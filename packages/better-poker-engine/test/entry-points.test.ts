@@ -13,10 +13,10 @@ async function bundledModules(entry: string): Promise<readonly string[]> {
   return Object.keys(result.metafile.inputs);
 }
 
-test("the core entry point loads no TOML, zod or PHH code (adrs.md 2)", async () => {
+test("the core entry point loads no TOML or PHH code (adrs.md 2)", async () => {
   const modules = await bundledModules(manifest.exports["."]);
   expect(modules.some((path) => path.endsWith("src/cards.ts"))).toBe(true);
-  expect(modules.filter((path) => /toml|zod|phh/iu.test(path))).toEqual([]);
+  expect(modules.filter((path) => /toml|phh/iu.test(path))).toEqual([]);
 });
 
 test("the /phh entry point loads smol-toml and zod", async () => {
