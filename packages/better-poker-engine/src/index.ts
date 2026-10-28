@@ -29,7 +29,73 @@ export {
   type HandType,
   type HandValue,
 } from "./evaluation.ts";
+export type {
+  Cause,
+  EventBody,
+  HandEvent,
+  HandRecord,
+  PlayerAmount,
+  PlayerRecord,
+  PotRecord,
+  Snapshot,
+} from "./events.ts";
+export {
+  act,
+  automation,
+  replayHand,
+  startHand,
+  summarizeHand,
+  type Action,
+  type AutomatedStep,
+  type Automation,
+  type CheckOrCall,
+  type DealerAction,
+  type DealerDecision,
+  type Decision,
+  type Hand,
+  type HandSetup,
+  type HoleCard,
+  type PlayerAction,
+  type PlayerId,
+  type RaiseRange,
+  type ReplayError,
+  type SetupError,
+  type Transition,
+  type Violation,
+} from "./hand.ts";
 export type { HandCategory } from "./lookups.ts";
 export { seededRandom, secureRandom, type RandomSource } from "./random.ts";
 export { err, ok, type Result } from "./result.ts";
+export {
+  draw,
+  holdem,
+  omaha,
+  shortDeck,
+  stud,
+  type Antes,
+  type BettingStructure,
+  type BlindStakes,
+  type Face,
+  type FixedLimitStakes,
+  type ForcedBets,
+  type Game,
+  type GameError,
+  type Mode,
+  type NonEmpty,
+  type Opening,
+  type Rake,
+  type Rules,
+  type Street,
+  type StudStakes,
+} from "./rules.ts";
 export type { VariantCode } from "./variants.ts";
+export {
+  eventsFor,
+  viewHand,
+  type Audience,
+  type DealerView,
+  type HandEventView,
+  type HandView,
+  type PlayerView,
+  type Pot,
+} from "./views.ts";

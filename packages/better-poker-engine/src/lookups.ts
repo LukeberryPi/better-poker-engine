@@ -137,6 +137,21 @@ const rhodeIslandSteps = [
   straights("straightFlush", 3, "suited"),
 ];
 
+/** Up cards on show in stud, from one to four of them. */
+const openingSteps = [
+  multisets("highCard", [1], "either"),
+  multisets("highCard", [1, 1], "either"),
+  multisets("highCard", [1, 1, 1], "either"),
+  multisets("highCard", [1, 1, 1, 1], "either"),
+  multisets("onePair", [2], "unsuited"),
+  multisets("onePair", [2, 1], "unsuited"),
+  multisets("onePair", [2, 1, 1], "unsuited"),
+  multisets("twoPair", [2, 2], "unsuited"),
+  multisets("threeOfAKind", [3], "unsuited"),
+  multisets("threeOfAKind", [3, 1], "unsuited"),
+  multisets("fourOfAKind", [4], "unsuited"),
+];
+
 /** pokerkit's lookup classes, keyed by their names without `Lookup`. */
 const definitions = {
   standard: {
@@ -191,6 +206,16 @@ const definitions = {
   numeral211: {
     rankOrder: rankOrders.numeral211,
     steps: rhodeIslandSteps,
+    badugi: false,
+  },
+  lowHandOpening: {
+    rankOrder: rankOrders.regular,
+    steps: openingSteps,
+    badugi: false,
+  },
+  highHandOpening: {
+    rankOrder: rankOrders.standard,
+    steps: openingSteps,
     badugi: false,
   },
 } satisfies Record<string, LookupDefinition>;
