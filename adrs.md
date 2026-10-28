@@ -72,3 +72,6 @@ Agreed with the project owner. Do not re-litigate without real friction.
   `Statistics.from_hand_history` keys payoffs by player name, merging repeated
   names. It is documented but untested upstream. Our `statistics()` keys by
   player id; a name-keyed variant is a follow-up.
+- **ACPC log import.** pokerkit's `ACPCProtocolParser` reads ACPC competition
+  logs into hand histories. Like the dropped site parsers, it is untested
+  upstream. ACPC export stays (decision 7).
