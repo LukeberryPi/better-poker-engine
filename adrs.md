@@ -26,6 +26,10 @@ Agreed with the project owner. Do not re-litigate without real friction.
    text or `repr`. Doctests that expect a `TypeError` become compile-time
    `@ts-expect-error` checks. `parity/manifest.ts` maps every original id to
    its TypeScript test and CI fails when a required id is missing or red.
+   Examples that cannot keep pokerkit's result are listed with a reason in
+   `parity/deviations.ts`, and CI prints them all. A deviation is allowed only
+   when an ADR removed the feature, JavaScript semantics make the result
+   impossible, or a JavaScript built-in does the job.
 9. **Sessions:** a table runs consecutive hands: seats mapped to positions,
    button movement including heads-up, stacks carried over, joining and leaving
    between hands. Not in scope: sit-out, missed or dead blinds, top-ups,

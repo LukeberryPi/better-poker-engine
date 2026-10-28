@@ -107,6 +107,14 @@ doctest examples, listed by id in `parity/manifest.ts`.
 - A doctest that expects `TypeError` becomes a `// @ts-expect-error` line.
 - An example with nothing to execute in TypeScript (an `import`) still gets
   its `example(n, …)` call, with the following example asserting through it.
+- Port each example against the code that plays the same role in this engine,
+  public or internal. Never add code whose only caller is a parity test.
+- When pokerkit's result cannot be kept, declare the example in
+  `parity/deviations.ts` instead of bending the test: `dropped` (an ADR
+  removed the feature), `differs` (JavaScript semantics force another result;
+  the example still runs and asserts ours) or `builtin` (a JavaScript built-in
+  does the job). Any other reason, including "hard to port", goes to the
+  owner, not into the registry.
 - When a module's port is complete, add its pokerkit source file to
   `parity/required.ts`. CI then fails if any of its ids is missing or red.
 

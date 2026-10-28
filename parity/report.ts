@@ -1,4 +1,9 @@
 import {
+  examplesToRun,
+  type Deviation,
+  type Deviations,
+} from "./deviations.ts";
+import {
   doctests,
   unitTests,
   type DoctestId,
@@ -14,10 +19,17 @@ export type FileProgress = {
   readonly required: boolean;
   readonly total: number;
   readonly passed: number;
+  readonly notRun: number;
+};
+
+export type DeclaredDeviation = {
+  readonly id: DoctestId;
+  readonly deviation: Deviation;
 };
 
 export type ParityReport = {
   readonly files: readonly FileProgress[];
+  readonly deviations: readonly DeclaredDeviation[];
   readonly errors: readonly string[];
 };
 
@@ -44,41 +56,71 @@ type ManifestEntry = {
   readonly id: UnitTestId | DoctestId;
   readonly file: SourceFile;
   readonly cases: number;
+  readonly notRun: number;
 };
 
-function entries(): readonly ManifestEntry[] {
+function entries(declared: Deviations): readonly ManifestEntry[] {
   const unit = Object.entries(unitTests).map(([id, file]) => ({
     // SAFETY: Object.entries over the const manifest yields its own keys.
     id: id as UnitTestId,
     file,
     cases: 1,
+    notRun: 0,
   }));
-  const doc = Object.entries(doctests).map(([id, entry]) => ({
+  const doc = Object.entries(doctests).map(([key, entry]) => {
     // SAFETY: Object.entries over the const manifest yields its own keys.
-    id: id as DoctestId,
-    file: entry.file,
-    cases: entry.examples,
-  }));
+    const id = key as DoctestId;
+    const notRun = entry.examples - examplesToRun(id, declared).length;
+    return { id, file: entry.file, cases: entry.examples, notRun };
+  });
   return [...unit, ...doc];
+}
+
+function deviationErrors(declared: Deviations): string[] {
+  return Object.entries(doctests).flatMap(([key, entry]) => {
+    // SAFETY: Object.entries over the const manifest yields its own keys.
+    const id = key as DoctestId;
+    const indexes = (declared[id] ?? []).flatMap((item) => item.examples);
+    const outOfRange = indexes.filter(
+      (index) => !Number.isInteger(index) || index < 1 || index > entry.examples
+    );
+    const repeated = indexes.filter(
+      (index, position) => indexes.indexOf(index) !== position
+    );
+    return [
+      ...outOfRange.map(
+        (index) =>
+          `${id}: deviation example ${index} is not in 1..${entry.examples}`
+      ),
+      ...repeated.map(
+        (index) => `${id}: example ${index} is declared as a deviation twice`
+      ),
+    ];
+  });
 }
 
 export function parityReport(
   outcomes: ReadonlyMap<string, readonly Outcome[]>,
-  required: ReadonlySet<SourceFile>
+  required: ReadonlySet<SourceFile>,
+  declared: Deviations
 ): ParityReport {
-  const progress = new Map<SourceFile, { total: number; passed: number }>();
-  const errors: string[] = [];
-  for (const { id, file, cases } of entries()) {
+  const progress = new Map<
+    SourceFile,
+    { total: number; passed: number; notRun: number }
+  >();
+  const errors = deviationErrors(declared);
+  for (const { id, file, cases, notRun } of entries(declared)) {
     const results = outcomes.get(id) ?? [];
     const passed = results.length === 1 && results[0] === "passed";
-    const counts = progress.get(file) ?? { total: 0, passed: 0 };
+    const counts = progress.get(file) ?? { total: 0, passed: 0, notRun: 0 };
     progress.set(file, {
       total: counts.total + cases,
-      passed: counts.passed + (passed ? cases : 0),
+      passed: counts.passed + (passed ? cases - notRun : 0),
+      notRun: counts.notRun + notRun,
     });
     if (results.length > 1)
       errors.push(`${id}: ported ${results.length} times`);
-    else if (!passed && required.has(file)) {
+    else if (!passed && notRun < cases && required.has(file)) {
       errors.push(`${id}: ${results[0] ?? "missing"} (${file} is required)`);
     }
   }
@@ -87,5 +129,10 @@ export function parityReport(
     required: required.has(file),
     ...counts,
   }));
-  return { files, errors };
+  const listed = Object.keys(doctests).flatMap((key) => {
+    // SAFETY: Object.keys over the const manifest yields its own keys.
+    const id = key as DoctestId;
+    return (declared[id] ?? []).map((deviation) => ({ id, deviation }));
+  });
+  return { files, deviations: listed, errors };
 }

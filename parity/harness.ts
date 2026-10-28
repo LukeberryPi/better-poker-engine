@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { doctests, type DoctestId, type UnitTestId } from "./manifest.ts";
+import { examplesToRun } from "./deviations.ts";
+import type { DoctestId, UnitTestId } from "./manifest.ts";
 
 export type Example = (index: number, run: () => void) => void;
 export type ParityOptions = { readonly timeout?: number };
@@ -13,7 +14,7 @@ export function unitTest(
   test(id, run, options.timeout);
 }
 
-/** Fails unless examples 1..n of the docstring each ran once, in order. */
+/** Fails unless each example ran once, in order, except dropped or builtin ones. */
 export function doctest(
   id: DoctestId,
   run: (example: Example) => void,
@@ -27,11 +28,7 @@ export function doctest(
         ran.push(index);
         body();
       });
-      const expected = Array.from(
-        { length: doctests[id].examples },
-        (_, offset) => offset + 1
-      );
-      expect(ran).toEqual(expected);
+      expect(ran).toEqual(examplesToRun(id));
     },
     options.timeout
   );
