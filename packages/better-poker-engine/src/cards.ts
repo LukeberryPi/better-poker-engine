@@ -1,5 +1,6 @@
 import { randomBelow, type RandomSource } from "./random.ts";
 import { err, ok, type Result } from "./result.ts";
+import { isWhitespace } from "./words.ts";
 
 const ranks = [
   "A",
@@ -99,10 +100,10 @@ export function parseCards(
 ): Result<readonly Card[], CardParseError> {
   const cards: Card[] = [];
   let rank: { readonly text: string; readonly at: number } | null = null;
-  for (const token of text.matchAll(/10|,|\s|./gsu)) {
+  for (const token of text.matchAll(/10|./gsu)) {
     const symbol = token[0] === "10" ? "T" : token[0];
     if (symbol === ",") continue;
-    if (/\s/u.test(symbol)) {
+    if (isWhitespace(symbol)) {
       if (rank !== null) return invalidCard(text, rank.at, token.index);
     } else if (rank === null) {
       rank = { text: symbol, at: token.index };

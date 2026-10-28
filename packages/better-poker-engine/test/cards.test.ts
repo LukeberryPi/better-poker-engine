@@ -22,6 +22,13 @@ describe("parseCards", () => {
     expect(parseCards("Ac,\nKd ,Qh")).toEqual(ok(["Ac", "Kd", "Qh"]));
   });
 
+  test("separates cards where pokerkit's str.split() does", () => {
+    expect(parseCards("Ac\u001cKd\u0085Qh")).toEqual(ok(["Ac", "Kd", "Qh"]));
+    expect(parseCards("Ac\ufeffKd")).toEqual(
+      err({ code: "invalid_card", at: 2, text: "\ufeffK" })
+    );
+  });
+
   test("rejects a known suit on an unknown rank", () => {
     expect(parseCards("As ?s")).toEqual(
       err({ code: "invalid_card", at: 3, text: "?s" })
