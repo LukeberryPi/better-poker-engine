@@ -200,7 +200,7 @@ const label = z.union(
 );
 
 /** Reads a TOML local time as `TomlDate` writes it, e.g. `12:34:56.789`. */
-export function localTimeOf(time: string): PhhTime | null {
+function localTimeOf(time: string): PhhTime | null {
   const match = /^(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/u.exec(time);
   if (match === null) return null;
   const [, hour = "", minute = "", second = "", fraction = ""] = match;

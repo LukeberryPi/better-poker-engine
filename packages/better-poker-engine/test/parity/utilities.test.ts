@@ -26,7 +26,7 @@ import {
   type SuitSymbol,
 } from "../../src/cards.ts";
 import { parseAmount } from "../../src/phh-actions.ts";
-import { localTimeOf } from "../../src/phh.ts";
+import { parsePhh } from "../../src/phh.ts";
 import { seededRandom } from "../../src/random.ts";
 import { err, ok, type Result } from "../../src/result.ts";
 import { cards, known } from "../support.ts";
@@ -215,7 +215,18 @@ doctest("pokerkit.utilities.parse_value", (example) => {
 
 doctest("pokerkit.utilities.parse_time", (example) => {
   example(1, () => {
-    expect(localTimeOf("12:34:56")).toEqual({
+    const parsed = parsePhh(
+      [
+        "variant = 'NT'",
+        "antes = [0, 0]",
+        "blinds_or_straddles = [1, 2]",
+        "min_bet = 2",
+        "starting_stacks = [200, 200]",
+        "actions = []",
+        "time = 12:34:56",
+      ].join("\n")
+    );
+    expect(parsed.ok ? parsed.value.time : parsed.error).toEqual({
       hour: 12,
       minute: 34,
       second: 56,
