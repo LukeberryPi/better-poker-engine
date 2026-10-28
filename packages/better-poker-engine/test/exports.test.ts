@@ -26,6 +26,7 @@ test("the analysis subpath exports the analysis functions", () => {
   expect(Object.keys(analysis).toSorted()).toEqual([
     "equities",
     "handStrength",
+    "icm",
     "parseRange",
   ]);
 });
