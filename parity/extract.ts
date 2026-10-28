@@ -28,8 +28,54 @@ function indentOf(line: string): number {
   return line.length - line.trimStart().length;
 }
 
-function tripleQuoteCount(line: string): number {
-  return line.match(/"""|'''/g)?.length ?? 0;
+type Quote = '"""' | "'''";
+
+/** Where a physical line leaves the tokenizer: inside a string, brackets or a `\` join. */
+type LineEnd = {
+  readonly openString: Quote | null;
+  readonly depth: number;
+  readonly joined: boolean;
+};
+
+const statementStart: LineEnd = { openString: null, depth: 0, joined: false };
+
+function scanLine(line: string, start: LineEnd): LineEnd {
+  let openString = start.openString;
+  let depth = start.depth;
+  let index = 0;
+  while (index < line.length) {
+    if (openString !== null) {
+      const close = line.indexOf(openString, index);
+      if (close === -1) return { openString, depth, joined: false };
+      openString = null;
+      index = close + 3;
+      continue;
+    }
+    const char = line[index];
+    if (char === "#") return { openString, depth, joined: false };
+    if (char === '"' || char === "'") {
+      if (line.startsWith(char.repeat(3), index)) {
+        openString = char === '"' ? '"""' : "'''";
+        index += 3;
+        continue;
+      }
+      index += 1;
+      while (index < line.length && line[index] !== char) {
+        index += line[index] === "\\" ? 2 : 1;
+      }
+      index += 1;
+      continue;
+    }
+    if (char === "(" || char === "[" || char === "{") depth += 1;
+    if (char === ")" || char === "]" || char === "}") depth -= 1;
+    index += 1;
+  }
+  return { openString, depth, joined: line.endsWith("\\") };
+}
+
+function startsStatement(end: LineEnd, trimmed: string): boolean {
+  const continuation = end.openString !== null || end.depth > 0 || end.joined;
+  return !continuation && trimmed !== "" && !trimmed.startsWith("#");
 }
 
 /** Names follow `doctest.DocTestFinder`: module path, then the qualified name. */
@@ -37,17 +83,17 @@ export function doctestsIn(file: string, source: string): DoctestEntry[] {
   const module = moduleName(file);
   const counts = new Map<string, number>();
   let scopes: Scope[] = [];
-  let insideString = false;
+  let previous = statementStart;
   for (const line of source.split("\n")) {
     const trimmed = line.trim();
-    if (trimmed.startsWith(">>>")) {
+    if (previous.openString !== null && trimmed.startsWith(">>>")) {
       if (scopes.slice(0, -1).some((scope) => scope.kind === "def")) {
         throw new Error(`${file}: doctest finder skips nested functions`);
       }
       const id = [module, ...scopes.map((scope) => scope.name)].join(".");
       counts.set(id, (counts.get(id) ?? 0) + 1);
     }
-    if (!insideString && trimmed !== "") {
+    if (startsStatement(previous, trimmed)) {
       const indent = indentOf(line);
       scopes = scopes.filter((scope) => scope.indent < indent);
       const match = scopeHeader.exec(line);
@@ -57,7 +103,7 @@ export function doctestsIn(file: string, source: string): DoctestEntry[] {
         scopes.push({ name, indent, kind });
       }
     }
-    if (tripleQuoteCount(line) % 2 === 1) insideString = !insideString;
+    previous = scanLine(line, previous);
   }
   return [...counts].map(([id, examples]) => ({ id, file, examples }));
 }

@@ -44,6 +44,41 @@ test("doctest ids are the module path plus the qualified name", () => {
   ]);
 });
 
+test("multi-line headers, column-0 comments and strings keep their scope", () => {
+  const source = lines(
+    "PATTERN = compile(r'(?!')  # (",
+    "class NoLimitTexasHoldem(",
+    "    Poker,",
+    "):",
+    "# a comment at column 0 inside the class",
+    "    def create_state(",
+    "        cls,",
+    "    ) -> State:",
+    '        """Create.',
+    "",
+    "        >>> 1",
+    '        """',
+    "",
+    "def rake(",
+    "    amount,",
+    ") -> int:",
+    '    """Rake.',
+    "",
+    "    >>> 2",
+    "    >>> 3",
+    '    """',
+    "# >>> not an example"
+  );
+  expect(doctestsIn("pokerkit/games.py", source)).toEqual([
+    {
+      id: "pokerkit.games.NoLimitTexasHoldem.create_state",
+      file: "pokerkit/games.py",
+      examples: 1,
+    },
+    { id: "pokerkit.games.rake", file: "pokerkit/games.py", examples: 2 },
+  ]);
+});
+
 test("examples inside a nested function are rejected", () => {
   const source = lines(
     "def outer():",

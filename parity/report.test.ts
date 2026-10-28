@@ -55,14 +55,17 @@ test("a fully passing required file reports no errors", () => {
 });
 
 test("a passing docstring counts every one of its examples", () => {
-  const report = parityReport(passing(["pokerkit.analysis"]), new Set());
+  const report = parityReport(
+    passing(["pokerkit.analysis.calculate_equities"]),
+    new Set()
+  );
   expect(
     report.files.find((file) => file.file === "pokerkit/analysis.py")
   ).toEqual({
     file: "pokerkit/analysis.py",
     required: false,
     total: 17,
-    passed: 17,
+    passed: 5,
   });
 });
 
