@@ -106,6 +106,8 @@ function plus(r0: string, r1: string, suffix: Suffix): Combos | null {
 }
 
 function explicitCards(notation: string): Combos | null {
+  // `parseCards` skips U+FEFF, which pokerkit's `Card.parse` rejects as a card symbol.
+  if (/\s/u.test(notation)) return null;
   const parsed = parseCards(notation);
   if (!parsed.ok) return null;
   const cards = parsed.value;
@@ -126,10 +128,16 @@ function combosOf(notation: string): Combos | null {
   return interval(r0, r1, r2, r3, suffix);
 }
 
+/** Python's `str.split()` also splits at U+001C–U+001F, which are not Unicode whitespace. */
+const informationSeparators = new Set(["\u001c", "\u001d", "\u001e", "\u001f"]);
+
 /** pokerkit's `parse_range`: notations separated by whitespace, commas or semicolons. */
 export function parseRange(text: string): Result<Range, RangeError> {
+  const spaced = [...text]
+    .map((symbol) => (informationSeparators.has(symbol) ? " " : symbol))
+    .join("");
   const combos = new Map<string, readonly KnownCard[]>();
-  for (const token of text.matchAll(/[^\s,;]+/gu)) {
+  for (const token of spaced.matchAll(/[^\p{White_Space},;]+/gu)) {
     const parsed = combosOf(token[0]);
     if (parsed === null) {
       return err({ code: "invalid_range", at: token.index, text: token[0] });
