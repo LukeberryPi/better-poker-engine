@@ -85,9 +85,30 @@ describe("icm", () => {
     expect(icm([0.5, -0.25], [1, 1])).toEqual(ok([0.125, 0.125]));
   });
 
-  test("pays nothing, as pokerkit, when payouts outnumber players", () => {
-    expect(icm([50, 30, 20], [10, 20])).toEqual(ok([0, 0]));
-    expect(icm([50, 30, 20], [100, 0])).toEqual(ok([0, 0]));
+  test("values players with chips as pokerkit would without the others", () => {
+    const random = seededRandom(29);
+    for (let table = 0; table < 300; table += 1) {
+      const stacks = Array.from(
+        { length: 1 + randomBelow(6, random) },
+        (_, player) =>
+          player > 0 && randomBelow(3, random) === 0
+            ? 0
+            : 1 + randomBelow(10_000, random)
+      );
+      const payouts = Array.from(
+        { length: randomBelow(8, random) },
+        () => randomBelow(1000, random) / 7
+      );
+      const holders = stacks.filter((stack) => stack > 0);
+      const values = okValue(icm(payouts, stacks));
+      expect(values.filter((_, player) => stacks[player] !== 0)).toEqual(
+        transcribedIcm(payouts.slice(0, holders.length), holders)
+      );
+    }
+  });
+
+  test("pays only as many places as there are players", () => {
+    expect(icm([50, 30, 20], [10, 10])).toEqual(ok([40, 40]));
     expect(icm([50], [])).toEqual(ok([]));
   });
 
@@ -97,16 +118,21 @@ describe("icm", () => {
     expect(icm([], [10, 20])).toEqual(ok([0, 0]));
   });
 
-  test("pays nothing, as pokerkit, when more places are paid than players have chips", () => {
-    expect(icm([50, 30, 20], [1, 2, 0])).toEqual(ok([0, 0, 0]));
-    expect(icm([40, 30, 20, 10], [1, 1, 1, 0])).toEqual(ok([0, 0, 0, 0]));
+  test("places players without chips last, sharing the places left evenly", () => {
+    expect(icm([70, 30], [100, 0])).toEqual(ok([70, 30]));
+    expect(icm([50, 30, 20], [50, 50, 0])).toEqual(ok([40, 40, 20]));
+    expect(icm([50, 30, 20], [100, 0])).toEqual(ok([50, 30]));
+    expect(icm([40, 30, 20, 10], [1, 0, 0, 0])).toEqual(ok([40, 20, 20, 20]));
+    const [first, second, third] = okValue(icm([50, 30, 20], [1, 2, 0]));
+    expect(first).toBeCloseTo(110 / 3, 12);
+    expect(second).toBeCloseTo(130 / 3, 12);
+    expect(third).toBe(20);
   });
 
   test("finds no chips left where pokerkit divides by zero", () => {
     expect(icm([70, 30], [0, 0])).toEqual(err({ code: "no_chips_left" }));
     expect(icm([], [0])).toEqual(err({ code: "no_chips_left" }));
-    expect(icm([70, 30], [100, 0])).toEqual(err({ code: "no_chips_left" }));
-    expect(icm([50, 30, 20], [50, 50, 0])).toEqual(
+    expect(icm([50, 30, 20], [2 ** 53 - 1, 1, 1])).toEqual(
       err({ code: "no_chips_left" })
     );
   });
