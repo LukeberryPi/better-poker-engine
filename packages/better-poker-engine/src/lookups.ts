@@ -1,5 +1,4 @@
 import {
-  arePaired,
   areRainbow,
   areSuited,
   rankOf,
@@ -309,7 +308,7 @@ export function lookup(name: LookupName): Lookup {
 
 /** pokerkit's `Lookup.get_entry_or_none`: null when the cards form no hand. */
 export function entryOf(table: Lookup, cards: readonly Card[]): Entry | null {
-  if (table.badugi && (arePaired(cards) || !areRainbow(cards))) return null;
+  if (table.badugi && !areRainbow(cards)) return null;
   let product = 1;
   for (const card of cards) {
     const rank = rankOf(card);

@@ -187,9 +187,11 @@ doctest("pokerkit.utilities.Deck", (example) => {
     deck[3] = "As";
   });
   example(8, () => expect(deck.slice(0, 6)).toEqual(known("2c2d2hAs3c3d")));
-  example(9, () => expect(decks.standard).toHaveLength(decks.regular.length));
+  example(9, () => expect(decks.standard).toHaveLength(52));
   example(10, () => expect(decks.regular).toHaveLength(52));
-  example(11, () => expectSameCards(decks.standard, decks.regular.join("")));
+  example(11, () => {
+    expect(decks.standard.slice(0, 6)).toEqual(known("2c2d2h2s3c3d"));
+  });
   example(12, () => {
     expect(decks.regular.slice(0, 6)).toEqual(known("AcAdAhAs2c2d"));
   });
