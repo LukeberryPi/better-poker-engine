@@ -1,5 +1,6 @@
 import { parseCards, type Card } from "./cards.ts";
 import { canonicalDecimal, type PhhDecimal } from "./phh-amounts.ts";
+import { wordsOf } from "./words.ts";
 
 type Cards = readonly [Card, ...Card[]];
 
@@ -105,8 +106,7 @@ function withArgument(
   return code === "sm" ? { type: "show", player, cards } : null;
 }
 
-function bodyOf(text: string): ActionBody | null {
-  const words = text.split(/\s+/u).filter((word) => word !== "");
+function bodyOf(words: readonly string[]): ActionBody | null {
   const [actor, code, argument, ...rest] = words;
   if (actor === undefined) return { type: "noOp" };
   if (actor === "d") return dealing(words.slice(1));
@@ -117,19 +117,15 @@ function bodyOf(text: string): ActionBody | null {
     : withArgument(player, code, argument);
 }
 
-/** Reads one action as pokerkit does. Commentary is the text after the first
- * `#` and one more character; that `#` must stand alone between words. */
+/** Reads one action as pokerkit does: its words up to a standalone `#`, and as
+ * commentary the text after the first `#` and one more character. */
 export function parsePhhAction(text: string): PhhAction | null {
-  const hash = text.indexOf("#");
-  const before = hash === -1 ? text : text.slice(0, hash);
-  const after = hash === -1 ? null : text.slice(hash + 1);
-  if (after !== null && (/\S$/u.test(before) || /^\S/u.test(after))) {
-    return null;
-  }
-  const body = bodyOf(before);
-  return body === null
-    ? null
-    : { ...body, commentary: after?.slice(1) ?? null };
+  const words = wordsOf(text).map((word) => word.text);
+  const hash = words.indexOf("#");
+  const body = bodyOf(hash === -1 ? words : words.slice(0, hash));
+  if (body === null) return null;
+  const at = text.indexOf("#");
+  return { ...body, commentary: at === -1 ? null : text.slice(at + 2) };
 }
 
 function bodyText(action: PhhAction): string {

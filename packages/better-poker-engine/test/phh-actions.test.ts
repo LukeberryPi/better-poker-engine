@@ -118,6 +118,21 @@ describe("parsePhhAction", () => {
     });
   });
 
+  test("separates words where pokerkit's str.split() does", () => {
+    expect(parsePhhAction("p1\u001ccbr\u00857")).toEqual({
+      type: "betOrRaiseTo",
+      player: 1,
+      amount: "7",
+      commentary: null,
+    });
+    expect(parsePhhAction("p1 cc\u0085# note")).toEqual({
+      type: "checkOrCall",
+      player: 1,
+      commentary: "note",
+    });
+    expect(parsePhhAction("p1\ufeffcc")).toBeNull();
+  });
+
   test("reads an amount in canonical form", () => {
     expect(parsePhhAction("p1 cbr 007.50")).toEqual({
       type: "betOrRaiseTo",
