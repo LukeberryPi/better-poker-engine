@@ -1,0 +1,17 @@
+{
+  "name": "better-poker-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Type-safe, immutable poker engine for TypeScript: a pokerkit rewrite with test parity",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LukeberryPi/better-poker-engine.git",
+    "directory": "packages/better-poker-engine"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

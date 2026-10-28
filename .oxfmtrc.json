@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "semi": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "useTabs": false,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "node_modules",
+    ".cursor",
+    "dist",
+    "bun.lock",
+    "*.log",
+    "parity/.results",
+    "parity/manifest.ts",
+    "tools/oxlint/anti-slop"
+  ]
+}
