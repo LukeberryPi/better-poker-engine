@@ -97,7 +97,12 @@ describe("icm", () => {
     expect(icm([], [10, 20])).toEqual(ok([0, 0]));
   });
 
-  test("rejects places that only players without chips could take", () => {
+  test("pays nothing, as pokerkit, when more places are paid than players have chips", () => {
+    expect(icm([50, 30, 20], [1, 2, 0])).toEqual(ok([0, 0, 0]));
+    expect(icm([40, 30, 20, 10], [1, 1, 1, 0])).toEqual(ok([0, 0, 0, 0]));
+  });
+
+  test("finds no chips left where pokerkit divides by zero", () => {
     expect(icm([70, 30], [0, 0])).toEqual(err({ code: "no_chips_left" }));
     expect(icm([], [0])).toEqual(err({ code: "no_chips_left" }));
     expect(icm([70, 30], [100, 0])).toEqual(err({ code: "no_chips_left" }));

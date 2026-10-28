@@ -1,8 +1,8 @@
 import type { Chips } from "../chips.ts";
 import { err, ok, type Result } from "../result.ts";
 
-/** `no_chips_left`: a place is still to be paid but the players left have no
- * chips, where pokerkit divides by zero. */
+/** `no_chips_left`: where pokerkit divides by zero, because no player has chips or its
+ * float arithmetic leaves exactly none in play while a place is still to be paid. */
 export type IcmError =
   | {
       readonly code: "invalid_stack";
@@ -15,8 +15,9 @@ type Contender = { readonly share: number; value: number; placed: boolean };
 
 type Finish = { readonly contender: Contender; readonly payout: number };
 
-/** pokerkit's `calculate_icm`: each player finishes next with their share of
- * the chips still in play. Same float operations, in pokerkit's order. */
+/** pokerkit's `calculate_icm`: each player finishes next with their share of the chips
+ * still in play, in pokerkit's float operations and order. As there, every value is 0
+ * when more places are paid than players have chips. */
 export function icm(
   payouts: readonly number[],
   stacks: readonly Chips[]
