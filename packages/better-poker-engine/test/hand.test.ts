@@ -13,6 +13,7 @@ import {
 import { draw, holdem, stud, type Game, type Street } from "../src/rules.ts";
 import { viewHand } from "../src/views.ts";
 import {
+  accept,
   allBut,
   auditor,
   drive,
@@ -22,11 +23,12 @@ import {
   play,
   repeat,
   spectator,
+  stacks,
   start,
 } from "./driver.ts";
 import { cards } from "./support.ts";
 
-const { call, fold, raiseTo } = moves;
+const { board, burn, call, deal, fold, raiseTo } = moves;
 
 const noLimit = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
 const cashGame = holdem.noLimit({
@@ -86,6 +88,18 @@ describe("startHand", () => {
       error: { code: "hole_cards_with_draw", street: 1 },
     });
   });
+
+  test("keeps no reference to the game it was given", () => {
+    const [first, ...rest] = noLimit.rules.streets;
+    const preflop = { ...first };
+    const game: Game = {
+      ...noLimit,
+      rules: { ...noLimit.rules, streets: [preflop, ...rest] },
+    };
+    const table = drive(start(game, [100, 100], automation.all));
+    preflop.minCompletionBetOrRaise = 10;
+    expect(minimumRaise(table)).toEqual({ type: "betOrRaiseTo", amount: 4 });
+  });
 });
 
 describe("act", () => {
@@ -116,6 +130,25 @@ describe("act", () => {
     });
   });
 
+  test("posts for the named player, and refuses one who already posted", () => {
+    const game = holdem.noLimit({
+      blinds: [1, 2],
+      minBet: 2,
+      antes: { kind: "everyone", amount: 1 },
+    });
+    const table = drive(start(game, [100, 100, 100], allBut("antePosting")));
+    expect(table.act({ type: "postAnte", player: "p2" })).toEqual({
+      type: "antePosted",
+      player: "p2",
+      amount: 1,
+    });
+    expect(table.reject({ type: "postAnte", player: "p2" })).toEqual({
+      code: "not_eligible",
+      player: "p2",
+      eligible: ["p1", "p3"],
+    });
+  });
+
   test("bounds bets and raises, in whole chips", () => {
     const table = drive(start(noLimit, [100, 100], automation.all));
     expect(table.reject({ type: "betOrRaiseTo", amount: 3 })).toEqual({
@@ -141,6 +174,18 @@ describe("act", () => {
     play(table, [raiseTo(4), raiseTo(5), call]);
     expect(table.reject(minimumRaise(table))).toEqual({
       code: "action_not_reopened",
+    });
+  });
+
+  test("reopens the raising after a minimum raise, despite a later short all-in", () => {
+    const table = drive(start(noLimit, [100, 100, 7], automation.all));
+    play(table, [call, call, call, raiseTo(2), raiseTo(4), raiseTo(5)]);
+    expect(table.act(minimumRaise(table))).toEqual({
+      type: "betOrRaised",
+      player: "p1",
+      kind: "raise",
+      to: 7,
+      allIn: false,
     });
   });
 
@@ -284,6 +329,83 @@ describe("act", () => {
       player: "p1",
       discarded: held,
     });
+  });
+});
+
+describe("dividing chips", () => {
+  test("gives a split pot's odd chip to the earliest position", () => {
+    const table = drive(
+      start(
+        noLimit,
+        [100, 100, 100],
+        allBut("holeDealing", "boardDealing", "cardBurning")
+      )
+    );
+    play(table, [deal("2c3c"), deal("2d3d"), deal("2h3h"), call, fold, call]);
+    for (const dealt of ["AsKsQs", "Js", "Ts"]) {
+      play(table, [burn, board(dealt), call, call]);
+    }
+    expect(stacks(table.hand)).toEqual([99, 101, 100]);
+  });
+
+  test("rounds the rake half to even, as Python's round does", () => {
+    const game = holdem.noLimit({
+      blinds: [1, 2],
+      minBet: 2,
+      mode: "cashGame",
+      rake: {
+        kind: "percentage",
+        basisPoints: 1000,
+        cap: null,
+        noFlopNoDrop: false,
+      },
+    });
+    const table = drive(start(game, [100, 100, 100], automation.all));
+    play(table, [raiseTo(12), fold, call, ...repeat(call, 6)]);
+    expect(summarizeHand(table.hand)?.rake).toBe(2);
+  });
+});
+
+describe("runouts", () => {
+  test("split each pot between the boards, as in pokerkit's four-runout example", () => {
+    const game = holdem.noLimit({
+      blinds: [200, 400, 800],
+      minBet: 400,
+      mode: "cashGame",
+      antes: { kind: "byPosition", amounts: [0, 0, 0, 0, 0, 600] },
+    });
+    const table = drive(
+      start(
+        game,
+        ["unbounded", 116400, 86900, "unbounded", 50000, "unbounded"],
+        allBut(
+          "holeDealing",
+          "boardDealing",
+          "cardBurning",
+          "runoutCountSelection"
+        )
+      )
+    );
+    play(table, [
+      ...["JsTh", "Ah9d", "KsKc", "5c2h", "6h5h", "6s3s"].map(deal),
+      ...[fold, raiseTo(2800), fold, call, raiseTo(12600), call, call, call],
+      ...[burn, board("9hTs9s"), call, raiseTo(17000), raiseTo(36000)],
+      ...[fold, fold, raiseTo(103800), call],
+      accept({ type: "selectRunoutCount", count: 4 }),
+      accept({ type: "selectRunoutCount", count: null }),
+      ...["Jh", "Ad", "Kh", "3c", "7s", "8s", "Qc", "Kd"].flatMap((card) => [
+        burn,
+        board(card),
+      ]),
+    ]);
+    expect(stacks(table.hand)).toEqual([
+      "unbounded",
+      79400,
+      149700,
+      "unbounded",
+      37400,
+      "unbounded",
+    ]);
   });
 });
 
