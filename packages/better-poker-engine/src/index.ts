@@ -32,3 +32,4 @@ export {
 export type { HandCategory } from "./lookups.ts";
 export { seededRandom, secureRandom, type RandomSource } from "./random.ts";
 export { err, ok, type Result } from "./result.ts";
+export type { VariantCode } from "./variants.ts";
