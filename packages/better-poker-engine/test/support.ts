@@ -1,3 +1,4 @@
+import { parseRange, type Range } from "../src/analysis.ts";
 import {
   isKnownCard,
   parseCards,
@@ -18,6 +19,20 @@ export function known(text: string): KnownCard[] {
     throw new Error(`Test cards are not all known: ${text}`);
   }
   return parsed;
+}
+
+/** pokerkit's `parse_range(*texts)`, which joins its arguments with a space. */
+export function range(...texts: readonly string[]): Range {
+  const parsed = parseRange(texts.join(" "));
+  if (!parsed.ok) throw new Error(`Test range does not parse: ${texts}`);
+  return parsed.value;
+}
+
+/** Sorted cards of sorted combinations: equal for the same set, unequal on repeats. */
+export function sortedCombos(
+  combos: readonly (readonly KnownCard[])[]
+): string[] {
+  return combos.map((combo) => combo.toSorted().join("")).toSorted();
 }
 
 export function scripted(values: readonly number[]): RandomSource {

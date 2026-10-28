@@ -17,7 +17,7 @@ const ranks = [
   "Q",
   "K",
 ] as const;
-const suits = ["c", "d", "h", "s"] as const;
+export const suits = ["c", "d", "h", "s"] as const;
 
 /** pokerkit's `Rank` and `Suit` members: `?` marks an unknown rank or suit. */
 export const rankSymbols = [...ranks, "?"] as const;

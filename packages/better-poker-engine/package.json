@@ -12,6 +12,7 @@
     "directory": "packages/better-poker-engine"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./analysis": "./src/analysis.ts"
   }
 }
