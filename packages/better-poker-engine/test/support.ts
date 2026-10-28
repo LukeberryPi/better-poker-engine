@@ -6,6 +6,12 @@ import {
   type KnownCard,
 } from "../src/cards.ts";
 import type { RandomSource } from "../src/random.ts";
+import type { Result } from "../src/result.ts";
+
+export function okValue<T, E>(result: Result<T, E>): T {
+  if (!result.ok) throw new Error(`Not ok: ${JSON.stringify(result.error)}`);
+  return result.value;
+}
 
 export function cards(text: string): Card[] {
   const parsed = parseCards(text);

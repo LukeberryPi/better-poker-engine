@@ -23,7 +23,11 @@ function isAnalysisModule(file: string): boolean {
 }
 
 test("the analysis subpath exports the analysis functions", () => {
-  expect(Object.keys(analysis).toSorted()).toEqual(["parseRange"]);
+  expect(Object.keys(analysis).toSorted()).toEqual([
+    "equities",
+    "handStrength",
+    "parseRange",
+  ]);
 });
 
 test("importing the core loads no analysis code (adrs.md decision 2)", async () => {
