@@ -1,10 +1,62 @@
 import { describe, expect, test } from "bun:test";
 
 import { icm } from "../../src/analysis.ts";
+import { randomBelow, seededRandom } from "../../src/random.ts";
 import { err, ok } from "../../src/result.ts";
 import { okValue } from "../support.ts";
 
+/** `itertools.permutations(items, size)`, in its order. */
+function permutations<T>(items: readonly T[], size: number): (readonly T[])[] {
+  if (size === 0) return [[]];
+  return items.flatMap((item, index) =>
+    permutations(items.toSpliced(index, 1), size - 1).map((rest) => [
+      item,
+      ...rest,
+    ])
+  );
+}
+
+/** pokerkit's `calculate_icm`, transcribed line by line. */
+function transcribedIcm(
+  payouts: readonly number[],
+  chips: readonly number[]
+): number[] {
+  const chipSum = chips.reduce((sum, chip) => sum + chip, 0);
+  const players = chips.map((chip) => ({
+    chipPercentage: chip / chipSum,
+    icm: 0,
+  }));
+  for (const order of permutations(players, payouts.length)) {
+    let probability = 1;
+    let denominator = 1;
+    for (const player of order) {
+      probability *= player.chipPercentage / denominator;
+      denominator -= player.chipPercentage;
+    }
+    for (const [place, player] of order.entries()) {
+      player.icm += (payouts[place] ?? Number.NaN) * probability;
+    }
+  }
+  return players.map((player) => player.icm);
+}
+
 describe("icm", () => {
+  test("matches a line-by-line transcription of pokerkit to the last bit", () => {
+    const random = seededRandom(13);
+    for (let table = 0; table < 300; table += 1) {
+      const players = 1 + randomBelow(6, random);
+      const stacks = Array.from(
+        { length: players },
+        () => 1 + randomBelow(10_000, random)
+      );
+      const payouts = Array.from(
+        { length: randomBelow(players + 1, random) },
+        () => randomBelow(1000, random) / 7
+      );
+      expect(icm(payouts, stacks)).toEqual(ok(transcribedIcm(payouts, stacks)));
+    }
+  });
+
   test("matches the exact fractions of pokerkit's first example", () => {
     const [first, second, third] = okValue(icm([70, 30], [50, 30, 20]));
     expect(first).toBeCloseTo(1265 / 28, 12);

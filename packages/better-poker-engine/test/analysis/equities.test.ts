@@ -60,7 +60,7 @@ describe("equities", () => {
       board: known("Kh9d5c4sJh"),
       samples: 3,
     };
-    const random = scripted([0, 1, 2]);
+    const random = scripted([2 ** 32 - 1, 0, 1, 2]);
     expect(equities({ ...deal, random })).toEqual(ok([1 / 3, 2 / 3]));
   });
 
