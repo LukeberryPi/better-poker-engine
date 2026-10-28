@@ -4,6 +4,7 @@ import type { Chips, Stack } from "../chips.ts";
 import { evaluate, type HandValue } from "../evaluation.ts";
 import type { HandEvent } from "../events.ts";
 import type { AutomatedStep, Hand, HoleCard, PlayerId } from "../hand.ts";
+import type { Seed } from "../random.ts";
 import type { Face, Game, Street } from "../rules.ts";
 
 /** A seat index: 0 is the small blind, as pokerkit's player indices. */
@@ -81,6 +82,8 @@ export type HandState = Brandable<"Hand"> & {
   readonly startingStacks: readonly Stack[];
   version: number;
   deck: Card[];
+  /** Hashed from the starting deck, so players can't predict a reshuffle. */
+  readonly reshuffleSeed: Seed;
   /** pokerkit's `board_cards`: one entry per dealt slot, one card per board. */
   boards: Card[][];
   burned: Card[];

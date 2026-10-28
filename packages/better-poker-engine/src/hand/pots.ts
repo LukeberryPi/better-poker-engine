@@ -97,9 +97,13 @@ export function totalPot(state: HandState): Chips {
   );
 }
 
-function handTypesInPlay(state: HandState, board: number): number[] {
+function handTypesInPlay(
+  state: HandState,
+  board: number,
+  eligible: readonly Position[]
+): number[] {
   return state.game.rules.handTypes.flatMap((_, handType) =>
-    positionsOf(state).some(
+    eligible.some(
       (position) => upHandOf(state, position, board, handType) !== null
     )
       ? [handType]
@@ -107,7 +111,8 @@ function handTypesInPlay(state: HandState, board: number): number[] {
   );
 }
 
-/** Each pot splits evenly over boards, then over hand types anyone made. */
+/** Each pot splits evenly over boards, then over the hand types its players made,
+ * so a side pot with no low goes whole to its high hand, as card rooms rule. */
 export function beginChipsPushing(state: HandState): void {
   state.street = null;
   const pots = potsOf(state).map((pot) => ({ ...pot }));
@@ -129,7 +134,7 @@ export function beginChipsPushing(state: HandState): void {
     const [perBoard, boardRemainder] = splitChips(pot.unraked, boards);
     for (let board = 0; board < boards; board += 1) {
       const boardAmount = perBoard + (board === 0 ? boardRemainder : 0);
-      const handTypes = handTypesInPlay(state, board);
+      const handTypes = handTypesInPlay(state, board, pot.eligible);
       if (handTypes.length === 0) {
         if (boardAmount > 0) {
           subPots.push({

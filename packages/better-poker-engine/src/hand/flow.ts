@@ -51,6 +51,7 @@ import {
   beginShowdown,
   endShowdown,
   killHand,
+  maxRunouts,
   selectRunoutCount,
   showdownOver,
   showOrMuck,
@@ -233,6 +234,7 @@ export function decisionOf(state: HandState): Decision {
         return {
           kind: "runoutSelection",
           players: idsOf(state, phase.selectors),
+          maxRunouts: maxRunouts(state),
         };
       }
       return { kind: "showdown", player: playerAt(state, at(phase.order, 0)) };

@@ -7,6 +7,7 @@ import { returnToDeck, takeCards } from "./dealing.ts";
 import { potsOf } from "./pots.ts";
 import { notEligible, pendingPlayer, type Refusal } from "./refusal.ts";
 import {
+  activeCount,
   allFaceUp,
   at,
   boardCount,
@@ -18,6 +19,7 @@ import {
   playerAt,
   positionsOf,
   rotatedFrom,
+  sum,
   upHandOf,
   type HandState,
   type Position,
@@ -80,6 +82,19 @@ export function endShowdown(state: HandState): boolean {
   return state.allIn && !isLastStreet(state);
 }
 
+/** As many runouts as the deck can deal in full, burns included, and at least one. */
+export function maxRunouts(state: HandState): number {
+  const perRunout = sum(
+    laterStreets(state).map(
+      (street) =>
+        (street.burn ? 1 : 0) +
+        street.board * state.game.boards +
+        street.hole.length * activeCount(state)
+    )
+  );
+  return Math.max(1, Math.floor(state.deck.length / perRunout));
+}
+
 export function selectRunoutCount(
   state: HandState,
   count: number | null,
@@ -89,8 +104,16 @@ export function selectRunoutCount(
   const { selectors } = state.phase;
   const position = pendingPlayer(state, selectors, player);
   if (!position.ok) return position;
-  if (count !== null && (!Number.isSafeInteger(count) || count < 1)) {
-    return err({ code: "runout_count_out_of_range", attempted: count });
+  const maximum = maxRunouts(state);
+  if (
+    count !== null &&
+    (!Number.isSafeInteger(count) || count < 1 || count > maximum)
+  ) {
+    return err({
+      code: "runout_count_out_of_range",
+      attempted: count,
+      maximum,
+    });
   }
   selectors[position.value] = false;
   if (count !== null) {

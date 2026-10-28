@@ -10,7 +10,14 @@ import {
   type Action,
   type HandSetup,
 } from "../src/hand.ts";
-import { draw, holdem, stud, type Game, type Street } from "../src/rules.ts";
+import {
+  draw,
+  holdem,
+  omaha,
+  stud,
+  type Game,
+  type Street,
+} from "../src/rules.ts";
 import { viewHand } from "../src/views.ts";
 import {
   accept,
@@ -25,6 +32,7 @@ import {
   spectator,
   stacks,
   start,
+  type Move,
 } from "./driver.ts";
 import { cards } from "./support.ts";
 
@@ -283,15 +291,18 @@ describe("act", () => {
     });
   });
 
-  test("refuses a runout count below one", () => {
+  test("refuses a runout count below one, or above what the deck can deal", () => {
     const table = drive(
       start(cashGame, [100, 100], allBut("runoutCountSelection"))
     );
     play(table, [raiseTo(100), call]);
-    expect(table.reject({ type: "selectRunoutCount", count: 0 })).toEqual({
-      code: "runout_count_out_of_range",
-      attempted: 0,
-    });
+    for (const count of [0, 7]) {
+      expect(table.reject({ type: "selectRunoutCount", count })).toEqual({
+        code: "runout_count_out_of_range",
+        attempted: count,
+        maximum: 6,
+      });
+    }
   });
 
   test("needs a named player to show once the hand is over", () => {
@@ -364,6 +375,38 @@ describe("dividing chips", () => {
     play(table, [raiseTo(12), fold, call, ...repeat(call, 6)]);
     expect(summarizeHand(table.hand)?.rake).toBe(2);
   });
+
+  test("gives a side pot to its high hand when nobody in it has a low", () => {
+    const game = omaha.fixedLimitHiLo({
+      blinds: [1, 2],
+      smallBet: 2,
+      bigBet: 4,
+    });
+    const table = drive(
+      start(
+        game,
+        [2, 4, 100, 100],
+        allBut("holeDealing", "boardDealing", "cardBurning")
+      )
+    );
+    play(table, [
+      ...["As3d9c9h", "AhAdJcJd", "QhQdJhJs", "ThTd9d9s"].map(deal),
+      ...repeat(call, 4),
+      ...[burn, board("2c5d7h"), moves.raise, call, call],
+      ...[burn, board("Kc"), moves.raise, call],
+      ...[burn, board("Ks"), call, call],
+    ]);
+    expect(
+      summarizeHand(table.hand)?.pots.map(({ winners }) => winners)
+    ).toEqual([
+      [
+        { player: "p2", amount: 4, hand: "Two pair (AhAd7hKcKs)" },
+        { player: "p1", amount: 4, hand: "High card (As3d2c5d7h)" },
+      ],
+      [{ player: "p2", amount: 6, hand: "Two pair (AhAd7hKcKs)" }],
+      [{ player: "p3", amount: 8, hand: "Two pair (QhQd7hKcKs)" }],
+    ]);
+  });
 });
 
 describe("runouts", () => {
@@ -407,6 +450,78 @@ describe("runouts", () => {
       "unbounded",
     ]);
   });
+
+  test("go as far as the deck can deal every street, burns included", () => {
+    const table = drive(
+      start(cashGame, [100, 100], allBut("runoutCountSelection"))
+    );
+    play(table, [raiseTo(100), call]);
+    expect(auditor(table.hand).decision).toEqual({
+      kind: "runoutSelection",
+      players: ["p1", "p2"],
+      maxRunouts: 6,
+    });
+    play(table, repeat(accept({ type: "selectRunoutCount", count: 6 }), 2));
+    const record = summarizeHand(table.hand);
+    expect(record?.runouts).toBe(6);
+    expect(new Set(record?.boards.flat()).size).toBe(30);
+    expect(record?.unclaimed).toBe(0);
+  });
+});
+
+describe("reshuffling", () => {
+  test("deals burned and discarded cards again in a seeded order", () => {
+    const game = draw.deuceToSevenTriple({
+      blinds: [1, 2],
+      smallBet: 2,
+      bigBet: 4,
+    });
+    const deck = decks.standard;
+    let hand = start(game, repeat(200, 6), automation.all, deck);
+    const actions: Action[] = [];
+    for (;;) {
+      const view = auditor(hand);
+      const { decision } = view;
+      if (decision.kind === "complete") break;
+      const drawer = decision.kind === "drawing" ? decision.player : null;
+      const held =
+        view.players.find(({ player }) => player === drawer)?.holeCards ?? [];
+      const action: Action =
+        drawer === null
+          ? { type: "checkOrCall" }
+          : { type: "draw", discard: held.map(({ card }) => card) };
+      const result = act(hand, action);
+      if (!result.ok) throw new Error(result.error.code);
+      hand = result.value.hand;
+      actions.push(action);
+    }
+    const replayed = replayHand(
+      { game, stacks: repeat(200, 6), deck, automate: automation.all },
+      actions
+    );
+    if (!replayed.ok) throw new Error(replayed.error.code);
+    expect(auditor(replayed.value.hand)).toEqual(auditor(hand));
+
+    const bodies = replayed.value.events.map(({ body }) => body);
+    const dealt = bodies.flatMap((body) => {
+      if (body.type === "cardBurned") return [body.card];
+      return body.type === "holeDealt"
+        ? body.cards.map(({ card }) => card)
+        : [];
+    });
+    const firstBurn = bodies.find((body) => body.type === "cardBurned");
+    const firstDiscards = bodies
+      .flatMap((body) => (body.type === "drew" ? [body.discarded] : []))
+      .slice(0, 6)
+      .flat();
+    const reserve = [
+      firstBurn?.type === "cardBurned" ? firstBurn.card : null,
+      ...firstDiscards,
+    ];
+    const redealt = dealt.slice(deck.length, deck.length + 9);
+    expect(reserve).toEqual(expect.arrayContaining(redealt));
+    expect(redealt).not.toEqual(reserve.slice(0, 9));
+  });
 });
 
 describe("unbounded stacks", () => {
@@ -423,6 +538,21 @@ describe("unbounded stacks", () => {
       ["unbounded", null],
       [200, 100],
     ]);
+  });
+});
+
+describe("summarizeHand", () => {
+  test("names a winning hand once shown, even after the losers' hands are killed", () => {
+    const deck = cards("2cAc7dAd 3h 9sTsJh 4h 5c 6h Kd");
+    const winners = (moves: readonly Move[]) => {
+      const table = drive(start(noLimit, [100, 100], automation.all, deck));
+      play(table, moves);
+      return summarizeHand(table.hand)?.pots.flatMap((pot) => pot.winners);
+    };
+    expect(winners([raiseTo(100), call])).toEqual([
+      { player: "p2", amount: 200, hand: "One pair (AcAdTsJhKd)" },
+    ]);
+    expect(winners([fold])).toEqual([{ player: "p1", amount: 1, hand: null }]);
   });
 });
 

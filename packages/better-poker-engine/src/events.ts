@@ -143,7 +143,7 @@ export type PotRecord = {
   readonly winners: readonly {
     readonly player: PlayerId;
     readonly amount: Chips;
-    /** Null when the pot was uncontested. */
+    /** Null when the pot went uncontested to a winner who didn't show. */
     readonly hand: string | null;
   }[];
 };

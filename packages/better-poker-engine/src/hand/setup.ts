@@ -1,5 +1,6 @@
 import { isKnownCard, type KnownCard } from "../cards.ts";
 import type { HandSetup, SetupError } from "../hand.ts";
+import { seedFrom } from "../random.ts";
 import { validateGame, type Antes, type Game, type Street } from "../rules.ts";
 import { beginAntePosting } from "./forced.ts";
 import type { HandState, Position } from "./state.ts";
@@ -114,6 +115,7 @@ export function initialState(setup: HandSetup): HandState {
     startingStacks: [...setup.stacks],
     version: 0,
     deck: [...setup.deck],
+    reshuffleSeed: seedFrom(setup.deck.join(" ")),
     boards: [],
     burned: [],
     mucked: [],

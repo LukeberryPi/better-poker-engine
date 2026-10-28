@@ -9,6 +9,7 @@ import type {
 import type { HoleCard } from "../hand.ts";
 import { engineVersion } from "../version.ts";
 import {
+  allFaceUp,
   at,
   boardCards,
   boardCount,
@@ -88,9 +89,11 @@ function potRecords(state: HandState): PotRecord[] {
       return body.awards.map(({ player, amount }) => {
         const position = state.players.indexOf(player);
         const value =
-          board === null || handType === null
-            ? null
-            : upHandOf(state, position, board, handType);
+          board !== null && handType !== null
+            ? upHandOf(state, position, board, handType)
+            : allFaceUp(state, position)
+              ? upHandOf(state, position, 0, 0)
+              : null;
         return {
           player,
           amount,

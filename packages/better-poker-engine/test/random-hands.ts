@@ -201,7 +201,10 @@ function plausibleAction(
       return {
         type: "selectRunoutCount",
         player: pick(decision.players, random),
-        count: pick([null, 1, 2, 3], random),
+        count: pick(
+          [null, 1, Math.min(2, decision.maxRunouts), decision.maxRunouts],
+          random
+        ),
       };
     case "showdown":
       return pick<Action>(

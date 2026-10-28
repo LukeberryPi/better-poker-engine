@@ -1,6 +1,7 @@
-import { isKnownCard, type Card } from "../cards.ts";
+import { isKnownCard, shuffle, type Card, type KnownCard } from "../cards.ts";
 import type { EventBody } from "../events.ts";
 import type { HoleCard } from "../hand.ts";
+import { seedFrom, sfc32 } from "../random.ts";
 import { err, ok, type Result } from "../result.ts";
 import { notEligible, type Refusal } from "./refusal.ts";
 import {
@@ -16,10 +17,17 @@ import {
 } from "./state.ts";
 
 /** Burned, mucked and discarded cards, dealt again once the deck runs out. */
-function reserve(state: HandState): Card[] {
+function reserve(state: HandState): KnownCard[] {
   return [state.burned, state.mucked, ...state.discarded]
     .flat()
     .filter(isKnownCard);
+}
+
+/** The reserve in the order it is dealt again; a replay deals it the same way. */
+function reshuffled(state: HandState): readonly KnownCard[] {
+  const cards = reserve(state);
+  const key = [...state.reshuffleSeed, ...cards].join(" ");
+  return shuffle(cards, sfc32(seedFrom(key)));
 }
 
 /** Hole cards that would not fit in the deck go to the board instead. */
@@ -84,7 +92,9 @@ export function canDealBoard(phase: Dealing): boolean {
 /** pokerkit's `get_dealable_cards`: the deck, then the reserve if it runs short. */
 function fromDeck(state: HandState, count: number): Result<Card[], Refusal> {
   const dealable =
-    count > state.deck.length ? [...state.deck, ...reserve(state)] : state.deck;
+    count > state.deck.length
+      ? [...state.deck, ...reshuffled(state)]
+      : state.deck;
   if (dealable.length < count) {
     return err({
       code: "not_enough_cards",
@@ -112,7 +122,7 @@ export function takeCards(state: HandState, cards: readonly Card[]): void {
   const deck = new Set(state.deck);
   const dealt = new Set(cards);
   if (dealt.size > deck.size && [...deck].every((card) => dealt.has(card))) {
-    returnToDeck(state, reserve(state));
+    returnToDeck(state, reshuffled(state));
     state.burned = [];
     state.mucked = [];
     state.discarded = state.discarded.map(() => []);

@@ -140,7 +140,12 @@ export type Decision =
       readonly player: PlayerId;
       readonly maxDiscards: number;
     }
-  | { readonly kind: "runoutSelection"; readonly players: readonly PlayerId[] }
+  | {
+      readonly kind: "runoutSelection";
+      readonly players: readonly PlayerId[];
+      /** The most runouts the deck left can deal in full. */
+      readonly maxRunouts: number;
+    }
   | { readonly kind: "showdown"; readonly player: PlayerId }
   | DealerDecision
   | { readonly kind: "complete" };
@@ -220,7 +225,11 @@ export type Violation =
     }
   | { readonly code: "card_not_held"; readonly card: Card }
   | { readonly code: "unknown_card_shown" }
-  | { readonly code: "runout_count_out_of_range"; readonly attempted: number }
+  | {
+      readonly code: "runout_count_out_of_range";
+      readonly attempted: number;
+      readonly maximum: number;
+    }
   | { readonly code: "must_show" };
 
 export type Transition = {
