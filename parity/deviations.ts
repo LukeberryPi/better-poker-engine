@@ -12,7 +12,27 @@ export type Deviation = {
 export type Deviations = { readonly [Id in DoctestId]?: readonly Deviation[] };
 
 /** Every doctest example that does not keep pokerkit's result, and why. */
-export const deviations: Deviations = {};
+export const deviations: Deviations = {
+  "pokerkit.utilities.parse_value": [
+    {
+      kind: "dropped",
+      examples: [4],
+      reason:
+        "Digit separators such as 9,999.99 come only from the online-site " +
+        "hand histories whose parsers adrs.md 7 drops. TOML numbers cannot " +
+        "hold commas, and PHH writes cbr amounts as plain decimals.",
+    },
+  ],
+  "pokerkit.utilities.parse_month": [
+    {
+      kind: "dropped",
+      examples: [1, 2],
+      reason:
+        "Month names come only from the online-site hand histories whose " +
+        "parsers adrs.md 7 drops; the PHH month field is an integer.",
+    },
+  ],
+};
 
 export function examplesToRun(
   id: DoctestId,
