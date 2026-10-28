@@ -587,7 +587,6 @@ export function formatPhh(history: Phh): string {
     ...line("country", history.country, tomlString),
     ...line("time", history.time, timeText),
     ...line("time_zone", history.timeZone, tomlString),
-    ...line("time_zone_abbreviation", history.timeZoneAbbreviation, tomlString),
     ...line("day", history.day, String),
     ...line("month", history.month, String),
     ...line("year", history.year, String),
@@ -607,6 +606,8 @@ export function formatPhh(history: Phh): string {
     ...line("currency_symbol", history.currencySymbol, tomlString),
     ...line("time_limit", history.timeLimit, stackText),
     ...line("time_banks", history.timeBanks, listOf(decimalText)),
+    // pokerkit lacks this spec field, so it keeps it as a user field.
+    ...line("time_zone_abbreviation", history.timeZoneAbbreviation, tomlString),
     ...Object.entries(history.extra).map(
       ([key, value]) => `${tomlKey(key)} = ${tomlValue(value)}`
     ),

@@ -37,6 +37,14 @@ function history(text: string): Phh {
   return parsed.value;
 }
 
+function withoutTrailingZeros(text: string): string {
+  return text.replace(
+    /(\d+)\.(\d*?)0+(?=\D|$)/gu,
+    (_match, whole: string, fraction: string) =>
+      fraction === "" ? whole : `${whole}.${fraction}`
+  );
+}
+
 const noLimit = [
   "variant = 'NT'",
   "antes = [0, 0]",
@@ -198,6 +206,18 @@ describe("parsePhhs", () => {
     expect(parsePhhs(written)).toEqual(parsed);
     expect(written.startsWith("[1]\nvariant = 'NT'\n")).toBe(true);
     expect(written).toContain("\n\n[30]\nvariant = 'NT'\n");
+  });
+
+  test("keeps pokerkit's layout, losing only the trailing zeros of floats", () => {
+    const parsed = parsePhhs(text);
+    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    const sections = text
+      .trimEnd()
+      .split("\n\n")
+      .map((section) => section.replace(/^\[\d+\]\n/u, ""));
+    expect(parsed.value.map(formatPhh)).toEqual(
+      sections.map(withoutTrailingZeros)
+    );
   });
 
   test("reads the metadata online histories carry", () => {
@@ -552,11 +572,14 @@ describe("formatPhh", () => {
       author: "O'Neil",
       event: "Line one\nline two",
       time: { hour: 9, minute: 5, second: 0, millisecond: 7 },
+      timeZone: "America/Toronto",
+      timeZoneAbbreviation: "EDT",
       hand: "A-1",
       table: 3,
       players: ["a'''b", "Bob"],
       timeLimit: "unbounded",
       timeBanks: ["30", "12.5"],
+      extra: { _note: { type: "string", value: "x" } },
     });
     expect(written).toBe(
       [
@@ -570,11 +593,14 @@ describe("formatPhh", () => {
         "author = '''O'Neil'''",
         'event = "Line one\\nline two"',
         "time = 09:05:00.007",
+        "time_zone = 'America/Toronto'",
         "hand = 'A-1'",
         "table = 3",
         "players = [\"a'''b\", 'Bob']",
         "time_limit = inf",
         "time_banks = [30, 12.5]",
+        "time_zone_abbreviation = 'EDT'",
+        "_note = 'x'",
       ].join("\n")
     );
     expect(history(written)).toMatchObject({
