@@ -6,15 +6,17 @@ import {
   suits,
   type KnownCard,
   type Rank,
+  type RankOrder,
   type Suit,
 } from "../cards.ts";
 import { err, ok, type Result } from "../result.ts";
+import { wordsOf } from "../words.ts";
 
 /** Hole-card combinations of distinct cards, none repeated: pokerkit's set of frozensets. */
 export type Range = readonly (readonly KnownCard[])[];
 
 /** `at` is the offset of the invalid notation in the parsed text, `text` the notation as written. */
-export type RangeError = {
+export type RangeParseError = {
   readonly code: "invalid_range";
   readonly at: number;
   readonly text: string;
@@ -37,9 +39,6 @@ const suitsBySuffix = {
   o: anySuits.filter(([first, second]) => first !== second),
 } satisfies Record<Suffix, readonly SuitPair[]>;
 
-const order = rankOrders.standard.join("");
-const topRank = order.charAt(order.length - 1);
-
 function rankFrom(symbol: string): Rank | null {
   return rankOrders.standard.find((rank) => rank === symbol) ?? null;
 }
@@ -55,27 +54,27 @@ function withSuits(
   return pairs.map(([s0, s1]) => [cardOf(high, s0), cardOf(low, s1)]);
 }
 
-/** `AK`, `AKs`, `AKo` and pairs such as `JJ`; as in pokerkit, any `XXs` is no combination. */
+/** `AK`, `AKs`, `AKo` and pairs such as `JJ`. A suited pair such as `JJs` is
+ * invalid, where pokerkit yields no combination. */
 function rankPair(
   first: string,
   second: string,
   suffix: Suffix
 ): Combos | null {
   if (first !== second) return withSuits(first, second, suitsBySuffix[suffix]);
-  return suffix === "s" ? [] : withSuits(first, second, pairSuits);
+  return suffix === "s" ? null : withSuits(first, second, pairSuits);
 }
 
 function unionOf(parts: readonly (Combos | null)[]): Combos | null {
   return parts.every((part) => part !== null) ? parts.flat() : null;
 }
 
-/** `JTs-KQs`, `TT-JJ`: the second pair of ranks is the first shifted by whole ranks. */
+/** `JTs-KQs`, `TT-JJ`: the second pair of ranks is the first shifted by whole ranks.
+ * `order` lists the ranks from lowest to highest. */
 function interval(
-  r0: string,
-  r1: string,
-  r2: string,
-  r3: string,
-  suffix: Suffix
+  [r0, r1, r2, r3]: readonly [string, string, string, string],
+  suffix: Suffix,
+  order: string
 ): Combos | null {
   const i0 = order.indexOf(r0);
   const i1 = order.indexOf(r1);
@@ -95,8 +94,16 @@ function interval(
 }
 
 /** `JJ+` is every pair from JJ up; `QT+` raises the lower rank to just below the higher. */
-function plus(r0: string, r1: string, suffix: Suffix): Combos | null {
-  if (r0 === r1) return interval(r0, r1, topRank, topRank, suffix);
+function plus(
+  r0: string,
+  r1: string,
+  suffix: Suffix,
+  order: string
+): Combos | null {
+  if (r0 === r1) {
+    const top = order.charAt(order.length - 1);
+    return interval([r0, r1, top, top], suffix, order);
+  }
   const i0 = order.indexOf(r0);
   const i1 = order.indexOf(r1);
   if (i0 < 0 || i1 < 0) return null;
@@ -106,8 +113,6 @@ function plus(r0: string, r1: string, suffix: Suffix): Combos | null {
 }
 
 function explicitCards(notation: string): Combos | null {
-  // `parseCards` skips U+FEFF, which pokerkit's `Card.parse` rejects as a card symbol.
-  if (/\s/u.test(notation)) return null;
   const parsed = parseCards(notation);
   if (!parsed.ok) return null;
   const cards = parsed.value;
@@ -117,30 +122,29 @@ function explicitCards(notation: string): Combos | null {
 /** pokerkit's patterns, matched on code points as Python matches characters. */
 const rankNotation = /^(.)(.)([so]?)(\+|-(.)(.)\3)?$/su;
 
-function combosOf(notation: string): Combos | null {
+function combosOf(notation: string, order: string): Combos | null {
   const match = rankNotation.exec(notation);
   if (match === null) return explicitCards(notation);
   const [, r0 = "", r1 = "", third = "", tail = "", r2 = "", r3 = ""] = match;
   // SAFETY: the pattern's third group is empty, `s` or `o`.
   const suffix = third as Suffix;
   if (tail === "") return rankPair(r0, r1, suffix);
-  if (tail === "+") return plus(r0, r1, suffix);
-  return interval(r0, r1, r2, r3, suffix);
+  if (tail === "+") return plus(r0, r1, suffix, order);
+  return interval([r0, r1, r2, r3], suffix, order);
 }
 
-/** Python's `str.split()` also splits at U+001C–U+001F, which are not Unicode whitespace. */
-const informationSeparators = new Set(["\u001c", "\u001d", "\u001e", "\u001f"]);
-
-/** pokerkit's `parse_range`: notations separated by whitespace, commas or semicolons. */
-export function parseRange(text: string): Result<Range, RangeError> {
-  const spaced = [...text]
-    .map((symbol) => (informationSeparators.has(symbol) ? " " : symbol))
-    .join("");
+/** pokerkit's `parse_range`: notations separated by whitespace, commas or semicolons.
+ * `rankOrder` places ranks for `+` and `-`, so `A2+` reads differently in ace-to-five games. */
+export function parseRange(
+  text: string,
+  rankOrder: RankOrder = "standard"
+): Result<Range, RangeParseError> {
+  const order = rankOrders[rankOrder].join("");
   const combos = new Map<string, readonly KnownCard[]>();
-  for (const token of spaced.matchAll(/[^\p{White_Space},;]+/gu)) {
-    const parsed = combosOf(token[0]);
+  for (const word of wordsOf(text.replace(/[,;]/gu, " "))) {
+    const parsed = combosOf(word.text, order);
     if (parsed === null) {
-      return err({ code: "invalid_range", at: token.index, text: token[0] });
+      return err({ code: "invalid_range", at: word.at, text: word.text });
     }
     for (const combo of parsed) {
       const cards = combo.toSorted().join("");

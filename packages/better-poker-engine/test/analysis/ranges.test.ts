@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { parseRange } from "../../src/analysis.ts";
-import { known, range, sortedCombos } from "../support.ts";
+import { known, okValue, range, sortedCombos } from "../support.ts";
 
 describe("parseRange", () => {
   test("reports the first invalid notation with its offset", () => {
@@ -66,10 +66,23 @@ describe("parseRange", () => {
     expect(sortedCombos(range("QQo+"))).toEqual(sortedCombos(range("QQ+")));
   });
 
-  test("yields no suited pairs, whatever the repeated symbol, as pokerkit", () => {
-    expect(range("JJs")).toEqual([]);
-    expect(range("QQs+")).toEqual([]);
-    expect(range("XXs")).toEqual([]);
+  test("rejects suited pairs, which pokerkit reads as no combination", () => {
+    for (const text of ["JJs", "QQs+", "JJs-KKs", "XXs"]) {
+      expect(parseRange(text)).toEqual({
+        ok: false,
+        error: { code: "invalid_range", at: 0, text },
+      });
+    }
+  });
+
+  test("reads plus and dash notation in the given rank order", () => {
+    expect(okValue(parseRange("A2+", "regular"))).toHaveLength(16);
+    expect(okValue(parseRange("22-AA", "regular"))).toHaveLength(2 * 6);
+    expect(okValue(parseRange("TT+", "royal"))).toHaveLength(5 * 6);
+    expect(parseRange("22+", "royal")).toEqual({
+      ok: false,
+      error: { code: "invalid_range", at: 0, text: "22+" },
+    });
   });
 
   test("reads other notation as explicit cards", () => {

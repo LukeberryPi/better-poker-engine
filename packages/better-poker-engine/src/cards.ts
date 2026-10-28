@@ -167,6 +167,8 @@ export const rankOrders = {
   royal: ["T", "J", "Q", "K", "A"],
 } as const satisfies Record<string, readonly Rank[]>;
 
+export type RankOrder = keyof typeof rankOrders;
+
 export type DeckName =
   | "standard"
   | "shortDeck"
