@@ -163,7 +163,7 @@ describe("phh-dataset files", () => {
       day: 22,
       month: 6,
       year: 2023,
-      hand: 5,
+      hand: { kind: "integer", value: 5 },
       level: null,
       seats: null,
       seatCount: null,
@@ -200,7 +200,8 @@ describe("parsePhhs", () => {
     if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
     expect(parsed.value).toHaveLength(30);
     expect(parsed.value.map((item) => item.hand).slice(0, 2)).toEqual([
-      59937794410, 59937793662,
+      { kind: "integer", value: 59937794410 },
+      { kind: "integer", value: 59937793662 },
     ]);
     const written = formatPhhs(parsed.value);
     expect(parsePhhs(written)).toEqual(parsed);
@@ -232,7 +233,7 @@ describe("parsePhhs", () => {
       timeZoneAbbreviation: "ET",
       seats: [2, 4, 5, 6],
       seatCount: 6,
-      table: "vgLbwVmy1dOb81ICg4y5+Q",
+      table: { kind: "string", value: "vgLbwVmy1dOb81ICg4y5+Q" },
       currencySymbol: "$",
       extra: {},
     });
@@ -606,8 +607,8 @@ describe("formatPhh", () => {
       time: { hour: 9, minute: 5, second: 0, millisecond: 7 },
       timeZone: "America/Toronto",
       timeZoneAbbreviation: "EDT",
-      hand: "A-1",
-      table: 3,
+      hand: { kind: "string", value: "A-1" },
+      table: { kind: "integer", value: 3 },
       players: ["a'''b", "Bob"],
       timeLimit: "unbounded",
       timeBanks: ["30", "12.5"],
