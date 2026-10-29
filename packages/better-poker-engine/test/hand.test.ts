@@ -82,32 +82,32 @@ describe("startHand", () => {
     });
   });
 
-  test("refuses a deck that runs out before the hand can end", () => {
-    expect(startHand(setup(noLimit, cards("AsKsQsJs")))).toEqual({
-      ok: false,
-      error: { code: "deck_too_small", players: 2, cards: 4 },
-    });
-    const seats = (game: Game, deck: readonly Card[], players: number) =>
+  test("refuses more players than the game's deck can deal", () => {
+    const seats = (game: Game, players: number) =>
       startHand({
         game,
         stacks: repeat(10, players),
-        deck,
+        deck: decks[game.rules.deck],
         automate: automation.all,
-      }).ok;
-    const leducGame = leduc.fixedLimit();
-    expect(
-      [4, 5, 6].map((players) => seats(leducGame, decks.leduc, players))
-    ).toEqual([true, true, false]);
+      });
+    expect(seats(leduc.fixedLimit(), 6)).toEqual({
+      ok: false,
+      error: { code: "player_count", players: 6 },
+    });
+    expect(seats(leduc.fixedLimit(), 5).ok).toBe(true);
     const tripleDraw = draw.deuceToSevenTriple({
       blinds: [1, 2],
       smallBet: 2,
       bigBet: 4,
     });
-    expect(
-      [51, 50].map((size) =>
-        seats(tripleDraw, decks.standard.slice(0, size), 10)
-      )
-    ).toEqual([true, false]);
+    const royalDraw = {
+      ...tripleDraw,
+      rules: { ...tripleDraw.rules, deck: "royal" },
+    } satisfies Game;
+    expect([3, 4].map((players) => seats(royalDraw, players).ok)).toEqual([
+      true,
+      false,
+    ]);
   });
 
   test("plays every accepted table to the end, nobody folding", () => {
@@ -131,11 +131,7 @@ describe("startHand", () => {
           automate: automation.all,
         });
         if (!started.ok) {
-          expect(started.error).toEqual({
-            code: "deck_too_small",
-            players,
-            cards: deck.length,
-          });
+          expect(started.error).toEqual({ code: "player_count", players });
           continue;
         }
         accepted.push(players);
@@ -326,6 +322,28 @@ describe("act", () => {
     expect(
       table.reject({ type: "dealBoard", cards: cards("2c3c4c5c") })
     ).toEqual({ code: "wrong_card_count", expected: 3, attempted: 4 });
+  });
+
+  test("refuses to deal from a stacked deck that ran out, but deals named cards", () => {
+    const deck = cards("AsKsQsJs");
+    const table = drive(start(noLimit, [100, 100], automation.all, deck));
+    play(table, [call, call]);
+    expect(auditor(table.hand).decision).toEqual({
+      kind: "dealer",
+      step: "cardBurning",
+    });
+    expect(table.reject({ type: "burnCard" })).toEqual({
+      code: "not_enough_cards",
+      needed: 1,
+      available: 0,
+    });
+    table.act({ type: "burnCard", card: "2c" });
+    expect(auditor(table.hand).decision).toEqual({
+      kind: "dealer",
+      step: "boardDealing",
+      board: 0,
+      cards: 3,
+    });
   });
 
   test("refuses to discard a card the player does not hold", () => {

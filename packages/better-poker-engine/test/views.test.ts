@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { decks } from "../src/cards.ts";
 import type { HandEvent } from "../src/events.ts";
 import {
   automation,
@@ -77,9 +76,12 @@ describe("viewHand", () => {
 
   test("shows stud up cards to everyone", () => {
     const game = stud.fixedLimit({ bringIn: 1, smallBet: 2, bigBet: 4 });
-    const top = cards("2c3c 4c5c 6c7c");
-    const rest = decks.standard.filter((card) => !top.includes(card));
-    const hand = start(game, [100, 100], automation.all, [...top, ...rest]);
+    const hand = start(
+      game,
+      [100, 100],
+      automation.all,
+      cards("2c3c 4c5c 6c7c")
+    );
     expect(holeCardsOf(spectator(hand))).toEqual([
       ["??", "??", "6c"],
       ["??", "??", "7c"],
