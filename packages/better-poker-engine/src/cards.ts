@@ -17,7 +17,7 @@ const ranks = [
   "Q",
   "K",
 ] as const;
-const suits = ["c", "d", "h", "s"] as const;
+export const suits = ["c", "d", "h", "s"] as const;
 
 /** pokerkit's `Rank` and `Suit` members: `?` marks an unknown rank or suit. */
 export const rankSymbols = [...ranks, "?"] as const;
@@ -166,6 +166,8 @@ export const rankOrders = {
   numeral211: ["2", "3", "4", "5", "6", "7", "8", "9", "T", "A"],
   royal: ["T", "J", "Q", "K", "A"],
 } as const satisfies Record<string, readonly Rank[]>;
+
+export type RankOrder = keyof typeof rankOrders;
 
 export type DeckName =
   | "standard"

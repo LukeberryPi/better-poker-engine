@@ -1,10 +1,14 @@
 import { isKnownCard, type Card, type KnownCard } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 import {
+  cardKeyOf,
   categoryLabels,
+  entryAt,
   entryOf,
   lookup,
+  type Entry,
   type HandCategory,
+  type Lookup,
   type LookupName,
 } from "./lookups.ts";
 
@@ -32,10 +36,11 @@ export type HandValue<T extends HandType = HandType> = {
   readonly strength: number;
 };
 
+/** Positions in `[...hole, ...board]` of each card set that may form a hand. */
 type Candidates = (
-  hole: readonly KnownCard[],
-  board: readonly KnownCard[]
-) => (readonly KnownCard[])[];
+  hole: readonly number[],
+  board: readonly number[]
+) => (readonly number[])[];
 
 function anyCards(size: number): Candidates {
   return (hole, board) => combinations([...hole, ...board], size);
@@ -86,6 +91,10 @@ export const handRules = {
   numeral211: { lookup: "numeral211", low: false, candidates: anyCards(3) },
 } satisfies Record<HandType, HandRules>;
 
+function strengthOf(rules: HandRules, table: Lookup, entry: Entry): number {
+  return rules.low ? table.size - 1 - entry.index : entry.index;
+}
+
 /** These exact cards as a hand of `type`, as pokerkit's `Hand(cards)`. */
 export function handValue<T extends HandType>(
   type: T,
@@ -95,9 +104,38 @@ export function handValue<T extends HandType>(
   const table = lookup(rules.lookup);
   const entry = entryOf(table, cards);
   if (entry === null) return null;
-  const strength = rules.low ? table.size - 1 - entry.index : entry.index;
+  const strength = strengthOf(rules, table, entry);
   return { type, cards, category: entry.category, strength };
 }
+
+const candidatesByCounts = new Map<string, readonly (readonly number[])[]>();
+
+/** Built once per hand type and card counts; never modified. */
+function candidatesOf(
+  type: HandType,
+  holeCount: number,
+  boardCount: number
+): readonly (readonly number[])[] {
+  const counts = `${type} ${holeCount} ${boardCount}`;
+  const cached = candidatesByCounts.get(counts);
+  if (cached !== undefined) return cached;
+  const positions = Array.from(
+    { length: holeCount + boardCount },
+    (_, position) => position
+  );
+  const candidates = handRules[type].candidates(
+    positions.slice(0, holeCount),
+    positions.slice(holeCount)
+  );
+  candidatesByCounts.set(counts, candidates);
+  return candidates;
+}
+
+type Best = {
+  readonly positions: readonly number[];
+  readonly entry: Entry;
+  readonly strength: number;
+};
 
 /** The strongest hand of `type`; null if none forms or a card is not fully known. */
 export function evaluate<T extends HandType>(
@@ -106,14 +144,27 @@ export function evaluate<T extends HandType>(
   board: readonly Card[]
 ): HandValue<T> | null {
   if (!hole.every(isKnownCard) || !board.every(isKnownCard)) return null;
-  let best: HandValue<T> | null = null;
-  for (const cards of handRules[type].candidates(hole, board)) {
-    const value = handValue(type, cards);
-    if (value !== null && (best === null || value.strength > best.strength)) {
-      best = value;
+  const rules = handRules[type];
+  const table = lookup(rules.lookup);
+  const cards = [...hole, ...board];
+  const keys = cards.map(cardKeyOf);
+  let best: Best | null = null;
+  for (const positions of candidatesOf(type, hole.length, board.length)) {
+    const entry = entryAt(table, keys, positions);
+    if (entry === null) continue;
+    const strength = strengthOf(rules, table, entry);
+    if (best === null || strength > best.strength) {
+      best = { positions, entry, strength };
     }
   }
-  return best;
+  if (best === null) return null;
+  return {
+    type,
+    // SAFETY: candidate positions index `cards`, whose counts built them.
+    cards: best.positions.map((position) => cards[position] as KnownCard),
+    category: best.entry.category,
+    strength: best.strength,
+  };
 }
 
 export function compareHands<T extends HandType>(
