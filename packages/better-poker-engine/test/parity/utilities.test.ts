@@ -25,6 +25,8 @@ import {
   type RankSymbol,
   type SuitSymbol,
 } from "../../src/cards.ts";
+import { parseAmount } from "../../src/phh-actions.ts";
+import { parsePhh } from "../../src/phh.ts";
 import { seededRandom } from "../../src/random.ts";
 import { err, ok, type Result } from "../../src/result.ts";
 import { cards, known } from "../support.ts";
@@ -203,6 +205,34 @@ doctest("pokerkit.utilities.shuffled", (example) => {
     shuffled = shuffle(known("AcAdAhAs"), seededRandom(0));
   });
   example(2, () => expect(shuffled.map(rankOf)).toEqual(["A", "A", "A", "A"]));
+});
+
+doctest("pokerkit.utilities.parse_value", (example) => {
+  example(1, () => expect(parseAmount("3")).toBe("3"));
+  example(2, () => expect(parseAmount("3.0")).toBe("3"));
+  example(3, () => expect(parseAmount("3.5")).toBe("3.5"));
+});
+
+doctest("pokerkit.utilities.parse_time", (example) => {
+  example(1, () => {
+    const parsed = parsePhh(
+      [
+        "variant = 'NT'",
+        "antes = [0, 0]",
+        "blinds_or_straddles = [1, 2]",
+        "min_bet = 2",
+        "starting_stacks = [200, 200]",
+        "actions = []",
+        "time = 12:34:56",
+      ].join("\n")
+    );
+    expect(parsed.ok ? parsed.value.time : parsed.error).toEqual({
+      hour: 12,
+      minute: 34,
+      second: 56,
+      millisecond: 0,
+    });
+  });
 });
 
 unitTest("pokerkit.tests.test_utilities.RankTestCase.test_members", () => {
