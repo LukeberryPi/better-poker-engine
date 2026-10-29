@@ -7,6 +7,7 @@ export const required: readonly SourceFile[] = [
   "pokerkit/state.py",
   "pokerkit/tests/test_lookups.py",
   "pokerkit/tests/test_notation.py",
+  "pokerkit/tests/test_papers.py",
   "pokerkit/tests/test_rules.py",
   "pokerkit/tests/test_state.py",
   "pokerkit/tests/test_utilities.py",
