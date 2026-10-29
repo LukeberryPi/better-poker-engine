@@ -136,7 +136,7 @@ describe("random hands", () => {
       );
       const record = summarizeHand(walk.hand);
       if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
-      const nets = record.players.map((player) => player.net ?? NaN);
+      const nets = record.players.map((player) => player.net);
       const kept = record.rake + record.unclaimed;
       expect(nets.reduce((sum, net) => sum + net, kept)).toBe(0);
       expect(record.players.map((player) => player.endingStack)).toEqual(

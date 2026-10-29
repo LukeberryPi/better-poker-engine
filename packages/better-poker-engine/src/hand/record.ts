@@ -58,17 +58,12 @@ function streetOfFirst(
 
 function playerRecord(state: HandState, position: Position): PlayerRecord {
   const player = playerAt(state, position);
-  const startingStack = at(state.startingStacks, position);
-  const endingStack = at(state.stacks, position);
   return {
     player,
     position,
-    startingStack,
-    endingStack,
-    net:
-      startingStack === "unbounded" || endingStack === "unbounded"
-        ? null
-        : endingStack - startingStack,
+    startingStack: at(state.startingStacks, position),
+    endingStack: at(state.stacks, position),
+    net: at(state.payoffs, position),
     holeCards: heldCards(state, position),
     foldedOnStreet: streetOfFirst(
       state.events,

@@ -525,7 +525,7 @@ describe("reshuffling", () => {
 });
 
 describe("unbounded stacks", () => {
-  test("never run out, and leave the net unknown", () => {
+  test("never run out, and still give each player's net", () => {
     const deck = cards("2cAc7dAd 3h 9sTsJh 4h 5c 6h Kd");
     const table = drive(
       start(noLimit, ["unbounded", 100], automation.all, deck)
@@ -535,7 +535,7 @@ describe("unbounded stacks", () => {
     expect(
       record?.players.map(({ endingStack, net }) => [endingStack, net])
     ).toEqual([
-      ["unbounded", null],
+      ["unbounded", -100],
       [200, 100],
     ]);
   });
