@@ -44,4 +44,5 @@ agents live in [`AGENTS.md`](AGENTS.md).
 
 ## License
 
-MIT. pokerkit's license is reproduced in [`NOTICE`](NOTICE).
+MIT. The licenses of pokerkit and of the phh-dataset files used as test
+fixtures are reproduced in [`NOTICE`](NOTICE).

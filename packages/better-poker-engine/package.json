@@ -13,6 +13,11 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./analysis": "./src/analysis.ts"
+    "./analysis": "./src/analysis.ts",
+    "./phh": "./src/phh.ts"
+  },
+  "dependencies": {
+    "smol-toml": "1.9.1",
+    "zod": "4.6.7"
   }
 }
