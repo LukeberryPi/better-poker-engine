@@ -3,8 +3,11 @@ import {
   areSuited,
   rankOf,
   rankOrders,
+  suitOf,
   type Card,
+  type KnownCard,
   type Rank,
+  type Suit,
 } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 
@@ -341,4 +344,39 @@ export function entryOf(table: Lookup, cards: readonly Card[]): Entry | null {
     product *= primes[rank];
   }
   return table.entries.get(keyOf(product, areSuited(cards))) ?? null;
+}
+
+/** What a lookup key needs from a known card: its rank's prime and a bit for its suit. */
+export type CardKey = { readonly prime: number; readonly suit: number };
+
+const suitBits = { c: 1, d: 2, h: 4, s: 8 } satisfies Record<Suit, number>;
+
+export function cardKeyOf(card: KnownCard): CardKey {
+  // SAFETY: a known card's rank and suit are both known.
+  return {
+    prime: primes[rankOf(card) as Rank],
+    suit: suitBits[suitOf(card) as Suit],
+  };
+}
+
+/** `entryOf` for the known cards at `positions` of `keys`, without building card sets. */
+export function entryAt(
+  table: Lookup,
+  keys: readonly CardKey[],
+  positions: readonly number[]
+): Entry | null {
+  let product = 1;
+  let seen = 0;
+  let suited = true;
+  let rainbow = true;
+  for (const position of positions) {
+    // SAFETY: callers pass positions of the cards these keys were made from.
+    const key = keys[position] as CardKey;
+    product *= key.prime;
+    suited &&= seen === 0 || seen === key.suit;
+    rainbow &&= (seen & key.suit) === 0;
+    seen |= key.suit;
+  }
+  if (table.badugi && !rainbow) return null;
+  return table.entries.get(keyOf(product, suited)) ?? null;
 }
