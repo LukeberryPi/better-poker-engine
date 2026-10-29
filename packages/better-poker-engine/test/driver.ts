@@ -123,7 +123,11 @@ export function holeDealt(
   };
 }
 
-export type Step = readonly [index: number, action: Action, body: EventBody];
+export type Step = readonly [
+  index: number,
+  action: Action | "minimumRaise",
+  body: EventBody,
+];
 
 /** One example per step: the action is accepted with exactly this event. */
 export function steps(
@@ -132,7 +136,12 @@ export function steps(
   list: readonly Step[]
 ): void {
   for (const [index, action, body] of list) {
-    example(index, () => expect(table().act(action)).toEqual(body));
+    example(index, () => {
+      const driver = table();
+      const attempted =
+        action === "minimumRaise" ? minimumRaise(driver) : action;
+      expect(driver.act(attempted)).toEqual(body);
+    });
   }
 }
 

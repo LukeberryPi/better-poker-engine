@@ -118,6 +118,13 @@ export type StudStakes = Options & {
   readonly bigBet: Chips;
 };
 
+export type KuhnStakes = Options & { readonly bet?: Chips };
+
+export type AnteStakes = Options & {
+  readonly smallBet?: Chips;
+  readonly bigBet?: Chips;
+};
+
 type Builder<Stakes> = (stakes: Stakes) => Game;
 
 type Bets = { readonly small: Chips; readonly big: Chips };
@@ -242,7 +249,7 @@ function betsOf(stakes: BlindStakes | FixedLimitStakes | StudStakes): Bets {
 }
 
 function gameOf(
-  variant: VariantCode,
+  variant: Game["variant"],
   rules: Rules,
   forcedBets: Pick<ForcedBets, "blinds" | "bringIn">,
   options: Options
@@ -262,7 +269,7 @@ function gameOf(
 }
 
 function blindGame<Stakes extends BlindStakes | FixedLimitStakes>(
-  variant: VariantCode,
+  variant: Game["variant"],
   rules: (bets: Bets) => Rules
 ): Builder<Stakes> {
   return (stakes) =>
@@ -283,6 +290,64 @@ function studGame(
       variant,
       rules(betsOf(stakes)),
       { blinds: [], bringIn: stakes.bringIn ?? null },
+      stakes
+    );
+}
+
+/** One hole card, then one board card a street; antes are the only forced bets. */
+type OneCardGame = {
+  readonly deck: DeckName;
+  readonly handType: HandType;
+  readonly boardStreets: number;
+  readonly maxBetsAndRaises: number;
+};
+
+function oneCardGame(
+  game: OneCardGame,
+  ante: Chips,
+  bets: Bets,
+  options: Options
+): Game {
+  const street = (board: number, bet: Chips): Street => ({
+    burn: board > 0,
+    hole: board > 0 ? [] : ["down"],
+    board,
+    draw: false,
+    opening: "position",
+    minCompletionBetOrRaise: bet,
+    maxBetsAndRaises: game.maxBetsAndRaises,
+  });
+  const rules: Rules = {
+    deck: game.deck,
+    handTypes: [game.handType],
+    streets: [
+      street(0, bets.small),
+      ...Array.from({ length: game.boardStreets }, () => street(1, bets.big)),
+    ],
+    structure: "fixedLimit",
+  };
+  return gameOf(
+    "custom",
+    rules,
+    { blinds: [], bringIn: null },
+    {
+      ...options,
+      antes: options.antes ?? { kind: "everyone", amount: ante },
+      anteTrimming: options.anteTrimming ?? true,
+    }
+  );
+}
+
+function anteGame(
+  game: OneCardGame,
+  ante: Chips,
+  bets: Bets
+): (stakes?: AnteStakes) => Game {
+  return (stakes = {}) =>
+    oneCardGame(
+      game,
+      ante,
+      { small: stakes.smallBet ?? bets.small, big: stakes.bigBet ?? bets.big },
       stakes
     );
 }
@@ -344,6 +409,66 @@ export const draw = {
     "FB",
     drawRules("regular", ["badugi"], 4, 3, "fixedLimit")
   ),
+};
+
+export const kuhn = {
+  /** Antes 1 and a bet of 1 unless given, antes trimmed, as in pokerkit. */
+  fixedLimit: (stakes: KuhnStakes = {}): Game => {
+    const bet = stakes.bet ?? 1;
+    return oneCardGame(
+      { deck: "kuhn", handType: "kuhn", boardStreets: 0, maxBetsAndRaises: 1 },
+      1,
+      { small: bet, big: bet },
+      stakes
+    );
+  },
+};
+
+export const leduc = {
+  /** Antes 1 and bets 2 then 4 unless given, antes trimmed, as in pokerkit. */
+  fixedLimit: anteGame(
+    { deck: "leduc", handType: "leduc", boardStreets: 1, maxBetsAndRaises: 2 },
+    1,
+    { small: 2, big: 4 }
+  ),
+};
+
+const rhodeIslandBets = { small: 10, big: 20 };
+
+function rhodeIslandGame(deck: DeckName): (stakes?: AnteStakes) => Game {
+  return anteGame(
+    { deck, handType: "rhodeIsland", boardStreets: 2, maxBetsAndRaises: 3 },
+    5,
+    rhodeIslandBets
+  );
+}
+
+export const rhodeIsland = {
+  /** Antes 5 and bets 10 then 20 unless given, antes trimmed, as in pokerkit. */
+  fixedLimit: rhodeIslandGame("standard"),
+};
+
+export const numeral211 = {
+  /** Antes 5 and bets 10 then 20 unless given, antes trimmed, as in pokerkit. */
+  fixedLimit: anteGame(
+    {
+      deck: "numeral211",
+      handType: "numeral211",
+      boardStreets: 2,
+      maxBetsAndRaises: 4,
+    },
+    5,
+    rhodeIslandBets
+  ),
+};
+
+/** Texas and Rhode Island hold'em dealt from the twenty cards ten to ace. */
+export const royal = {
+  noLimit: blindGame<BlindStakes>(
+    "custom",
+    boardRules("royal", ["standardHigh"], 2, "noLimit")
+  ),
+  rhodeIsland: rhodeIslandGame("royal"),
 };
 
 function anteAmounts(antes: Antes): readonly number[] {

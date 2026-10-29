@@ -1,9 +1,8 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { decks, type Card, type DeckName } from "../../src/cards.ts";
+import { decks, type Card } from "../../src/cards.ts";
 import type { Stack } from "../../src/chips.ts";
-import type { HandType } from "../../src/evaluation.ts";
 import type { HandEvent } from "../../src/events.ts";
 import {
   automation,
@@ -18,7 +17,10 @@ import { lookup } from "../../src/lookups.ts";
 import {
   draw,
   holdem,
+  leduc,
+  numeral211,
   omaha,
+  rhodeIsland,
   shortDeck,
   stud,
   type Game,
@@ -1043,63 +1045,11 @@ unitTest(
   }
 );
 
-type OneCardGame = {
-  readonly deck: DeckName;
-  readonly handType: HandType;
-  readonly ante: number;
-  readonly smallBet: number;
-  readonly bigBet: number;
-  readonly maxBetsAndRaises: number;
-  readonly boardStreets: number;
-};
-
-/** pokerkit's Leduc, Rhode Island and numeral 211 hold'em: one hole card, then one board card a street. */
-function oneCardGame(rules: OneCardGame): Game {
-  const street = (board: number): Street => ({
-    burn: board > 0,
-    hole: board > 0 ? [] : ["down"],
-    board,
-    draw: false,
-    opening: "position",
-    minCompletionBetOrRaise: board > 0 ? rules.bigBet : rules.smallBet,
-    maxBetsAndRaises: rules.maxBetsAndRaises,
-  });
-  return {
-    variant: "custom",
-    rules: {
-      deck: rules.deck,
-      handTypes: [rules.handType],
-      streets: [
-        street(0),
-        ...Array.from({ length: rules.boardStreets }, () => street(1)),
-      ],
-      structure: "fixedLimit",
-    },
-    forcedBets: {
-      antes: { kind: "everyone", amount: rules.ante },
-      blinds: [],
-      bringIn: null,
-      anteTrimming: true,
-    },
-    rake: { kind: "none" },
-    mode: "tournament",
-    boards: 1,
-  };
-}
-
-const rhodeIsland = oneCardGame({
-  deck: "standard",
-  handType: "rhodeIsland",
-  ante: 5,
-  smallBet: 10,
-  bigBet: 20,
-  maxBetsAndRaises: 3,
-  boardStreets: 2,
-});
-
 unitTest("pokerkit.tests.test_state.StateTestCase.test_folded_status", () => {
   const folded = (script: Move[]) => {
-    const table = drive(start(rhodeIsland, [155, 155], automation.all));
+    const table = drive(
+      start(rhodeIsland.fixedLimit(), [155, 155], automation.all)
+    );
     play(table, script);
     const record = summarizeHand(table.hand);
     return record === null ? null : !record.wentToShowdown;
@@ -1202,31 +1152,15 @@ function dealtFrom(game: Game, startingStacks: readonly number[]): Card[] {
 }
 
 unitTest("pokerkit.tests.test_state.StateTestCase.test_leduc_holdem", () => {
-  const leduc = oneCardGame({
-    deck: "leduc",
-    handType: "leduc",
-    ante: 1,
-    smallBet: 2,
-    bigBet: 4,
-    maxBetsAndRaises: 2,
-    boardStreets: 1,
-  });
-  expect(dealtFrom(leduc, [13, 13]).sort()).toEqual([...decks.leduc].sort());
+  expect(dealtFrom(leduc.fixedLimit(), [13, 13]).sort()).toEqual(
+    [...decks.leduc].sort()
+  );
 });
 
 unitTest(
   "pokerkit.tests.test_state.StateTestCase.test_numeral211_holdem",
   () => {
-    const numeral211 = oneCardGame({
-      deck: "numeral211",
-      handType: "numeral211",
-      ante: 5,
-      smallBet: 10,
-      bigBet: 20,
-      maxBetsAndRaises: 4,
-      boardStreets: 2,
-    });
-    expect(dealtFrom(numeral211, [205, 205]).sort()).toEqual(
+    expect(dealtFrom(numeral211.fixedLimit(), [205, 205]).sort()).toEqual(
       [...decks.numeral211].sort()
     );
   }

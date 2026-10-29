@@ -128,8 +128,8 @@ export type PlayerRecord = {
   readonly position: number;
   readonly startingStack: Stack;
   readonly endingStack: Stack;
-  /** Null when either stack is unbounded. */
-  readonly net: number | null;
+  /** Chips won less chips put in, known even when a stack is unbounded. */
+  readonly net: number;
   /** What the player held last, folded or not; face "up" once shown. */
   readonly holeCards: readonly HoleCard[];
   readonly foldedOnStreet: number | null;
