@@ -30,6 +30,26 @@ export {
   type ChipsError,
   type PhhDecimal,
 } from "./phh-amounts.ts";
+export {
+  historyFromHand,
+  type ExportOptions,
+  type HistoryExportError,
+} from "./phh-export.ts";
+export {
+  toAcpc,
+  toPluribus,
+  type AcpcError,
+  type AcpcMessage,
+  type PluribusError,
+  type ProtocolOptions,
+} from "./phh-protocols.ts";
+export {
+  replayHistory,
+  type HistoryReplay,
+  type HistoryReplayError,
+  type ReplayOptions,
+  type ReplayStep,
+} from "./phh-replay.ts";
 export type { PhhValue } from "./toml.ts";
 
 /** A stack, or `unbounded` where the history writes `inf`. */
@@ -127,6 +147,13 @@ type DocumentError =
       readonly code: "action_syntax";
       readonly index: number;
       readonly text: string;
+    }
+  /** `player` is the N of a `pN` beyond the players `starting_stacks` seats. */
+  | {
+      readonly code: "unknown_player";
+      readonly index: number;
+      readonly text: string;
+      readonly player: number;
     };
 
 export type PhhError = TomlSyntaxError | DocumentError;
@@ -481,12 +508,21 @@ function variantOf(
 }
 
 function actionsOf(
-  texts: readonly string[]
+  texts: readonly string[],
+  players: number
 ): Result<readonly PhhAction[], DocumentError> {
   const actions: PhhAction[] = [];
   for (const [index, text] of texts.entries()) {
     const action = parsePhhAction(text);
     if (action === null) return err({ code: "action_syntax", index, text });
+    if ("player" in action && action.player > players) {
+      return err({
+        code: "unknown_player",
+        index,
+        text,
+        player: action.player,
+      });
+    }
     actions.push(action);
   }
   return ok(actions);
@@ -502,7 +538,10 @@ function historyFrom(table: TomlTable): Result<Phh, DocumentError> {
   if (!fields.success) {
     return err(schemaError(fields.error.issues, variant.value));
   }
-  const actions = actionsOf(fields.data.actions);
+  const actions = actionsOf(
+    fields.data.actions,
+    fields.data.startingStacks.length
+  );
   if (!actions.ok) return actions;
   const extra = entries
     .filter(([key]) => !standardFields.has(key))

@@ -177,6 +177,8 @@ export const moves = {
     table.act(minimumRaise(table));
   }) satisfies Move,
   standPat: accept({ type: "draw", discard: [] }),
+  discard: (text: string) => accept({ type: "draw", discard: cards(text) }),
+  show: (text: string) => accept({ type: "show", cards: cards(text) }),
   /** pokerkit's `stand_pat_or_discard(state.hole_cards[i])`. */
   discardHeld:
     (position: number): Move =>

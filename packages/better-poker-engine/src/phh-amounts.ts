@@ -78,3 +78,26 @@ export function toChips(
     ? err({ code: "out_of_range", amount, scale })
     : ok(Number(chips));
 }
+
+/** `toChips` for a `blinds_or_straddles` entry, where pokerkit reads a negative
+ * amount as a post bet: its size converts exactly as `toChips`, then is negated. */
+export function toBlindChips(
+  amount: PhhDecimal,
+  scale: AmountScale
+): Result<number, ChipsError> {
+  const exact = exactDecimal(amount);
+  if (exact === null || exact.units >= 0n) return toChips(amount, scale);
+  const size = toChips(canonicalText({ ...exact, units: -exact.units }), scale);
+  return size.ok ? ok(-size.value) : err({ ...size.error, amount });
+}
+
+/** The inverse of `toChips` for any safe integer: `fromChips(-25, 100)` is `"-0.25"`. */
+export function fromChips(chips: number, scale: AmountScale): PhhDecimal {
+  let units = BigInt(chips);
+  let exponent = -amountScales.indexOf(scale);
+  while (units !== 0n && units % 10n === 0n) {
+    units /= 10n;
+    exponent += 1;
+  }
+  return canonicalText({ units, exponent: units === 0n ? 0 : exponent });
+}

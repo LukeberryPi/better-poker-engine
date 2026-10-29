@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import packageJson from "../package.json" with { type: "json" };
 import type { Stack } from "../src/chips.ts";
+import type { HandEvent } from "../src/events.ts";
 import {
   act,
   replayHand,
@@ -9,6 +10,14 @@ import {
   type Action,
   type Transition,
 } from "../src/hand.ts";
+import {
+  formatPhh,
+  historyFromHand,
+  parsePhh,
+  replayHistory,
+  type HistoryExportError,
+} from "../src/phh.ts";
+import { err } from "../src/result.ts";
 import { randomWalk, type Walk } from "./random-hands.ts";
 
 const walks = Array.from({ length: 150 }, (_, seed) => randomWalk(seed));
@@ -33,6 +42,27 @@ function transitions(walk: Walk): Transition[] {
 
 function acceptedActions(walk: Walk): Action[] {
   return walk.steps.flatMap((step) => (step.result.ok ? [step.action] : []));
+}
+
+/** A history burns "??", leaves runout counts to the replay and deals each
+ * player's cards at once, so hole cards are compared through the records. */
+function keptByHistory(events: readonly HandEvent[]) {
+  return events.flatMap(({ body, commentary, street }) => {
+    if (body.type === "runoutCountSelected" || body.type === "holeDealt") {
+      return [];
+    }
+    const kept = body.type === "cardBurned" ? { ...body, card: "??" } : body;
+    return [{ body: kept, commentary, street }];
+  });
+}
+
+function refusalOf(walk: Walk): HistoryExportError | null {
+  const { game } = walk.setup;
+  if (game.variant === "custom") return { code: "custom_variant" };
+  if (game.boards !== 1) return { code: "boards", boards: game.boards };
+  const runouts = summarizeHand(walk.hand)?.runouts ?? 1;
+  if (runouts !== 1) return { code: "runouts", runouts };
+  return game.rake.kind === "none" ? null : { code: "rake" };
 }
 
 describe("random hands", () => {
@@ -144,6 +174,42 @@ describe("random hands", () => {
       );
       expect(record.actions).toBe(acceptedActions(walk).length);
     }
+  });
+
+  test("play the same hand again from the PHH history they write", () => {
+    const refused = new Set<string>();
+    const played: number[] = [];
+    const differing = walks.flatMap((walk) => {
+      const history = historyFromHand(walk.hand);
+      const refusal = refusalOf(walk);
+      if (refusal !== null) {
+        refused.add(refusal.code);
+        return JSON.stringify(history) === JSON.stringify(err(refusal))
+          ? []
+          : [walk.seed];
+      }
+      const parsed = history.ok ? parsePhh(formatPhh(history.value)) : history;
+      const replay = parsed.ok ? replayHistory(parsed.value) : parsed;
+      if (!replay.ok) return [walk.seed];
+      played.push(walk.seed);
+      const events = transitions(walk).flatMap((step) => step.events);
+      const again = replay.value.steps.flatMap((step) => step.events);
+      const record = summarizeHand(walk.hand);
+      const replayed = summarizeHand(replay.value.final);
+      return JSON.stringify(keptByHistory(events)) ===
+        JSON.stringify(keptByHistory(again)) &&
+        JSON.stringify([record?.players, record?.pots, record?.boards]) ===
+          JSON.stringify([replayed?.players, replayed?.pots, replayed?.boards])
+        ? []
+        : [walk.seed];
+    });
+    expect(differing).toEqual([]);
+    expect(refused).toEqual(
+      new Set(["custom_variant", "boards", "runouts", "rake"])
+    );
+    expect(
+      new Set(played.map((seed) => walks[seed]?.setup.game.variant)).size
+    ).toBe(11);
   });
 
   test("carry the package version in their records", () => {
