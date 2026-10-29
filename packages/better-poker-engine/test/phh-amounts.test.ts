@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { amountScales, canonicalDecimal, toChips } from "../src/phh-amounts.ts";
+import {
+  amountScales,
+  canonicalDecimal,
+  toBlindChips,
+  toChips,
+} from "../src/phh-amounts.ts";
 import { err, ok } from "../src/result.ts";
 
 describe("canonicalDecimal", () => {
@@ -91,5 +96,23 @@ describe("toChips", () => {
     for (const [power, scale] of amountScales.entries()) {
       expect(toChips("1", scale)).toEqual(ok(10 ** power));
     }
+  });
+});
+
+describe("toBlindChips", () => {
+  test("converts a post bet's size exactly and keeps its sign", () => {
+    expect(toBlindChips("-0.25", 100)).toEqual(ok(-25));
+    expect(toBlindChips("-1259450.25", 100)).toEqual(ok(-125945025));
+    expect(toBlindChips("0.25", 100)).toEqual(ok(25));
+    expect(toBlindChips("0", 1)).toEqual(ok(0));
+  });
+
+  test("reports the post bet as written when its size does not convert", () => {
+    expect(toBlindChips("-0.295", 100)).toEqual(
+      err({ code: "not_integral", amount: "-0.295", scale: 100 })
+    );
+    expect(toBlindChips("-9007199254740992", 1)).toEqual(
+      err({ code: "out_of_range", amount: "-9007199254740992", scale: 1 })
+    );
   });
 });

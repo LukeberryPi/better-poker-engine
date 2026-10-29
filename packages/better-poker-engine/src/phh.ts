@@ -30,6 +30,13 @@ export {
   type ChipsError,
   type PhhDecimal,
 } from "./phh-amounts.ts";
+export {
+  replayHistory,
+  type HistoryReplay,
+  type HistoryReplayError,
+  type ReplayOptions,
+  type ReplayStep,
+} from "./phh-replay.ts";
 export type { PhhValue } from "./toml.ts";
 
 /** A stack, or `unbounded` where the history writes `inf`. */
