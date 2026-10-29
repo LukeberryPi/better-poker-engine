@@ -90,3 +90,14 @@ export function toBlindChips(
   const size = toChips(canonicalText({ ...exact, units: -exact.units }), scale);
   return size.ok ? ok(-size.value) : err({ ...size.error, amount });
 }
+
+/** The inverse of `toChips` for any safe integer: `fromChips(-25, 100)` is `"-0.25"`. */
+export function fromChips(chips: number, scale: AmountScale): PhhDecimal {
+  let units = BigInt(chips);
+  let exponent = -amountScales.indexOf(scale);
+  while (units !== 0n && units % 10n === 0n) {
+    units /= 10n;
+    exponent += 1;
+  }
+  return canonicalText({ units, exponent: units === 0n ? 0 : exponent });
+}

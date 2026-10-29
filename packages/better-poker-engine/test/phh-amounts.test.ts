@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   amountScales,
   canonicalDecimal,
+  fromChips,
   toBlindChips,
   toChips,
 } from "../src/phh-amounts.ts";
@@ -96,6 +97,24 @@ describe("toChips", () => {
     for (const [power, scale] of amountScales.entries()) {
       expect(toChips("1", scale)).toEqual(ok(10 ** power));
     }
+  });
+});
+
+describe("fromChips", () => {
+  test("writes chips back as the decimal toChips read", () => {
+    expect(fromChips(29, 100)).toBe("0.29");
+    expect(fromChips(125945025, 100)).toBe("1259450.25");
+    expect(fromChips(2500, 100)).toBe("25");
+    expect(fromChips(7000, 1)).toBe("7000");
+    expect(fromChips(0, 100)).toBe("0");
+    expect(fromChips(Number.MAX_SAFE_INTEGER, 100_000)).toBe(
+      "90071992547.40991"
+    );
+  });
+
+  test("writes a post bet with its sign", () => {
+    expect(fromChips(-25, 100)).toBe("-0.25");
+    expect(fromChips(-2500, 100)).toBe("-25");
   });
 });
 

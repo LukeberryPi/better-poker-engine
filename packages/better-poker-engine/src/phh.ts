@@ -31,6 +31,11 @@ export {
   type PhhDecimal,
 } from "./phh-amounts.ts";
 export {
+  historyFromHand,
+  type ExportOptions,
+  type HistoryExportError,
+} from "./phh-export.ts";
+export {
   replayHistory,
   type HistoryReplay,
   type HistoryReplayError,
