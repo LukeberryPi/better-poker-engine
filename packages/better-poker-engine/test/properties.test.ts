@@ -58,6 +58,7 @@ function keptByHistory(events: readonly HandEvent[]) {
 
 function refusalOf(walk: Walk): HistoryExportError | null {
   const { game } = walk.setup;
+  if (game.variant === "custom") return { code: "custom_variant" };
   if (game.boards !== 1) return { code: "boards", boards: game.boards };
   const runouts = summarizeHand(walk.hand)?.runouts ?? 1;
   if (runouts !== 1) return { code: "runouts", runouts };
@@ -203,7 +204,9 @@ describe("random hands", () => {
         : [walk.seed];
     });
     expect(differing).toEqual([]);
-    expect(refused).toEqual(new Set(["boards", "runouts", "rake"]));
+    expect(refused).toEqual(
+      new Set(["custom_variant", "boards", "runouts", "rake"])
+    );
     expect(
       new Set(played.map((seed) => walks[seed]?.setup.game.variant)).size
     ).toBe(11);
