@@ -35,6 +35,11 @@ export type { PhhValue } from "./toml.ts";
 /** A stack, or `unbounded` where the history writes `inf`. */
 export type PhhStack = PhhDecimal | Unbounded;
 
+/** `hand` and `table`, which a history may write as an integer or a string. */
+export type PhhLabel =
+  | { readonly kind: "integer"; readonly value: number }
+  | { readonly kind: "string"; readonly value: string };
+
 /** A TOML local time such as `12:34:56`; TOML keeps at least milliseconds. */
 export type PhhTime = {
   readonly hour: number;
@@ -96,11 +101,11 @@ export type Phh = ForcedBets & {
   readonly day: number | null;
   readonly month: number | null;
   readonly year: number | null;
-  readonly hand: number | string | null;
+  readonly hand: PhhLabel | null;
   readonly level: number | null;
   readonly seats: readonly number[] | null;
   readonly seatCount: number | null;
-  readonly table: number | string | null;
+  readonly table: PhhLabel | null;
   readonly players: readonly string[] | null;
   readonly finishingStacks: readonly PhhStack[] | null;
   readonly winnings: readonly PhhDecimal[] | null;
@@ -195,7 +200,16 @@ function integerFrom(minimum: bigint, maximum: bigint) {
 const safeLimit = BigInt(Number.MAX_SAFE_INTEGER);
 const integer = integerFrom(-safeLimit, safeLimit);
 const label = z.union(
-  [text, integer],
+  [
+    z.pipe(
+      text,
+      z.transform((value): PhhLabel => ({ kind: "string", value }))
+    ),
+    z.pipe(
+      integer,
+      z.transform((value): PhhLabel => ({ kind: "integer", value }))
+    ),
+  ],
   expected(`a string or an integer from ${-safeLimit} to ${safeLimit}`)
 );
 
@@ -533,8 +547,10 @@ function stackText(value: PhhStack): string {
   return value === "unbounded" ? "inf" : decimalText(value);
 }
 
-function labelText(value: number | string): string {
-  return String(value) === value ? tomlString(value) : String(value);
+function labelText(label: PhhLabel): string {
+  return label.kind === "string"
+    ? tomlString(label.value)
+    : String(label.value);
 }
 
 function timeText(time: PhhTime): string {
