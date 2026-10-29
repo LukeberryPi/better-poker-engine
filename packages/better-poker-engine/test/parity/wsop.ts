@@ -4,14 +4,9 @@ import type { Card } from "../../src/cards.ts";
 import type { EventBody, HandEvent } from "../../src/events.ts";
 import type { Hand } from "../../src/hand.ts";
 import { stateOf } from "../../src/hand/state.ts";
-import {
-  formatPhh,
-  historyFromHand,
-  parsePhh,
-  replayHistory,
-  type Phh,
-} from "../../src/phh.ts";
+import { formatPhh } from "../../src/phh.ts";
 import { accept, type Move } from "../driver.ts";
+import { exported, parsed, replayed } from "../phh-support.ts";
 import { cards } from "../support.ts";
 
 /** pokerkit's `Card.parse(*rows)`, set as the deck the hand deals from. */
@@ -34,28 +29,6 @@ export const dealer = {
   pullChips: accept({ type: "pullChips" }),
 } satisfies Record<string, Move>;
 
-export function discard(text: string): Move {
-  return accept({ type: "draw", discard: cards(text) });
-}
-
-function historyOf(hand: Hand): Phh {
-  const history = historyFromHand(hand);
-  if (!history.ok) throw new Error(JSON.stringify(history.error));
-  return history.value;
-}
-
-function finalOf(history: Phh): Hand {
-  const replay = replayHistory(history);
-  if (!replay.ok) throw new Error(JSON.stringify(replay.error));
-  return replay.value.final;
-}
-
-function parsed(text: string): Phh {
-  const history = parsePhh(text);
-  if (!history.ok) throw new Error(JSON.stringify(history.error));
-  return history.value;
-}
-
 /** The end of each WSOP test: the hand's history replays to the same
  * operations, as pokerkit compares them, except the `ignored` kinds. */
 export function replaysWithout(
@@ -66,16 +39,16 @@ export function replaysWithout(
     events.flatMap(({ body, commentary }) =>
       ignored.includes(body.type) ? [] : [{ body, commentary }]
     );
-  const hh = historyOf(hand);
-  let newState = finalOf(hh);
+  const hh = exported(hand);
+  let newState = replayed(hh).final;
 
   expect(operations(stateOf(newState).events)).toEqual(
     operations(stateOf(hand).events)
   );
 
   const newHh = parsed(formatPhh(hh));
-  // pokerkit replays `hh` here again, which repeats the check above.
-  newState = finalOf(newHh);
+  // pokerkit replays `hh` again here, evidently meaning `new_hh`.
+  newState = replayed(newHh).final;
 
   expect(operations(stateOf(newState).events)).toEqual(
     operations(stateOf(hand).events)

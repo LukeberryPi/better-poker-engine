@@ -2,13 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Card } from "../src/cards.ts";
 import { act, type Action, type Hand } from "../src/hand.ts";
-import {
-  formatPhh,
-  historyFromHand,
-  parsePhh,
-  replayHistory,
-  type Phh,
-} from "../src/phh.ts";
+import { formatPhh, historyFromHand } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
 import { holdem, stud } from "../src/rules.ts";
 import {
@@ -20,6 +14,7 @@ import {
   start,
   type Move,
 } from "./driver.ts";
+import { exported, parsed, replayed } from "./phh-support.ts";
 
 const { burn, board, call, fold, raiseTo } = moves;
 
@@ -39,12 +34,6 @@ const cashGame = holdem.noLimit({
 
 function dealTo(player: string, card: Card): Move {
   return accept({ type: "dealHole", player, cards: [card] });
-}
-
-function exported(hand: Hand): Phh {
-  const history = historyFromHand(hand);
-  if (!history.ok) throw new Error(JSON.stringify(history.error));
-  return history.value;
 }
 
 function commented(hand: Hand, action: Action, commentary?: string): Hand {
@@ -176,11 +165,9 @@ describe("historyFromHand", () => {
     expect(formatPhh(history).split("\n").at(-1)).toBe(
       "actions = ['# late', 'd dh p1 AcAd # dealt', 'd dh p2 KcKd', 'p2 f # tilt']"
     );
-    const parsed = parsePhh(formatPhh(history));
-    const replay = parsed.ok ? replayHistory(parsed.value) : parsed;
-    if (!replay.ok) throw new Error(JSON.stringify(replay.error));
+    const replay = replayed(parsed(formatPhh(history)));
     expect(
-      replay.value.steps.flatMap((step) =>
+      replay.steps.flatMap((step) =>
         step.events.flatMap((event) =>
           event.commentary === null ? [] : [[event.body.type, event.commentary]]
         )

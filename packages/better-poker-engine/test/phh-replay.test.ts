@@ -3,32 +3,19 @@ import { readdirSync, readFileSync } from "node:fs";
 
 import type { EventBody } from "../src/events.ts";
 import {
-  parsePhh,
   parsePhhs,
   replayHistory,
   type HistoryReplay,
   type Phh,
-  type ReplayOptions,
 } from "../src/phh.ts";
 import { err } from "../src/result.ts";
 import { boardDealt, burned, checked, inProgress, stacks } from "./driver.ts";
+import { parsed, replayed } from "./phh-support.ts";
 
 const fixtures = new URL("fixtures/phh/", import.meta.url);
 
 function fixture(path: string): string {
   return readFileSync(new URL(path, fixtures), "utf8");
-}
-
-function history(text: string): Phh {
-  const parsed = parsePhh(text);
-  if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
-  return parsed.value;
-}
-
-function replayed(of: Phh, options: ReplayOptions = {}): HistoryReplay {
-  const replay = replayHistory(of, options);
-  if (!replay.ok) throw new Error(JSON.stringify(replay.error));
-  return replay.value;
 }
 
 function bodies(replay: HistoryReplay): (string | null | EventBody)[][] {
@@ -43,7 +30,7 @@ function noLimit(players: number, actions: readonly string[]): Phh {
   const blinds = zeros.map((zero, position) =>
     position < 2 ? position + 1 : zero
   );
-  return history(
+  return parsed(
     [
       "variant = 'NT'",
       `antes = [${zeros.join(", ")}]`,
@@ -68,17 +55,19 @@ describe("replayHistory", () => {
     const files = readdirSync(new URL("wsop/", fixtures));
     expect(files).toHaveLength(9);
     for (const file of files) {
-      const parsed = history(fixture(`wsop/${file}`));
-      const { final } = replayed(parsed);
+      const history = parsed(fixture(`wsop/${file}`));
+      const { final } = replayed(history);
       expect(inProgress(final)).toBe(false);
-      expect(stacks(final)).toEqual((parsed.finishingStacks ?? []).map(Number));
+      expect(stacks(final)).toEqual(
+        (history.finishingStacks ?? []).map(Number)
+      );
     }
   });
 
   test("reads a negative blind as a live post bet", () => {
-    const parsed = parsePhhs(fixture("handhq-ps-25nlh-1-30.phhs"));
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
-    const postBet = parsed.value[8];
+    const histories = parsePhhs(fixture("handhq-ps-25nlh-1-30.phhs"));
+    if (!histories.ok) throw new Error(JSON.stringify(histories.error));
+    const postBet = histories.value[8];
     if (postBet === undefined) throw new Error("No ninth history");
     const replay = replayed(postBet, { amountScale: 100 });
     expect(replay.steps[0]?.events.map((event) => event.body)).toEqual([
@@ -227,9 +216,9 @@ describe("replayHistory errors", () => {
         field: "actions[2]",
       })
     );
-    const parsed = parsePhhs(fixture("handhq-ps-25nlh-1-30.phhs"));
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
-    const cents = parsed.value[0];
+    const histories = parsePhhs(fixture("handhq-ps-25nlh-1-30.phhs"));
+    if (!histories.ok) throw new Error(JSON.stringify(histories.error));
+    const cents = histories.value[0];
     if (cents === undefined) throw new Error("No first history");
     expect(replayHistory(cents, { amountScale: 10 })).toEqual(
       err({
@@ -242,7 +231,7 @@ describe("replayHistory errors", () => {
   });
 
   test("reports a setup the engine refuses", () => {
-    const alone = history(
+    const alone = parsed(
       [
         "variant = 'NT'",
         "antes = [0]",

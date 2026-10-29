@@ -1,12 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { parsePhh, toAcpc, toPluribus, type Phh } from "../src/phh.ts";
+import { toAcpc, toPluribus, type Phh } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
+import { parsed } from "./phh-support.ts";
 
 function history(lines: readonly string[]): Phh {
-  const parsed = parsePhh(lines.join("\n"));
-  if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
-  return parsed.value;
+  return parsed(lines.join("\n"));
 }
 
 function headsUp(

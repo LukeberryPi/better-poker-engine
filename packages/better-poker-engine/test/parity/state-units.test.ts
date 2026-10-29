@@ -58,6 +58,7 @@ const {
   refuse,
   standPat,
   discardHeld,
+  show,
 } = moves;
 
 function openingDigest(name: "lowHandOpening" | "highHandOpening"): string {
@@ -1003,7 +1004,6 @@ unitTest(
       "8hQs",
       "9cKh",
     ];
-    const show = (text: string) => accept({ type: "show", cards: cards(text) });
     play(table, [
       ...holes.map(deal),
       raiseTo(645),

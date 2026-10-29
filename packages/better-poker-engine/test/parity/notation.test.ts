@@ -1,11 +1,9 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import type { Automation, Hand } from "../../src/hand.ts";
+import type { Automation } from "../../src/hand.ts";
 import {
   formatPhh,
-  historyFromHand,
-  parsePhh,
   toAcpc,
   toPluribus,
   type AcpcMessage,
@@ -14,19 +12,10 @@ import {
 import { ok } from "../../src/result.ts";
 import { holdem } from "../../src/rules.ts";
 import { readToml } from "../../src/toml.ts";
-import {
-  accept,
-  drive,
-  inProgress,
-  moves,
-  play,
-  repeat,
-  start,
-  type Move,
-} from "../driver.ts";
-import { cards } from "../support.ts";
+import { drive, inProgress, moves, play, repeat, start } from "../driver.ts";
+import { exported, parsed } from "../phh-support.ts";
 
-const { deal, board, burn, call, fold, raise, raiseTo } = moves;
+const { deal, board, burn, call, fold, raise, raiseTo, show } = moves;
 
 const automate = [
   "antePosting",
@@ -50,26 +39,10 @@ const noLimit = holdem.noLimit({
   anteTrimming: true,
 });
 
-function show(text: string): Move {
-  return accept({ type: "show", cards: cards(text) });
-}
-
-function historyOf(hand: Hand): Phh {
-  const history = historyFromHand(hand);
-  if (!history.ok) throw new Error(JSON.stringify(history.error));
-  return history.value;
-}
-
 function tomlOf(text: string) {
   const table = readToml(text);
   if (!table.ok) throw new Error(JSON.stringify(table.error));
   return table.value;
-}
-
-function parsed(text: string): Phh {
-  const history = parsePhh(text);
-  if (!history.ok) throw new Error(JSON.stringify(history.error));
-  return history.value;
 }
 
 unitTest(
@@ -86,7 +59,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    let hh = historyOf(table.hand);
+    let hh = exported(table.hand);
     hh = {
       ...hh,
       extra: {
@@ -138,7 +111,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    let hh = historyOf(table.hand);
+    let hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 0 })).toEqual(
       ok([
@@ -182,7 +155,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 1, { handNumber: 1 })).toEqual(
       ok([
@@ -220,7 +193,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 2 })).toEqual(
       ok([
@@ -263,7 +236,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 30 })).toEqual(
       ok([
@@ -332,7 +305,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 1, { handNumber: 31 })).toEqual(
       ok([
@@ -427,7 +400,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 2, { handNumber: 55 })).toEqual(
       ok([
@@ -476,7 +449,7 @@ unitTest(
 
     expect(inProgress(table.hand)).toBe(false);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 90 })).toEqual(
       ok([
@@ -548,7 +521,7 @@ unitTest(
       raise,
     ]);
 
-    let hh = historyOf(table.hand);
+    let hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 0 })).toEqual(
       ok(interactions.slice(0, -7))
@@ -556,7 +529,7 @@ unitTest(
 
     play(table, [call, burn, board("Kh")]);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 0 })).toEqual(
       ok(interactions.slice(0, -5))
@@ -564,7 +537,7 @@ unitTest(
 
     call(table);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 0 })).toEqual(
       ok(interactions.slice(0, -3))
@@ -572,7 +545,7 @@ unitTest(
 
     raise(table);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 0 })).toEqual(
       ok(interactions.slice(0, -2))
@@ -580,7 +553,7 @@ unitTest(
 
     play(table, [call, show("8hTc"), show("TdAs")]);
 
-    hh = historyOf(table.hand);
+    hh = exported(table.hand);
 
     expect(toAcpc(hh, 0, { handNumber: 0 })).toEqual(ok(interactions));
   }
@@ -628,7 +601,7 @@ unitTest(
     expect(inProgress(table.hand)).toBe(false);
 
     let hh: Phh = {
-      ...historyOf(table.hand),
+      ...exported(table.hand),
       players: ["Hattori", "MrBlue", "Pluribus", "Budd", "MrWhite", "MrOrange"],
     };
 
@@ -662,7 +635,7 @@ unitTest(
     expect(inProgress(table.hand)).toBe(false);
 
     hh = {
-      ...historyOf(table.hand),
+      ...exported(table.hand),
       players: ["MrOrange", "Hattori", "MrBlue", "Pluribus", "Budd", "MrWhite"],
     };
 

@@ -12,9 +12,9 @@ import {
   start,
   totalPot,
 } from "../driver.ts";
-import { dealer, deck, discard, replaysWithout } from "./wsop.ts";
+import { dealer, deck, replaysWithout } from "./wsop.ts";
 
-const { call, fold, raise, raiseTo, bringIn, standPat } = moves;
+const { call, fold, raise, raiseTo, bringIn, standPat, discard } = moves;
 const {
   postAnte,
   collectBets,

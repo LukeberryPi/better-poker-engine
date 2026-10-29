@@ -9,12 +9,8 @@ import { stateOf } from "../../src/hand/state.ts";
 import { formatPhhAction } from "../../src/phh-actions.ts";
 import {
   formatPhh,
-  parsePhh,
-  replayHistory,
   type AmountScale,
   type HistoryReplay,
-  type Phh,
-  type ReplayOptions,
 } from "../../src/phh.ts";
 import { draw, holdem, omaha, shortDeck, type Game } from "../../src/rules.ts";
 import {
@@ -29,32 +25,24 @@ import {
   start,
   type Move,
 } from "../driver.ts";
+import { parsed, replayed } from "../phh-support.ts";
 import { cards, known } from "../support.ts";
 
-const { deal, board, burn, call, fold, raise, raiseTo, standPat } = moves;
-
-function show(text: string): Move {
-  return accept({ type: "show", cards: cards(text) });
-}
-
-function discard(text: string): Move {
-  return accept({ type: "draw", discard: cards(text) });
-}
+const {
+  deal,
+  board,
+  burn,
+  call,
+  fold,
+  raise,
+  raiseTo,
+  standPat,
+  discard,
+  show,
+} = moves;
 
 function selectRunoutCount(count: number | null): Move {
   return accept({ type: "selectRunoutCount", count });
-}
-
-function parsed(text: string): Phh {
-  const history = parsePhh(text);
-  if (!history.ok) throw new Error(JSON.stringify(history.error));
-  return history.value;
-}
-
-function replayed(history: Phh, options: ReplayOptions): HistoryReplay {
-  const replay = replayHistory(history, options);
-  if (!replay.ok) throw new Error(JSON.stringify(replay.error));
-  return replay.value;
 }
 
 /** pokerkit's `state.operations`, which do not say what caused them. */
