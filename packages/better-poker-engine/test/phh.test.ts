@@ -549,6 +549,38 @@ describe("parsePhh errors", () => {
     );
   });
 
+  test("rejects an action by a player the history does not seat", () => {
+    const sixPlayers = [
+      "variant = 'NT'",
+      "antes = [0, 0, 0, 0, 0, 0]",
+      "blinds_or_straddles = [1, 2, 0, 0, 0, 0]",
+      "min_bet = 2",
+      "starting_stacks = [200, 200, 200, 200, 200, 200]",
+    ].join("\n");
+    const texts = [
+      "d dh p7 AcAd",
+      "p7 sd",
+      "p7 sd Ac",
+      "p7 pb",
+      "p7 f",
+      "p7 cc",
+      "p7 cbr 6",
+      "p7 sm",
+      "p7 sm -",
+      "p7 sm AcAd # shown",
+    ];
+    for (const text of texts) {
+      expect(
+        parsePhh(`${sixPlayers}\nactions = ['p6 f', 'd db 2c3c4c', '${text}']`)
+      ).toEqual(err({ code: "unknown_player", index: 2, text, player: 7 }));
+    }
+    expect(
+      parsePhh(`${sixPlayers}\nactions = ['d dh p6 AcAd', 'p6 f', 'p6 sm']`)
+    ).toMatchObject(
+      ok({ actions: [{ player: 6 }, { player: 6 }, { player: 6 }] })
+    );
+  });
+
   test("reports schema issues before action syntax", () => {
     expect(
       parsePhh(
