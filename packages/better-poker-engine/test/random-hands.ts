@@ -72,7 +72,7 @@ function randomOptions(random: RandomSource) {
 const blinds = [1, 2];
 const limits = { smallBet: 2, bigBet: 4 };
 
-/** Every builder, with random antes, rake, mode, ante trimming and boards. */
+/** Every named variant's builder, with random antes, rake, mode, ante trimming and boards. */
 const games: readonly ((random: RandomSource) => Game)[] = [
   (random) =>
     holdem.noLimit({
