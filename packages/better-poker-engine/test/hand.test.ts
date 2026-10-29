@@ -261,6 +261,19 @@ describe("act", () => {
     }
   });
 
+  test("bets Omaha hi-lo in fixed limits, as its name says", () => {
+    const game = omaha.fixedLimitHiLo({
+      blinds: [1, 2],
+      smallBet: 2,
+      bigBet: 4,
+    });
+    const table = drive(start(game, [100, 100, 100], automation.all));
+    expect(auditor(table.hand).decision).toMatchObject({
+      kind: "betting",
+      betOrRaiseTo: { kind: "raise", min: 4, max: 4 },
+    });
+  });
+
   test("does not reopen the raising to a player after a short all-in", () => {
     const table = drive(start(noLimit, [5, 100, 100], automation.all));
     play(table, [raiseTo(4), raiseTo(5), call]);
