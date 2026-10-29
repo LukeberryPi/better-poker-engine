@@ -1,0 +1,27 @@
+{
+  "name": "better-poker-engine-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.6",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "NODE_OPTIONS=--experimental-strip-types oxlint --deny-warnings && NODE_OPTIONS=--experimental-strip-types oxlint -c .oxlintrc.rules.json --deny-warnings tools/oxlint/anti-slop",
+    "typecheck": "tsc -p packages/better-poker-engine/tsconfig.json && tsc -p packages/better-poker-engine/tsconfig.test.json && tsc -p parity/tsconfig.json",
+    "test": "bun test packages parity",
+    "test:lint-rules": "bun test tools/oxlint/anti-slop/rules.test.ts",
+    "parity": "mkdir -p parity/.results && bun test --reporter=junit --reporter-outfile=parity/.results/junit.xml packages parity && bun parity/check.ts parity/.results/junit.xml",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:lint-rules && bun run parity"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "1.79.0",
+    "@types/bun": "1.3.6",
+    "oxfmt": "0.63.0",
+    "oxlint": "1.79.0",
+    "typescript": "7.0.2"
+  }
+}
