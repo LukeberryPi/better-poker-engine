@@ -1,4 +1,4 @@
-import { isKnownCard, type KnownCard } from "../cards.ts";
+import { decks, isKnownCard, type KnownCard } from "../cards.ts";
 import type { HandSetup, SetupError } from "../hand.ts";
 import { seedFrom } from "../random.ts";
 import { validateGame, type Antes, type Game, type Street } from "../rules.ts";
@@ -44,11 +44,31 @@ function defaultPlayers(count: number): string[] {
   return Array.from({ length: count }, (_, position) => `p${position + 1}`);
 }
 
+/** Whether the game's deck deals everyone their first hole cards, then every street to
+ * players who never fold. Burned cards come back through the reserve, so a burn only
+ * needs a card left; later hole cards that don't fit go to the board. */
+function dealsEveryStreet(game: Game, players: number): boolean {
+  let left = decks[game.rules.deck].length;
+  let dealtHoles = false;
+  for (const street of game.rules.streets) {
+    const holes = players * street.hole.length;
+    const fits = holes <= left;
+    if (holes > 0 && !fits && !dealtHoles) return false;
+    dealtHoles ||= holes > 0;
+    if (street.burn && left === 0) return false;
+    left -= fits
+      ? holes + street.board * game.boards
+      : (street.board + street.hole.length) * game.boards;
+    if (left < 0) return false;
+  }
+  return true;
+}
+
 export function validateSetup(setup: HandSetup): SetupError | null {
   const gameError = validateGame(setup.game);
   if (gameError !== null) return gameError;
   const { stacks } = setup;
-  if (stacks.length < 2)
+  if (stacks.length < 2 || !dealsEveryStreet(setup.game, stacks.length))
     return { code: "player_count", players: stacks.length };
   const players = setup.players ?? defaultPlayers(stacks.length);
   if (players.length !== stacks.length) {

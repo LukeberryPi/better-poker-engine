@@ -38,7 +38,7 @@ function acceptedActions(walk: Walk): Action[] {
 describe("random hands", () => {
   test("cover every variant, refusals included", () => {
     const variants = new Set(walks.map((walk) => walk.setup.game.variant));
-    expect(variants.size).toBe(11);
+    expect(variants.size).toBe(12);
     expect(
       walks.some((walk) => walk.steps.some((step) => !step.result.ok))
     ).toBe(true);
@@ -136,7 +136,7 @@ describe("random hands", () => {
       );
       const record = summarizeHand(walk.hand);
       if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
-      const nets = record.players.map((player) => player.net ?? NaN);
+      const nets = record.players.map((player) => player.net);
       const kept = record.rake + record.unclaimed;
       expect(nets.reduce((sum, net) => sum + net, kept)).toBe(0);
       expect(record.players.map((player) => player.endingStack)).toEqual(
