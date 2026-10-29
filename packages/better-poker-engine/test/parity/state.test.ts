@@ -1,7 +1,7 @@
 import { expect } from "bun:test";
 
 import { doctest } from "../../../../parity/harness.ts";
-import { suitOf } from "../../src/cards.ts";
+import { decks, suitOf } from "../../src/cards.ts";
 import { automation, startHand, type Hand } from "../../src/hand.ts";
 import {
   draw,
@@ -61,7 +61,12 @@ doctest("pokerkit.state.Street", (example) => {
     const rules = { ...noLimit.rules, streets: [street] as const };
     const game = { ...noLimit, rules };
     expect(
-      startHand({ game, stacks: [200, 200], deck: [], automate: [] }).ok
+      startHand({
+        game,
+        stacks: [200, 200],
+        deck: decks.standard,
+        automate: [],
+      }).ok
     ).toBe(true);
   });
   example(2, () => expect(street.burn).toBe(false));

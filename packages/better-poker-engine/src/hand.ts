@@ -85,7 +85,13 @@ export type SetupError =
       readonly ids: number;
       readonly stacks: number;
     }
-  | { readonly code: "duplicate_card"; readonly card: Card };
+  | { readonly code: "duplicate_card"; readonly card: Card }
+  /** The deck can't deal this many players their first hole cards and every street. */
+  | {
+      readonly code: "deck_too_small";
+      readonly players: number;
+      readonly cards: number;
+    };
 
 export type CheckOrCall =
   | { readonly kind: "check" }

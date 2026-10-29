@@ -13,7 +13,10 @@ import {
 import {
   draw,
   holdem,
+  kuhn,
+  leduc,
   omaha,
+  royal,
   stud,
   type Game,
   type Street,
@@ -77,6 +80,91 @@ describe("startHand", () => {
       ok: false,
       error: { code: "duplicate_card", card: "As" },
     });
+  });
+
+  test("refuses a deck that runs out before the hand can end", () => {
+    expect(startHand(setup(noLimit, cards("AsKsQsJs")))).toEqual({
+      ok: false,
+      error: { code: "deck_too_small", players: 2, cards: 4 },
+    });
+    const seats = (game: Game, deck: readonly Card[], players: number) =>
+      startHand({
+        game,
+        stacks: repeat(10, players),
+        deck,
+        automate: automation.all,
+      }).ok;
+    const leducGame = leduc.fixedLimit();
+    expect(
+      [4, 5, 6].map((players) => seats(leducGame, decks.leduc, players))
+    ).toEqual([true, true, false]);
+    const tripleDraw = draw.deuceToSevenTriple({
+      blinds: [1, 2],
+      smallBet: 2,
+      bigBet: 4,
+    });
+    expect(
+      [51, 50].map((size) =>
+        seats(tripleDraw, decks.standard.slice(0, size), 10)
+      )
+    ).toEqual([true, false]);
+  });
+
+  test("plays every accepted table to the end, nobody folding", () => {
+    const games = [
+      holdem.noLimit({ blinds: [1, 2], minBet: 2, boards: 2 }),
+      omaha.fixedLimitHiLo({ blinds: [1, 2], smallBet: 2, bigBet: 4 }),
+      stud.razz({ bringIn: 1, smallBet: 2, bigBet: 4 }),
+      draw.deuceToSevenTriple({ blinds: [1, 2], smallBet: 2, bigBet: 4 }),
+      kuhn.fixedLimit(),
+      leduc.fixedLimit(),
+      royal.noLimit({ blinds: [1, 2], minBet: 2 }),
+    ];
+    const seats = games.map((game) => {
+      const deck = decks[game.rules.deck];
+      const accepted: number[] = [];
+      for (let players = 2; players <= 12; players += 1) {
+        const started = startHand({
+          game,
+          stacks: repeat(1000, players),
+          deck,
+          automate: automation.all,
+        });
+        if (!started.ok) {
+          expect(started.error).toEqual({
+            code: "deck_too_small",
+            players,
+            cards: deck.length,
+          });
+          continue;
+        }
+        accepted.push(players);
+        let hand = started.value.hand;
+        for (let step = 0; step < 1000; step += 1) {
+          const view = auditor(hand);
+          const { decision } = view;
+          if (decision.kind === "complete") break;
+          const drawer = decision.kind === "drawing" ? decision.player : null;
+          const held =
+            view.players.find(({ player }) => player === drawer)?.holeCards ??
+            [];
+          const action: Action =
+            decision.kind === "betting" && decision.bringIn !== null
+              ? { type: "postBringIn" }
+              : drawer === null
+                ? { type: "checkOrCall" }
+                : { type: "draw", discard: held.map(({ card }) => card) };
+          const result = act(hand, action);
+          if (!result.ok) throw new Error(JSON.stringify(result.error));
+          hand = result.value.hand;
+        }
+        expect(auditor(hand).decision.kind).toBe("complete");
+      }
+      return accepted;
+    });
+    const upTo = (most: number) =>
+      Array.from({ length: most - 1 }, (_, index) => index + 2);
+    expect(seats).toEqual([12, 11, 12, 10, 3, 5, 7].map(upTo));
   });
 
   test("refuses streets that deal nothing or deal hole cards on a draw", () => {
@@ -238,21 +326,6 @@ describe("act", () => {
     expect(
       table.reject({ type: "dealBoard", cards: cards("2c3c4c5c") })
     ).toEqual({ code: "wrong_card_count", expected: 3, attempted: 4 });
-  });
-
-  test("refuses to deal from a deck that ran out", () => {
-    const deck = cards("AsKsQsJs");
-    const table = drive(start(noLimit, [100, 100], automation.all, deck));
-    play(table, [call, call]);
-    expect(auditor(table.hand).decision).toEqual({
-      kind: "dealer",
-      step: "cardBurning",
-    });
-    expect(table.reject({ type: "burnCard" })).toEqual({
-      code: "not_enough_cards",
-      needed: 1,
-      available: 0,
-    });
   });
 
   test("refuses to discard a card the player does not hold", () => {
