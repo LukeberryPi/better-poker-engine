@@ -16,6 +16,7 @@ export {
   type KnownCard,
   type PartlyKnownCard,
   type Rank,
+  type RankOrder,
   type RankSymbol,
   type Suit,
   type SuitSymbol,
