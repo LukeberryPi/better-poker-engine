@@ -38,7 +38,7 @@ function acceptedActions(walk: Walk): Action[] {
 describe("random hands", () => {
   test("cover every variant, refusals included", () => {
     const variants = new Set(walks.map((walk) => walk.setup.game.variant));
-    expect(variants.size).toBe(11);
+    expect(variants.size).toBe(12);
     expect(
       walks.some((walk) => walk.steps.some((step) => !step.result.ok))
     ).toBe(true);

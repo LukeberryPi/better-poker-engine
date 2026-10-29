@@ -16,7 +16,12 @@ import type { Result } from "../src/result.ts";
 import {
   draw,
   holdem,
+  kuhn,
+  leduc,
+  numeral211,
   omaha,
+  rhodeIsland,
+  royal,
   shortDeck,
   stud,
   type Antes,
@@ -72,7 +77,7 @@ function randomOptions(random: RandomSource) {
 const blinds = [1, 2];
 const limits = { smallBet: 2, bigBet: 4 };
 
-/** Every named variant's builder, with random antes, rake, mode, ante trimming and boards. */
+/** Every builder, with random antes, rake, mode, ante trimming and boards. */
 const games: readonly ((random: RandomSource) => Game)[] = [
   (random) =>
     holdem.noLimit({
@@ -104,7 +109,31 @@ const games: readonly ((random: RandomSource) => Game)[] = [
   (random) =>
     draw.deuceToSevenTriple({ ...randomOptions(random), blinds, ...limits }),
   (random) => draw.badugi({ ...randomOptions(random), blinds, ...limits }),
+  (random) => kuhn.fixedLimit(anteOptions(random)),
+  (random) => leduc.fixedLimit(anteOptions(random)),
+  (random) => rhodeIsland.fixedLimit(anteOptions(random)),
+  (random) => numeral211.fixedLimit(anteOptions(random)),
+  (random) => royal.noLimit({ ...randomOptions(random), blinds, minBet: 2 }),
+  (random) => royal.rhodeIsland(anteOptions(random)),
 ];
+
+/** Games whose only forced bets are antes keep their default antes over none. */
+function anteOptions(random: RandomSource) {
+  const { antes, ...options } = randomOptions(random);
+  return antes.kind === "none" ? options : { ...options, antes };
+}
+
+/** As many players as the deck deals every street to, before any reshuffle. */
+function maxPlayers(game: Game): number {
+  const { deck, streets } = game.rules;
+  const shared = streets.reduce(
+    (total, street) =>
+      total + (street.burn ? 1 : 0) + street.board * game.boards,
+    0
+  );
+  const each = streets.reduce((total, street) => total + street.hole.length, 0);
+  return Math.floor((decks[deck].length - shared) / each);
+}
 
 function randomAutomation(random: RandomSource): Automation {
   return pick(
@@ -121,7 +150,7 @@ function randomAutomation(random: RandomSource): Automation {
 /** Bounded stacks only, so chips add up; short ones force all-ins and side pots. */
 export function randomSetup(random: RandomSource): HandSetup {
   const game = pick(games, random)(random);
-  const players = between(2, 6, random);
+  const players = between(2, Math.min(6, maxPlayers(game)), random);
   const deep = chance(50, random);
   return {
     game,
@@ -202,7 +231,9 @@ function plausibleAction(
         type: "selectRunoutCount",
         player: pick(decision.players, random),
         count: pick(
-          [null, 1, Math.min(2, decision.maxRunouts), decision.maxRunouts],
+          [null, 1, 2, 3].map((count) =>
+            count === null ? null : Math.min(count, decision.maxRunouts)
+          ),
           random
         ),
       };
