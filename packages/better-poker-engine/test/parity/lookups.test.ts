@@ -1,5 +1,4 @@
 import { expect } from "bun:test";
-import { createHash } from "node:crypto";
 
 import { doctest, unitTest } from "../../../../parity/harness.ts";
 import type { DoctestId } from "../../../../parity/manifest.ts";
@@ -19,7 +18,7 @@ import {
   type Lookup,
   type LookupName,
 } from "../../src/lookups.ts";
-import { cards } from "../support.ts";
+import { cards, digestSortedByEntry, forEachCombination } from "../support.ts";
 
 type Hand = readonly KnownCard[];
 
@@ -27,47 +26,6 @@ function entryIn(table: Lookup, text: string): Entry {
   const entry = entryOf(table, cards(text));
   if (entry === null) throw new Error(`${text} has no entry`);
   return entry;
-}
-
-/** Each `size`-card combination of `deck`, in `itertools.combinations` order. */
-function forEachCombination(
-  deck: Hand,
-  size: number,
-  visit: (hand: Hand) => void,
-  chosen: Hand = []
-): void {
-  if (size === 0) {
-    visit(chosen);
-    return;
-  }
-  deck.forEach((card, index) => {
-    if (deck.length - index < size) return;
-    forEachCombination(deck.slice(index + 1), size - 1, visit, [
-      ...chosen,
-      card,
-    ]);
-  });
-}
-
-/** md5 of pokerkit's `serialize_combinations` after a stable sort by entry. */
-function digestSortedByEntry(
-  table: Lookup,
-  hands: (visit: (hand: Hand) => void) => void
-): string {
-  const lines = Array.from({ length: table.size }, (): string[] => []);
-  hands((hand) => {
-    const entry = entryOf(table, hand);
-    if (entry === null) throw new Error(`${hand.join("")} has no entry`);
-    lines[entry.index]?.push(hand.join(""));
-  });
-  const md5 = createHash("md5");
-  md5.update(
-    lines
-      .filter((bucket) => bucket.length > 0)
-      .map((bucket) => bucket.join("\n"))
-      .join("\n")
-  );
-  return md5.digest("hex");
 }
 
 function digestOfCombinations(

@@ -20,10 +20,38 @@ export function secureRandom(): RandomSource {
  * A seed, taken modulo 2 ** 32, gives the same sequence on every runtime. */
 export function seededRandom(seed: number): RandomSource {
   const next = splitmix32(seed);
-  let a = next();
-  let b = next();
-  let c = next();
-  let counter = next();
+  return sfc32([next(), next(), next(), next()]);
+}
+
+/** All 128 bits of sfc32's state. */
+export type Seed = readonly [number, number, number, number];
+
+/** cyrb128 from the same page. */
+export function seedFrom(text: string): Seed {
+  let h1 = 1779033703;
+  let h2 = 3144134277;
+  let h3 = 1013904242;
+  let h4 = 2773480762;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    h1 = h2 ^ Math.imul(h1 ^ code, 597399067);
+    h2 = h3 ^ Math.imul(h2 ^ code, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ code, 951274213);
+    h4 = h1 ^ Math.imul(h4 ^ code, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  h1 ^= h2 ^ h3 ^ h4;
+  h2 ^= h1;
+  h3 ^= h1;
+  h4 ^= h1;
+  return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
+}
+
+export function sfc32(seed: Seed): RandomSource {
+  let [a, b, c, counter] = seed;
   return {
     nextUint32: () => {
       const result = (a + b + counter) | 0;

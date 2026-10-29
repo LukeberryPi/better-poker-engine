@@ -25,6 +25,9 @@ import {
   type RankSymbol,
   type SuitSymbol,
 } from "../../src/cards.ts";
+import { rakePot, splitChips } from "../../src/hand/pots.ts";
+import { anteVector, perPosition } from "../../src/hand/setup.ts";
+import { maxOrNull, minOrNull } from "../../src/hand/state.ts";
 import { parseAmount } from "../../src/phh-actions.ts";
 import { parsePhh } from "../../src/phh.ts";
 import { seededRandom } from "../../src/random.ts";
@@ -205,6 +208,103 @@ doctest("pokerkit.utilities.shuffled", (example) => {
     shuffled = shuffle(known("AcAdAhAs"), seededRandom(0));
   });
   example(2, () => expect(shuffled.map(rankOf)).toEqual(["A", "A", "A", "A"]));
+});
+
+doctest("pokerkit.utilities.clean_values", (example) => {
+  example(1, () => {
+    expect(perPosition([1, 2, 3, 4].entries(), 4)).toEqual([1, 2, 3, 4]);
+  });
+  example(2, () => {
+    expect(perPosition([1, 2, 3, 4].entries(), 6)).toEqual([1, 2, 3, 4, 0, 0]);
+  });
+  example(3, () => {
+    expect(
+      perPosition(
+        [
+          [0, 1],
+          [-1, 2],
+        ],
+        4
+      )
+    ).toEqual([1, 0, 0, 2]);
+  });
+  example(4, () => {
+    expect(anteVector({ kind: "everyone", amount: 4 }, 4)).toEqual([
+      4, 4, 4, 4,
+    ]);
+  });
+  example(5, () => {
+    expect(perPosition([1, 2, 3].entries(), 2)).toEqual([1, 2]);
+  });
+  example(6, () => {
+    // @ts-expect-error amounts are required
+    expect(() => perPosition(null, 2)).toThrow(TypeError);
+  });
+});
+
+const tenPercent = {
+  kind: "percentage",
+  basisPoints: 1000,
+  cap: null,
+  noFlopNoDrop: false,
+} as const;
+const elevenPercent = { ...tenPercent, basisPoints: 1100 };
+
+doctest("pokerkit.utilities.rake", (example) => {
+  example(1, () => {
+    expect(rakePot(100, { kind: "none" }, true)).toEqual({
+      raked: 0,
+      unraked: 100,
+    });
+  });
+  example(2, () => {
+    expect(rakePot(1000, tenPercent, true)).toEqual({
+      raked: 100,
+      unraked: 900,
+    });
+  });
+  example(3, () => {
+    expect(rakePot(10, elevenPercent, true)).toEqual({ raked: 1, unraked: 9 });
+  });
+  example(4, () => {
+    expect(rakePot(10.0, elevenPercent, true)).toEqual({
+      raked: 1,
+      unraked: 9,
+    });
+  });
+  example(5, () => {
+    expect(rakePot(10.0, { ...elevenPercent, cap: 1.0 }, true)).toEqual({
+      raked: 1.0,
+      unraked: 9.0,
+    });
+  });
+  example(6, () => {
+    // @ts-expect-error no-flop-no-drop needs to know whether the flop was dealt
+    rakePot(100, { ...tenPercent, noFlopNoDrop: true });
+  });
+});
+
+doctest("pokerkit.utilities.divmod", (example) => {
+  example(1, () => expect(splitChips(11, 3)).toEqual([3, 2]));
+  example(2, () => expect(splitChips(11.0, 3)).toEqual([3, 2]));
+});
+
+const identity = (value: number) => value;
+
+doctest("pokerkit.utilities.min_or_none", (example) => {
+  example(1, () => expect(minOrNull([1, 2, 3, -2, -1], identity)).toBe(-2));
+  example(2, () => {
+    expect(minOrNull([1, null, 2, null, 3, -2, -1, null], identity)).toBe(-2);
+  });
+  example(3, () => expect(minOrNull([], identity)).toBeNull());
+});
+
+doctest("pokerkit.utilities.max_or_none", (example) => {
+  example(1, () => expect(maxOrNull([1, 2, 3, -2, -1], identity)).toBe(3));
+  example(2, () => {
+    expect(maxOrNull([1, null, 2, null, 3, -2, -1, null], identity)).toBe(3);
+  });
+  example(3, () => expect(maxOrNull([], identity)).toBeNull());
 });
 
 doctest("pokerkit.utilities.parse_value", (example) => {
