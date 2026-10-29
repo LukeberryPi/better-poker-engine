@@ -36,6 +36,14 @@ export {
   type HistoryExportError,
 } from "./phh-export.ts";
 export {
+  toAcpc,
+  toPluribus,
+  type AcpcError,
+  type AcpcMessage,
+  type PluribusError,
+  type ProtocolOptions,
+} from "./phh-protocols.ts";
+export {
   replayHistory,
   type HistoryReplay,
   type HistoryReplayError,
