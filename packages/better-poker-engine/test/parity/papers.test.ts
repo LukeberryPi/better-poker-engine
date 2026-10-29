@@ -4,8 +4,12 @@ import { unitTest } from "../../../../parity/harness.ts";
 import { decks } from "../../src/cards.ts";
 import type { Stack } from "../../src/chips.ts";
 import { compareHands, evaluate, handValue } from "../../src/evaluation.ts";
-import { startHand, type Automation, type Hand } from "../../src/hand.ts";
-import { stateOf } from "../../src/hand/state.ts";
+import {
+  startHand,
+  summarizeHand,
+  type Automation,
+  type Hand,
+} from "../../src/hand.ts";
 import { formatPhhAction } from "../../src/phh-actions.ts";
 import {
   formatPhh,
@@ -886,5 +890,7 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_alice_carol", () => {
   ]);
 
   expect(stacks(state.hand)).toEqual(repeat("unbounded", 4));
-  expect(stateOf(state.hand).payoffs).toEqual([-4, 20, 0, -16]);
+  expect(summarizeHand(state.hand)?.players.map(({ net }) => net)).toEqual([
+    -4, 20, 0, -16,
+  ]);
 });
