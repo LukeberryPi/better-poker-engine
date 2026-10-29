@@ -46,9 +46,9 @@ function handNumberOf(
 ): Result<number, ProtocolError> {
   const { hand } = history;
   if (options.handNumber !== undefined) return ok(options.handNumber);
-  return hand === null || String(hand) === hand
-    ? err({ code: "hand_number_required" })
-    : ok(Number(hand));
+  return hand?.kind === "integer"
+    ? ok(hand.value)
+    : err({ code: "hand_number_required" });
 }
 
 /** What the logs show of the cards: two slots per seat, "" until known. */
