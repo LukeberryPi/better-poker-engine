@@ -13,6 +13,14 @@ export type Deviations = { readonly [Id in DoctestId]?: readonly Deviation[] };
 
 /** Every doctest example that does not keep pokerkit's result, and why. */
 export const deviations: Deviations = {
+  "pokerkit.games.PotLimitOmahaHoldem.create_state": [
+    {
+      kind: "differs",
+      examples: [1, 4, 5, 6, 7, 8, 11, 12, 13, 14, 19],
+      reason:
+        "chips are integers in the smallest unit, so the stacks of 1259450.25 and 678473.5 are played in cents and every amount is 100 times pokerkit's",
+    },
+  ],
   "pokerkit.utilities.rake": [
     {
       kind: "differs",

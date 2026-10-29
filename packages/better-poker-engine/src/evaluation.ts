@@ -57,7 +57,7 @@ type HandRules = {
   readonly candidates: Candidates;
 };
 
-const handRules = {
+export const handRules = {
   standardHigh: { lookup: "standard", low: false, candidates: anyCards(5) },
   standardLow: { lookup: "standard2", low: true, candidates: anyCards(5) },
   shortDeckHigh: { lookup: "shortDeck", low: false, candidates: anyCards(5) },

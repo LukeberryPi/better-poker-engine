@@ -410,47 +410,6 @@ describe("dividing chips", () => {
 });
 
 describe("runouts", () => {
-  test("split each pot between the boards, as in pokerkit's four-runout example", () => {
-    const game = holdem.noLimit({
-      blinds: [200, 400, 800],
-      minBet: 400,
-      mode: "cashGame",
-      antes: { kind: "byPosition", amounts: [0, 0, 0, 0, 0, 600] },
-    });
-    const table = drive(
-      start(
-        game,
-        ["unbounded", 116400, 86900, "unbounded", 50000, "unbounded"],
-        allBut(
-          "holeDealing",
-          "boardDealing",
-          "cardBurning",
-          "runoutCountSelection"
-        )
-      )
-    );
-    play(table, [
-      ...["JsTh", "Ah9d", "KsKc", "5c2h", "6h5h", "6s3s"].map(deal),
-      ...[fold, raiseTo(2800), fold, call, raiseTo(12600), call, call, call],
-      ...[burn, board("9hTs9s"), call, raiseTo(17000), raiseTo(36000)],
-      ...[fold, fold, raiseTo(103800), call],
-      accept({ type: "selectRunoutCount", count: 4 }),
-      accept({ type: "selectRunoutCount", count: null }),
-      ...["Jh", "Ad", "Kh", "3c", "7s", "8s", "Qc", "Kd"].flatMap((card) => [
-        burn,
-        board(card),
-      ]),
-    ]);
-    expect(stacks(table.hand)).toEqual([
-      "unbounded",
-      79400,
-      149700,
-      "unbounded",
-      37400,
-      "unbounded",
-    ]);
-  });
-
   test("go as far as the deck can deal every street, burns included", () => {
     const table = drive(
       start(cashGame, [100, 100], allBut("runoutCountSelection"))
