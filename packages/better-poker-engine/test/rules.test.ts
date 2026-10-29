@@ -9,7 +9,15 @@ import {
   rhodeIsland,
   royal,
 } from "../src/rules.ts";
-import { drive, minimumRaise, moves, play, stacks, start } from "./driver.ts";
+import {
+  auditor,
+  drive,
+  minimumRaise,
+  moves,
+  play,
+  stacks,
+  start,
+} from "./driver.ts";
 import { cards } from "./support.ts";
 
 const { call, raiseTo } = moves;
@@ -23,6 +31,21 @@ describe("kuhn.fixedLimit", () => {
     expect(table.can(minimumRaise(table))).toBe(false);
     play(table, [call]);
     expect(stacks(table.hand)).toEqual([8, 12]);
+  });
+
+  test("takes a bet other than pokerkit's", () => {
+    const table = drive(
+      start(
+        kuhn.fixedLimit({ bet: 2 }),
+        [10, 10],
+        automation.all,
+        cards("QsKs")
+      )
+    );
+    play(table, [raiseTo(2)]);
+    expect(table.can(minimumRaise(table))).toBe(false);
+    play(table, [call]);
+    expect(stacks(table.hand)).toEqual([7, 13]);
   });
 });
 
@@ -62,6 +85,13 @@ describe("numeral211.fixedLimit", () => {
     expect(table.can(minimumRaise(table))).toBe(false);
     play(table, [call, raiseTo(20), call, call, call]);
     expect(stacks(table.hand)).toEqual([270, 140]);
+  });
+
+  test("deals from the forty cards without jacks, queens and kings", () => {
+    const table = drive(
+      start(numeral211.fixedLimit(), [205, 205], automation.all)
+    );
+    expect(auditor(table.hand).dealer?.deck).toHaveLength(38);
   });
 });
 
