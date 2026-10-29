@@ -156,7 +156,7 @@ const openingSteps = [
 ];
 
 /** pokerkit's lookup classes, keyed by their names without `Lookup`. */
-const definitions = {
+export const definitions = {
   standard: {
     rankOrder: rankOrders.standard,
     steps: standardSteps(true),

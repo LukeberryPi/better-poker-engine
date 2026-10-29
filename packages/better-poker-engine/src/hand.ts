@@ -73,6 +73,8 @@ export type HandSetup = {
 
 export type SetupError =
   | GameError
+  /** Fewer than two, or more than the game's deck can deal their first hole cards and
+   * every street. A stacked `deck` may hold less; the dealer then names the rest. */
   | { readonly code: "player_count"; readonly players: number }
   | {
       readonly code: "invalid_stack";

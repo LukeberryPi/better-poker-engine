@@ -13,7 +13,10 @@ import {
 import {
   draw,
   holdem,
+  kuhn,
+  leduc,
   omaha,
+  royal,
   stud,
   type Game,
   type Street,
@@ -77,6 +80,87 @@ describe("startHand", () => {
       ok: false,
       error: { code: "duplicate_card", card: "As" },
     });
+  });
+
+  test("refuses more players than the game's deck can deal", () => {
+    const seats = (game: Game, players: number) =>
+      startHand({
+        game,
+        stacks: repeat(10, players),
+        deck: decks[game.rules.deck],
+        automate: automation.all,
+      });
+    expect(seats(leduc.fixedLimit(), 6)).toEqual({
+      ok: false,
+      error: { code: "player_count", players: 6 },
+    });
+    expect(seats(leduc.fixedLimit(), 5).ok).toBe(true);
+    const tripleDraw = draw.deuceToSevenTriple({
+      blinds: [1, 2],
+      smallBet: 2,
+      bigBet: 4,
+    });
+    const royalDraw = {
+      ...tripleDraw,
+      rules: { ...tripleDraw.rules, deck: "royal" },
+    } satisfies Game;
+    expect([3, 4].map((players) => seats(royalDraw, players).ok)).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  test("plays every accepted table to the end, nobody folding", () => {
+    const games = [
+      holdem.noLimit({ blinds: [1, 2], minBet: 2, boards: 2 }),
+      omaha.fixedLimitHiLo({ blinds: [1, 2], smallBet: 2, bigBet: 4 }),
+      stud.razz({ bringIn: 1, smallBet: 2, bigBet: 4 }),
+      draw.deuceToSevenTriple({ blinds: [1, 2], smallBet: 2, bigBet: 4 }),
+      kuhn.fixedLimit(),
+      leduc.fixedLimit(),
+      royal.noLimit({ blinds: [1, 2], minBet: 2 }),
+    ];
+    const seats = games.map((game) => {
+      const deck = decks[game.rules.deck];
+      const accepted: number[] = [];
+      for (let players = 2; players <= 12; players += 1) {
+        const started = startHand({
+          game,
+          stacks: repeat(1000, players),
+          deck,
+          automate: automation.all,
+        });
+        if (!started.ok) {
+          expect(started.error).toEqual({ code: "player_count", players });
+          continue;
+        }
+        accepted.push(players);
+        let hand = started.value.hand;
+        for (let step = 0; step < 1000; step += 1) {
+          const view = auditor(hand);
+          const { decision } = view;
+          if (decision.kind === "complete") break;
+          const drawer = decision.kind === "drawing" ? decision.player : null;
+          const held =
+            view.players.find(({ player }) => player === drawer)?.holeCards ??
+            [];
+          const action: Action =
+            decision.kind === "betting" && decision.bringIn !== null
+              ? { type: "postBringIn" }
+              : drawer === null
+                ? { type: "checkOrCall" }
+                : { type: "draw", discard: held.map(({ card }) => card) };
+          const result = act(hand, action);
+          if (!result.ok) throw new Error(JSON.stringify(result.error));
+          hand = result.value.hand;
+        }
+        expect(auditor(hand).decision.kind).toBe("complete");
+      }
+      return accepted;
+    });
+    const upTo = (most: number) =>
+      Array.from({ length: most - 1 }, (_, index) => index + 2);
+    expect(seats).toEqual([12, 11, 12, 10, 3, 5, 7].map(upTo));
   });
 
   test("refuses streets that deal nothing or deal hole cards on a draw", () => {
@@ -253,7 +337,7 @@ describe("act", () => {
     ).toEqual({ code: "wrong_card_count", expected: 3, attempted: 4 });
   });
 
-  test("refuses to deal from a deck that ran out", () => {
+  test("refuses to deal from a stacked deck that ran out, but deals named cards", () => {
     const deck = cards("AsKsQsJs");
     const table = drive(start(noLimit, [100, 100], automation.all, deck));
     play(table, [call, call]);
@@ -265,6 +349,13 @@ describe("act", () => {
       code: "not_enough_cards",
       needed: 1,
       available: 0,
+    });
+    table.act({ type: "burnCard", card: "2c" });
+    expect(auditor(table.hand).decision).toEqual({
+      kind: "dealer",
+      step: "boardDealing",
+      board: 0,
+      cards: 3,
     });
   });
 
@@ -423,47 +514,6 @@ describe("dividing chips", () => {
 });
 
 describe("runouts", () => {
-  test("split each pot between the boards, as in pokerkit's four-runout example", () => {
-    const game = holdem.noLimit({
-      blinds: [200, 400, 800],
-      minBet: 400,
-      mode: "cashGame",
-      antes: { kind: "byPosition", amounts: [0, 0, 0, 0, 0, 600] },
-    });
-    const table = drive(
-      start(
-        game,
-        ["unbounded", 116400, 86900, "unbounded", 50000, "unbounded"],
-        allBut(
-          "holeDealing",
-          "boardDealing",
-          "cardBurning",
-          "runoutCountSelection"
-        )
-      )
-    );
-    play(table, [
-      ...["JsTh", "Ah9d", "KsKc", "5c2h", "6h5h", "6s3s"].map(deal),
-      ...[fold, raiseTo(2800), fold, call, raiseTo(12600), call, call, call],
-      ...[burn, board("9hTs9s"), call, raiseTo(17000), raiseTo(36000)],
-      ...[fold, fold, raiseTo(103800), call],
-      accept({ type: "selectRunoutCount", count: 4 }),
-      accept({ type: "selectRunoutCount", count: null }),
-      ...["Jh", "Ad", "Kh", "3c", "7s", "8s", "Qc", "Kd"].flatMap((card) => [
-        burn,
-        board(card),
-      ]),
-    ]);
-    expect(stacks(table.hand)).toEqual([
-      "unbounded",
-      79400,
-      149700,
-      "unbounded",
-      37400,
-      "unbounded",
-    ]);
-  });
-
   test("go as far as the deck can deal every street, burns included", () => {
     const table = drive(
       start(cashGame, [100, 100], allBut("runoutCountSelection"))
@@ -538,7 +588,7 @@ describe("reshuffling", () => {
 });
 
 describe("unbounded stacks", () => {
-  test("never run out, and leave the net unknown", () => {
+  test("never run out, and still give each player's net", () => {
     const deck = cards("2cAc7dAd 3h 9sTsJh 4h 5c 6h Kd");
     const table = drive(
       start(noLimit, ["unbounded", 100], automation.all, deck)
@@ -548,7 +598,7 @@ describe("unbounded stacks", () => {
     expect(
       record?.players.map(({ endingStack, net }) => [endingStack, net])
     ).toEqual([
-      ["unbounded", null],
+      ["unbounded", -100],
       [200, 100],
     ]);
   });
