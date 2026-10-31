@@ -12,16 +12,18 @@ test suite.
 
 - **A library, not a server.** One package that runs in browsers, Node, Bun,
   Deno and Workers. Multiplayer servers stay small: the package gives them
-  redacted per-player views, stale-action protection, zod mini input schemas
-  and an optional SQLite audit store.
-- **Pure.** A hand is immutable JSON. `act(hand, action)` returns the next
-  hand plus the events it produced, or a typed violation. Nothing reads a
-  clock or a random source you did not pass in.
+  redacted per-player views and stale-action protection: pass the `version`
+  a player saw as `act(hand, action, { expectedVersion })`, and a double
+  click or a late tab gets a `stale_version` violation instead of acting for
+  the next player.
+- **Pure.** A hand is deeply frozen plain data. `act(hand, action)` returns
+  the next hand plus the events it produced, or a typed violation. Nothing
+  reads a clock or a random source you did not pass in.
 - **Honest about money.** Amounts are integers in your smallest unit, side
   pots and all-ins are explicit, and hand-history stacks of unknown size are
   an explicit `unbounded` value.
-- **Auditable.** Every transition emits events; every hand and session ends in
-  one wide record; rejected attempts are kept.
+- **Auditable.** Every transition emits events, and every hand ends in one
+  wide record.
 - **Hand histories.** Reads and writes PHH, and exports ACPC and Pluribus logs.
 
 ## Parity with pokerkit

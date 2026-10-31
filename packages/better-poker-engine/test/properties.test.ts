@@ -40,6 +40,16 @@ function transitions(walk: Walk): Transition[] {
   ];
 }
 
+function deeplyFrozen<T extends {}>(value: T): boolean {
+  if (Object(value) !== value) return true;
+  return (
+    Object.isFrozen(value) &&
+    Object.values(value).every(
+      (child) => child === null || child === undefined || deeplyFrozen(child)
+    )
+  );
+}
+
 function acceptedActions(walk: Walk): Action[] {
   return walk.steps.flatMap((step) => (step.result.ok ? [step.action] : []));
 }
@@ -101,6 +111,15 @@ describe("random hands", () => {
       )
     );
     expect(changed).toEqual([]);
+  });
+
+  test("come out deeply frozen from every transition", () => {
+    const unfrozen = walks.flatMap((walk) =>
+      transitions(walk).flatMap(({ hand }, index) =>
+        deeplyFrozen(hand) ? [] : [{ seed: walk.seed, index }]
+      )
+    );
+    expect(unfrozen).toEqual([]);
   });
 
   test("act the same on a hand that went through JSON", () => {

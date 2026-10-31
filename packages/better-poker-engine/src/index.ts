@@ -47,6 +47,7 @@ export {
   startHand,
   summarizeHand,
   type Action,
+  type ActOptions,
   type AutomatedStep,
   type Automation,
   type CheckOrCall,

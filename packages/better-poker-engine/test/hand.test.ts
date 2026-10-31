@@ -21,6 +21,7 @@ import {
   type Game,
   type Street,
 } from "../src/rules.ts";
+import { stateOf } from "../src/hand/state.ts";
 import { viewHand } from "../src/views.ts";
 import {
   accept,
@@ -220,6 +221,35 @@ describe("act", () => {
       player: "p2",
       needless: false,
     });
+  });
+
+  test("refuses an action decided against an earlier version of the hand", () => {
+    const hand = start(noLimit, [100, 100, 100], automation.all);
+    const seen = spectator(hand).version;
+    const called = act(hand, { type: "checkOrCall" });
+    if (!called.ok) throw new Error(called.error.code);
+    const next = called.value.hand;
+    expect(
+      act(next, { type: "checkOrCall" }, { expectedVersion: seen })
+    ).toEqual({
+      ok: false,
+      error: {
+        code: "stale_version",
+        expected: seen,
+        current: spectator(next).version,
+      },
+    });
+    const current = { expectedVersion: spectator(next).version };
+    expect(act(next, { type: "checkOrCall" }, current).ok).toBe(true);
+  });
+
+  test("keeps an earlier hand as it was when a caller writes to it", () => {
+    const hand = start(noLimit, [100, 100, 100], automation.all);
+    const before = auditor(hand);
+    expect(() => {
+      stateOf(hand).stacks[2] = 5;
+    }).toThrow(TypeError);
+    expect(auditor(hand)).toEqual(before);
   });
 
   test("posts for the named player, and refuses one who already posted", () => {

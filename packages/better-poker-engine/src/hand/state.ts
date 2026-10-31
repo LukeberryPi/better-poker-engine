@@ -114,9 +114,19 @@ export function stateOf(hand: Hand): HandState {
   return hand as HandState;
 }
 
+/** Skips frozen objects: everything a hand holds was frozen whole when first reached. */
+function deepFreeze<T extends {}>(value: T): T {
+  if (Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) {
+    if (child !== null && child !== undefined) deepFreeze(child);
+  }
+  return value;
+}
+
 export function handFrom(state: HandState): Hand {
   // SAFETY: HandState carries the optional Hand brand; this grants it.
-  return state as Hand;
+  return deepFreeze(state) as Hand;
 }
 
 function clonePhase(phase: Phase): Phase {
