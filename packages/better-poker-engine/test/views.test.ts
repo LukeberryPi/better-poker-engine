@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import type { HandEvent } from "../src/events.ts";
+import type { HandEvent, HandRecord } from "../src/events.ts";
 import {
   automation,
+  summarizeHand,
   type HoleCard,
   type PlayerId,
   type Transition,
@@ -11,8 +12,10 @@ import { draw, holdem, stud } from "../src/rules.ts";
 import {
   eventsFor,
   viewHand,
+  viewRecord,
   type Audience,
   type HandEventView,
+  type HandRecordView,
   type HandView,
 } from "../src/views.ts";
 import {
@@ -170,9 +173,54 @@ describe("eventsFor", () => {
   });
 });
 
+describe("viewRecord", () => {
+  const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
+  const holeCardsOf = (view: HandRecord): string[][] =>
+    view.players.map((player) => player.holeCards.map((hole) => hole.card));
+
+  function foldedRecord(): HandRecord {
+    const table = drive(start(game, [100, 100, 100], automation.all));
+    play(table, [moves.fold, moves.fold]);
+    const record = summarizeHand(table.hand);
+    if (record === null) throw new Error("The hand is not complete");
+    return record;
+  }
+
+  test("shows each player their own folded cards and nobody else's", () => {
+    const record = foldedRecord();
+    const p2 = holeCardsOf(record)[1] ?? [];
+    expect(
+      holeCardsOf(viewRecord(record, { kind: "player", player: "p2" }))
+    ).toEqual([hidden, p2, hidden]);
+    expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
+      hidden,
+      hidden,
+      hidden,
+    ]);
+    expect<HandRecord>(viewRecord(record, { kind: "auditor" })).toEqual(record);
+    expect(holeCardsOf(record).flat()).not.toContain("??");
+  });
+
+  test("shows hands shown at showdown to everyone, mucked ones to nobody", () => {
+    const fullDeck = cards("AsKsQhJh 2c 3d4c5d 6h 7c 8d 9s");
+    const table = drive(start(game, [100, 100], automation.dealer, fullDeck));
+    play(table, repeat(call, 8));
+    table.act({ type: "show" });
+    table.act({ type: "muck" });
+    const record = summarizeHand(table.hand);
+    if (record === null) throw new Error("The hand is not complete");
+    expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
+      ["As", "Qh"],
+      hidden,
+    ]);
+  });
+});
+
 const knownCard = /"([2-9TJQKA][cdhs?])"/g;
 
-function cardsIn(value: HandView | HandEventView | undefined): string[] {
+function cardsIn(
+  value: HandView | HandEventView | HandRecordView | undefined
+): string[] {
   return [...JSON.stringify(value).matchAll(knownCard)].map(
     ([, card]) => card ?? ""
   );
@@ -243,6 +291,29 @@ describe("random hands", () => {
             .filter(unknown)
             .map((card) => ({ seed: walk.seed, audience, view: true, card })),
         ]);
+      });
+    });
+    expect(leaks).toEqual([]);
+  });
+
+  test("show each audience only cards it may know in the hand's record", () => {
+    const leaks = walks.flatMap((walk) => {
+      const record = summarizeHand(walk.hand);
+      if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
+      const events = transitions(walk).flatMap((step) => step.events);
+      const audiences: Audience[] = [
+        { kind: "spectator" },
+        ...walk.spectated.players.map(({ player }) => ({
+          kind: "player" as const,
+          player,
+        })),
+      ];
+      return audiences.flatMap((audience) => {
+        const known = new Set<string>();
+        for (const event of events) learn(known, audience, event);
+        return cardsIn(viewRecord(record, audience))
+          .filter((card) => !known.has(card))
+          .map((card) => ({ seed: walk.seed, audience, card }));
       });
     });
     expect(leaks).toEqual([]);

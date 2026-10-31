@@ -103,9 +103,11 @@ export type { VariantCode } from "./variants.ts";
 export {
   eventsFor,
   viewHand,
+  viewRecord,
   type Audience,
   type DealerView,
   type HandEventView,
+  type HandRecordView,
   type HandView,
   type PlayerView,
   type Pot,

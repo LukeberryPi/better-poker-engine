@@ -91,6 +91,14 @@ export function potsOf(state: HandState): readonly PotState[] {
   return pots;
 }
 
+/** Call while every player who stayed in through the betting is still active. */
+export function contestPots(state: HandState): void {
+  state.contestedPots ??= potsOf(state).map((pot) => ({
+    amount: pot.raked + pot.unraked,
+    eligible: pot.eligible,
+  }));
+}
+
 export function totalPot(state: HandState): Chips {
   return (
     sum(state.bets) + sum(potsOf(state).map((pot) => pot.raked + pot.unraked))
@@ -115,6 +123,7 @@ function handTypesInPlay(
  * so a side pot with no low goes whole to its high hand, as card rooms rule. */
 export function beginChipsPushing(state: HandState): void {
   state.street = null;
+  contestPots(state);
   const pots = potsOf(state).map((pot) => ({ ...pot }));
   state.pots = pots;
   const subPots: SubPot[] = [];

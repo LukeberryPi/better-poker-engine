@@ -8,6 +8,7 @@ import {
   startHand,
   summarizeHand,
   type Action,
+  type Automation,
   type HandSetup,
 } from "../src/hand.ts";
 import {
@@ -646,6 +647,80 @@ describe("summarizeHand", () => {
       { player: "p2", amount: 200, hand: "One pair (AcAdTsJhKd)" },
     ]);
     expect(winners([fold])).toEqual([{ player: "p1", amount: 1, hand: null }]);
+  });
+
+  describe("pots after a three-way all-in, 50, 100 and 300 deep", () => {
+    const board = "5cJd9c4s6c3h8h2h";
+    const shove = (
+      holes: string,
+      automate: Automation = automation.all,
+      stacks = [50, 100, 300]
+    ) => {
+      const table = drive(
+        start(noLimit, stacks, automate, cards(holes + board))
+      );
+      play(table, [raiseTo(Math.max(...stacks)), call, call]);
+      return table;
+    };
+    const potsOf = (holes: string) => summarizeHand(shove(holes).hand)?.pots;
+    const amounts = (pots: ReturnType<typeof potsOf>) =>
+      pots?.map(({ amount, eligible, winners }) => ({
+        amount,
+        eligible,
+        winners: winners.map(({ player, amount }) => `${player}:${amount}`),
+      }));
+
+    test("keeps main and side pot apart when different players win them", () => {
+      expect(amounts(potsOf("AsKs7cAhKh2d"))).toEqual([
+        { amount: 150, eligible: ["p1", "p2", "p3"], winners: ["p1:150"] },
+        { amount: 100, eligible: ["p2", "p3"], winners: ["p2:100"] },
+      ]);
+    });
+
+    test("keeps main and side pot apart when one player wins both", () => {
+      expect(amounts(potsOf("7cKsAs2dKhAh"))).toEqual([
+        { amount: 150, eligible: ["p1", "p2", "p3"], winners: ["p3:150"] },
+        { amount: 100, eligible: ["p2", "p3"], winners: ["p3:100"] },
+      ]);
+    });
+
+    test("splits a tied pot in each pot it covers, every chip accounted for", () => {
+      const table = drive(
+        start(
+          noLimit,
+          [51, 100, 100],
+          automation.all,
+          cards("7cTdTc8d3h4h 5cAsKsQs 6cJs 9h2h")
+        )
+      );
+      play(table, [raiseTo(100), call, call]);
+      expect(amounts(summarizeHand(table.hand)?.pots)).toEqual([
+        {
+          amount: 153,
+          eligible: ["p1", "p2", "p3"],
+          winners: ["p2:77", "p3:76"],
+        },
+        { amount: 98, eligible: ["p2", "p3"], winners: ["p2:49", "p3:49"] },
+      ]);
+      expect(stacks(table.hand)).toEqual([0, 126, 125]);
+    });
+
+    test("leaves a loser eligible whether they show or muck", () => {
+      const record = (last: "show" | "muck") => {
+        const table = shove("7cKsAs2dKhAh", automation.dealer);
+        for (;;) {
+          const { decision } = spectator(table.hand);
+          if (decision.kind !== "showdown") break;
+          table.act({ type: decision.player === "p3" ? "show" : last });
+        }
+        return summarizeHand(table.hand)?.pots.map((pot) => pot.eligible);
+      };
+      expect(record("show")).toEqual([
+        ["p1", "p2", "p3"],
+        ["p2", "p3"],
+      ]);
+      expect(record("muck")).toEqual(record("show"));
+    });
   });
 });
 

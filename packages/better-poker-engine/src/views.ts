@@ -1,7 +1,7 @@
 import type { Card, Deck } from "./cards.ts";
 import type { Chips, Stack } from "./chips.ts";
 import type { HandValue } from "./evaluation.ts";
-import type { Cause, EventBody, HandEvent } from "./events.ts";
+import type { Cause, EventBody, HandEvent, HandRecord } from "./events.ts";
 import type { Decision, Hand, HoleCard, PlayerId } from "./hand.ts";
 import { effectiveStack } from "./hand/betting.ts";
 import { decisionOf, potView } from "./hand/flow.ts";
@@ -173,6 +173,24 @@ function redactCause(cause: Cause, body: EventBody): Cause {
     default:
       return cause;
   }
+}
+
+/** Same structure as a raw record, so only the brand tells a redacted one apart. */
+export type HandRecordView = HandRecord & Redacted;
+
+/** Hole cards nobody showed read "??", except to their owner and to auditors. */
+export function viewRecord(
+  record: HandRecord,
+  audience: Audience
+): HandRecordView {
+  const players = record.players.map((player) =>
+    seesHoleCards(audience, player.player)
+      ? player
+      : { ...player, holeCards: hidden(player.holeCards) }
+  );
+  const view: HandRecord = { ...record, players };
+  // SAFETY: winners' hands come from face-up cards only, and players' hidden ones read "??".
+  return view as HandRecordView;
 }
 
 /** Replaces cards the audience may not see with "??". */

@@ -16,6 +16,12 @@ export type PotState = {
   readonly eligible: readonly Position[];
 };
 
+/** A pot as it stood when betting closed for good, before anyone showed or mucked. */
+export type ContestedPot = {
+  readonly amount: Chips;
+  readonly eligible: readonly Position[];
+};
+
 export type SubPot = {
   readonly amount: Chips;
   readonly pot: number;
@@ -106,6 +112,8 @@ export type HandState = Brandable<"Hand"> & {
   runoutCountSelected: boolean;
   /** Frozen once chips pushing begins. */
   pots: PotState[] | null;
+  /** Mucks can merge `pots`, as in pokerkit; the record reports these instead. */
+  contestedPots: readonly ContestedPot[] | null;
   phase: Phase;
   events: readonly HandEvent[];
 };

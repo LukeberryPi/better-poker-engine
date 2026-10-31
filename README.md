@@ -37,7 +37,9 @@ test suite.
   pots and all-ins are explicit, and hand-history stacks of unknown size are
   an explicit `unbounded` value.
 - **Auditable.** Every transition emits events, and every hand ends in one
-  wide record.
+  wide record: `summarizeHand(hand)`, with a record per pot of what it held,
+  who could win it and who did. That record holds every hole card; give
+  history screens `viewRecord(record, audience)` instead.
 - **Hand histories.** Reads and writes PHH, and exports ACPC and Pluribus logs.
 
 ## Parity with pokerkit

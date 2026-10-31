@@ -154,6 +154,7 @@ export function initialState(setup: HandSetup): HandState {
     runoutCount: null,
     runoutCountSelected: false,
     pots: null,
+    contestedPots: null,
     phase: { kind: "complete" },
     events: [],
   };
