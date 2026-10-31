@@ -11,10 +11,31 @@
     "url": "git+https://github.com/LukeberryPi/better-poker-engine.git",
     "directory": "packages/better-poker-engine"
   },
+  "files": [
+    "dist",
+    "src",
+    "NOTICE"
+  ],
   "exports": {
-    ".": "./src/index.ts",
-    "./analysis": "./src/analysis.ts",
-    "./phh": "./src/phh.ts"
+    ".": {
+      "@better-poker-engine/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./analysis": {
+      "@better-poker-engine/source": "./src/analysis.ts",
+      "types": "./dist/analysis.d.ts",
+      "default": "./dist/analysis.js"
+    },
+    "./phh": {
+      "@better-poker-engine/source": "./src/phh.ts",
+      "types": "./dist/phh.d.ts",
+      "default": "./dist/phh.js"
+    }
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "prepack": "bun run build && cp ../../README.md ../../LICENSE ../../NOTICE ."
   },
   "dependencies": {
     "smol-toml": "1.9.1",

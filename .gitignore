@@ -4,3 +4,7 @@ coverage
 *.log
 .DS_Store
 parity/.results
+*.tgz
+packages/better-poker-engine/LICENSE
+packages/better-poker-engine/NOTICE
+packages/better-poker-engine/README.md
