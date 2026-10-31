@@ -124,7 +124,7 @@ export function stateOf(hand: Hand): HandState {
 }
 
 /** Skips frozen objects: everything a hand holds was frozen whole when first reached. */
-function deepFreeze<T extends {}>(value: T): T {
+export function deepFreeze<T extends {}>(value: T): T {
   if (Object.isFrozen(value)) return value;
   Object.freeze(value);
   for (const child of Object.values(value)) {

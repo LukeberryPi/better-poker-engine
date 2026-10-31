@@ -67,8 +67,40 @@ export {
 } from "./hand.ts";
 export type { HandCategory } from "./lookups.ts";
 export { seededRandom, secureRandom, type RandomSource } from "./random.ts";
-export { actionSchema, playerActionSchema } from "./schemas.ts";
-export { parseHand, serializeHand, type HandParseError } from "./storage.ts";
+export {
+  actionSchema,
+  playerActionSchema,
+  tableCommandSchema,
+} from "./schemas.ts";
+export {
+  parseHand,
+  parseTable,
+  serializeHand,
+  serializeTable,
+  type HandParseError,
+  type TableParseError,
+} from "./storage.ts";
+export {
+  actAtTable,
+  createTable,
+  summarizeSession,
+  tableEventsFor,
+  viewTable,
+  type SeatView,
+  type SessionPlayer,
+  type SessionRecord,
+  type Table,
+  type TableCommand,
+  type TableEvent,
+  type TableEventBody,
+  type TableEventView,
+  type TableRejection,
+  type TableSetup,
+  type TableSetupError,
+  type TableTransition,
+  type TableView,
+  type TableViolation,
+} from "./table.ts";
 export { err, ok, type Result } from "./result.ts";
 export {
   draw,

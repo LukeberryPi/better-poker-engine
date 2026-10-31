@@ -11,6 +11,7 @@ import {
   type PlayerAction,
 } from "./hand.ts";
 import type { BettingStructure, Face, Game, Mode, Opening } from "./rules.ts";
+import type { TableCommand, TableSetup } from "./table.ts";
 import { variantCodes } from "./variants.ts";
 
 function keysOf<Key extends string, Value>(
@@ -150,6 +151,22 @@ export const handSetupSchema = object({
   deck: cards,
   automate: list(automatedStep),
 }) satisfies z.ZodMiniType<HandSetup>;
+
+export const tableSetupSchema = object({
+  game: gameSchema,
+  seats: z.number(),
+}) satisfies z.ZodMiniType<TableSetup>;
+
+export const tableCommandSchema = z.discriminatedUnion("type", [
+  action("join", { player: playerId, seat: z.number(), stack: chips }),
+  action("leave", { player: playerId }),
+  action("startHand", { deck: cards }),
+  action("act", {
+    player: playerId,
+    expectedVersion: z.number(),
+    action: playerActionSchema,
+  }),
+]) satisfies z.ZodMiniType<TableCommand>;
 
 const holeCard = object({ card, face });
 const playerAmount = object({ player: playerId, amount: chips });

@@ -9,7 +9,20 @@ import {
 } from "./hand.ts";
 import { stateOf } from "./hand/state.ts";
 import { err, ok, type Result } from "./result.ts";
-import { handEventSchema, handSetupSchema } from "./schemas.ts";
+import {
+  handEventSchema,
+  handSetupSchema,
+  tableCommandSchema,
+  tableSetupSchema,
+} from "./schemas.ts";
+import {
+  actAtTable,
+  createTable,
+  tableStateOf,
+  type Table,
+  type TableSetupError,
+  type TableViolation,
+} from "./table.ts";
 
 const storedHandSchema = z.object({
   format: z.literal(1),
@@ -36,14 +49,17 @@ export function serializeHand(hand: Hand): string {
   return JSON.stringify(stored);
 }
 
-export type HandParseError =
+type FormatError =
   | { readonly code: "invalid_json" }
   /** `path` locates the first field that does not parse, e.g. `events.3.body`. */
   | {
       readonly code: "invalid_format";
       readonly path: string;
       readonly message: string;
-    }
+    };
+
+export type HandParseError =
+  | FormatError
   | { readonly code: "setup"; readonly error: SetupError }
   | {
       readonly code: "rejected";
@@ -55,14 +71,17 @@ export type HandParseError =
   /** The setup parsed but the engine threw playing it, e.g. on 2³² boards. */
   | { readonly code: "unplayable"; readonly cause: unknown };
 
-function parseJson(text: string): Result<StoredHand, HandParseError> {
+function parseJson<Stored>(
+  schema: z.ZodMiniType<Stored>,
+  text: string
+): Result<Stored, FormatError> {
   let json: z.core.util.JSONType;
   try {
     json = JSON.parse(text);
   } catch {
     return err({ code: "invalid_json" });
   }
-  const parsed = storedHandSchema.safeParse(json);
+  const parsed = schema.safeParse(json);
   if (parsed.success) return ok(parsed.data);
   const [issue] = parsed.error.issues;
   return err({
@@ -74,7 +93,7 @@ function parseJson(text: string): Result<StoredHand, HandParseError> {
 
 /** Rebuilds the hand by replaying its actions, so it holds only what the engine produced. */
 export function parseHand(text: string): Result<Hand, HandParseError> {
-  const stored = parseJson(text);
+  const stored = parseJson(storedHandSchema, text);
   if (!stored.ok) return stored;
   try {
     return replay(stored.value);
@@ -106,4 +125,56 @@ function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
     if (!same) return err({ code: "mismatch", seq: index + 1 });
   }
   return ok(hand);
+}
+
+const storedTableSchema = z.object({
+  format: z.literal(1),
+  setup: tableSetupSchema,
+  commands: z.readonly(z.array(tableCommandSchema)),
+});
+
+type StoredTable = z.output<typeof storedTableSchema>;
+
+/** Auditor data: every deck the table dealt. Never send it to a client. */
+export function serializeTable(table: Table): string {
+  const { setup, commands } = tableStateOf(table);
+  return JSON.stringify({ format: 1, setup, commands } satisfies StoredTable);
+}
+
+export type TableParseError =
+  | FormatError
+  | { readonly code: "setup"; readonly error: TableSetupError }
+  | {
+      readonly code: "rejected";
+      readonly index: number;
+      readonly violation: TableViolation;
+    }
+  | { readonly code: "unplayable"; readonly cause: unknown };
+
+/** Rebuilds the table by replaying its commands; the same limits as `parseHand` apply. */
+export function parseTable(text: string): Result<Table, TableParseError> {
+  const stored = parseJson(storedTableSchema, text);
+  if (!stored.ok) return stored;
+  try {
+    return replayTable(stored.value);
+  } catch (cause) {
+    return err({ code: "unplayable", cause });
+  }
+}
+
+function replayTable({
+  setup,
+  commands,
+}: StoredTable): Result<Table, TableParseError> {
+  const created = createTable(setup);
+  if (!created.ok) return err({ code: "setup", error: created.error });
+  let table = created.value;
+  for (const [index, command] of commands.entries()) {
+    const next = actAtTable(table, command);
+    if (!next.ok) {
+      return err({ code: "rejected", index, violation: next.error.violation });
+    }
+    table = next.value.table;
+  }
+  return ok(table);
 }

@@ -19,6 +19,19 @@ test suite.
   before it reaches `act`: it refuses dealer steps such as `dealBoard`, so a
   client can never pick the cards. `actionSchema` adds the dealer steps, for
   trusted input only.
+- **Tables for play.** `createTable`, `actAtTable`, `viewTable` and
+  `summarizeSession` run a session of hands: seats map to positions, the
+  button moves to the next seat dealt in (heads-up, it posts the small
+  blind), stacks carry over, and players join any time and leave whenever
+  they hold no cards. `actAtTable` is the one write. Its `act` command takes
+  the player your server authenticated and the table `version` they saw, and
+  a rejection comes back with the attempt so you can store it. Each hand
+  deals a whole shuffled deck you pass in, and automates every step except
+  betting and drawing, so voluntary shows, mucks and run-it-twice are
+  refused. `serializeTable` and `parseTable` store a table as its command
+  log, under the same rules as hands; `tableEventsFor` redacts its events.
+  Not supported: sitting out, missed or dead blinds, top-ups and tournament
+  levels.
 - **Pure.** A hand is deeply frozen plain data. `act(hand, action)` returns
   the next hand plus the events it produced, or a typed violation. Nothing
   reads a clock or a random source you did not pass in.
