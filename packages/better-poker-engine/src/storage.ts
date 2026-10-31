@@ -51,7 +51,9 @@ export type HandParseError =
       readonly violation: Violation;
     }
   /** Replaying the actions did not give the stored event with this `seq`. */
-  | { readonly code: "mismatch"; readonly seq: number };
+  | { readonly code: "mismatch"; readonly seq: number }
+  /** The setup parsed but the engine threw playing it, e.g. on 2³² boards. */
+  | { readonly code: "unplayable"; readonly cause: unknown };
 
 function parseJson(text: string): Result<StoredHand, HandParseError> {
   let json: z.core.util.JSONType;
@@ -74,7 +76,14 @@ function parseJson(text: string): Result<StoredHand, HandParseError> {
 export function parseHand(text: string): Result<Hand, HandParseError> {
   const stored = parseJson(text);
   if (!stored.ok) return stored;
-  const { setup, events } = stored.value;
+  try {
+    return replay(stored.value);
+  } catch (cause) {
+    return err({ code: "unplayable", cause });
+  }
+}
+
+function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
   const started = startHand(setup);
   if (!started.ok) return err({ code: "setup", error: started.error });
   let { hand } = started.value;

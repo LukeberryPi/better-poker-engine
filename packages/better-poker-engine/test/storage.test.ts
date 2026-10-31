@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { decks, shuffle } from "../src/cards.ts";
 import { act, automation, type Hand } from "../src/hand.ts";
 import { seededRandom } from "../src/random.ts";
-import { holdem } from "../src/rules.ts";
+import { holdem, kuhn } from "../src/rules.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
 import { auditor, start } from "./driver.ts";
 import { randomWalk } from "./random-hands.ts";
@@ -16,7 +16,11 @@ function threeHanded(): Hand {
 }
 
 type Stored = {
-  setup: { stacks: number[]; deck: string[]; game: { rules?: object } };
+  setup: {
+    stacks: number[];
+    deck: string[];
+    game: { rules?: object; boards: number };
+  };
   events: { body: { type: string; player?: string; cards?: object[] } }[];
 };
 
@@ -111,6 +115,18 @@ describe("serializeHand and parseHand", () => {
     expect(parseHand(text)).toMatchObject({
       ok: false,
       error: { code: "invalid_format", path: "setup.game.rules" },
+    });
+  });
+
+  test("return an error for a setup the engine cannot play", () => {
+    const kuhnHand = start(kuhn.fixedLimit(), [2, 2], automation.all);
+    const text = tampered(kuhnHand, (data) => {
+      data.setup.game.boards = 2 ** 32;
+      data.events = [];
+    });
+    expect(parseHand(text)).toMatchObject({
+      ok: false,
+      error: { code: "unplayable" },
     });
   });
 
