@@ -10,10 +10,10 @@ Stacked PRs are fine: base the branch on the one it builds on.
 
 Implementation plans, design specs, task checklists and any other
 agent-workflow artifact must not be written into the repository. Plan in the
-conversation or in a scratch file outside the worktree. Two files are exempt
-and stay committed: `adrs.md` (decisions that outlive the change that made
-them) and `human-steps.md` (what only a person can do). Everything else about
-_how_ a change was made belongs in the PR description.
+conversation or in a scratch file outside the worktree. One file is exempt
+and stays committed: `adrs.md` (decisions that outlive the change that made
+them). Everything else about _how_ a change was made belongs in the PR
+description.
 
 ## No Python anywhere
 
