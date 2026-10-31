@@ -1,0 +1,13 @@
+{
+  "name": "@better-poker-engine/multiplayer-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun --conditions=@better-poker-engine/source src/server.ts"
+  },
+  "dependencies": {
+    "better-poker-engine": "workspace:*",
+    "hono": "4.13.14",
+    "zod": "4.6.7"
+  }
+}

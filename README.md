@@ -11,11 +11,12 @@ test suite.
 ## What it is
 
 - **A library, not a server.** One package that runs in browsers, Node, Bun,
-  Deno and Workers. Multiplayer servers stay small: the package gives them
-  redacted per-player views and stale-action protection: pass the `version`
-  a player saw as `act(hand, action, { expectedVersion })`, and a double
-  click or a late tab gets a `stale_version` violation instead of acting for
-  the next player. Parse client JSON with the zod mini `playerActionSchema`
+  Deno and Workers. It never runs your server, but keeps it small:
+  [`examples/multiplayer`](examples/multiplayer) is a Hono server built on
+  the tables and SQLite store below. For a single hand, pass the `version` a
+  player saw as `act(hand, action, { expectedVersion })`, and a double click
+  or a late tab gets a `stale_version` violation instead of acting for the
+  next player. Parse client JSON with the zod mini `playerActionSchema`
   before it reaches `act`: it refuses dealer steps such as `dealBoard`, so a
   client can never pick the cards. `actionSchema` adds the dealer steps, for
   trusted input only.
@@ -40,7 +41,7 @@ test suite.
   move started from, so two servers acting on one table cannot both land;
   the loser gets `conflict` and retries from a fresh load. Rows read back
   are parsed with zod mini.
-- **Pure.** A hand is deeply frozen plain data. `act(hand, action)` returns
+- **Pure.** Hands and tables are deeply frozen plain data. `act(hand, action)` returns
   the next hand plus the events it produced, or a typed violation. Nothing
   reads a clock or a random source you did not pass in.
 - **Safe to store.** `serializeHand(hand)` and `parseHand(text)` are the only
@@ -51,9 +52,9 @@ test suite.
   edited stack or dealt card is refused. An edit the events never contradict,
   such as an undealt card, still loads: sign the text if you need tamper
   evidence. A hand loads only in an engine that replays it the same way, so
-  keep the version that stored it. A stored hand is
-  auditor data, with the whole deck and every hole card: never send it to a
-  client. Clients get `viewHand` and `eventsFor`.
+  keep the version that stored it. A stored hand is auditor data, with the
+  whole deck and every hole card: never send it to a client. Clients get
+  `viewHand` and `eventsFor`.
 - **Honest about money.** Amounts are integers in your smallest unit, side
   pots and all-ins are explicit, and hand-history stacks of unknown size are
   an explicit `unbounded` value.
@@ -76,6 +77,7 @@ cards. Python error text is not compared.
 ```sh
 bun install
 bun run check   # format, lint, typecheck, tests, parity report
+cd examples/multiplayer && bun run start   # the Hono example; PORT defaults to 3000
 ```
 
 Decisions live in [`adrs.md`](adrs.md); house rules for contributors and
