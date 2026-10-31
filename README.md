@@ -13,7 +13,8 @@ test suite.
 - **A library, not a server.** One package that runs in browsers, Node, Bun,
   Deno and Workers. It never runs your server, but keeps it small:
   [`examples/multiplayer`](examples/multiplayer) is a Hono server built on
-  the tables and SQLite store below. For a single hand, pass the `version` a
+  the tables and SQLite store below. Its `x-player` header stands in for
+  authentication; real auth, websockets and rate limits are yours to add. For a single hand, pass the `version` a
   player saw as `act(hand, action, { expectedVersion })`, and a double click
   or a late tab gets a `stale_version` violation instead of acting for the
   next player. Parse client JSON with the zod mini `playerActionSchema`
