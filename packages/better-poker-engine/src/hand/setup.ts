@@ -134,6 +134,7 @@ export function initialState(setup: HandSetup): HandState {
     blinds: perPosition(game.forcedBets.blinds.entries(), count),
     startingStacks: [...setup.stacks],
     version: 0,
+    startingDeck: [...setup.deck],
     deck: [...setup.deck],
     reshuffleSeed: seedFrom(setup.deck.join(" ")),
     boards: [],

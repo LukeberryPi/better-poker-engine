@@ -22,6 +22,13 @@ test suite.
 - **Pure.** A hand is deeply frozen plain data. `act(hand, action)` returns
   the next hand plus the events it produced, or a typed violation. Nothing
   reads a clock or a random source you did not pass in.
+- **Safe to store.** `serializeHand(hand)` and `parseHand(text)` are the only
+  supported way to store a hand. The text is the setup plus the event log;
+  `parseHand` replays it and returns a typed error unless the replay gives
+  back exactly the stored events, so an edited stack, card or action is
+  refused and every loaded hand is one the engine played. A stored hand is
+  auditor data, with the whole deck and every hole card: never send it to a
+  client. Clients get `viewHand` and `eventsFor`.
 - **Honest about money.** Amounts are integers in your smallest unit, side
   pots and all-ins are explicit, and hand-history stacks of unknown size are
   an explicit `unbounded` value.

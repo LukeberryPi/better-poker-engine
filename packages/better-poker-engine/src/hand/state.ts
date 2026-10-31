@@ -1,5 +1,5 @@
 import type { Brandable } from "../brand.ts";
-import { isKnownCard, type Card, type KnownCard } from "../cards.ts";
+import { isKnownCard, type Card, type Deck, type KnownCard } from "../cards.ts";
 import type { Chips, Stack } from "../chips.ts";
 import { evaluate, type HandValue } from "../evaluation.ts";
 import type { HandEvent } from "../events.ts";
@@ -81,6 +81,7 @@ export type HandState = Brandable<"Hand"> & {
   readonly blinds: readonly number[];
   readonly startingStacks: readonly Stack[];
   version: number;
+  readonly startingDeck: Deck;
   deck: Card[];
   /** Hashed from the starting deck, so players can't predict a reshuffle. */
   readonly reshuffleSeed: Seed;
