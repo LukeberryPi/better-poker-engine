@@ -67,6 +67,7 @@ export {
 } from "./hand.ts";
 export type { HandCategory } from "./lookups.ts";
 export { seededRandom, secureRandom, type RandomSource } from "./random.ts";
+export { actionSchema, playerActionSchema } from "./schemas.ts";
 export { err, ok, type Result } from "./result.ts";
 export {
   draw,

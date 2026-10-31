@@ -15,7 +15,10 @@ test suite.
   redacted per-player views and stale-action protection: pass the `version`
   a player saw as `act(hand, action, { expectedVersion })`, and a double
   click or a late tab gets a `stale_version` violation instead of acting for
-  the next player.
+  the next player. Parse client JSON with the zod mini `playerActionSchema`
+  before it reaches `act`: it refuses dealer steps such as `dealBoard`, so a
+  client can never pick the cards. `actionSchema` adds the dealer steps, for
+  trusted input only.
 - **Pure.** A hand is deeply frozen plain data. `act(hand, action)` returns
   the next hand plus the events it produced, or a typed violation. Nothing
   reads a clock or a random source you did not pass in.
