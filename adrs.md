@@ -7,7 +7,8 @@ Agreed with the project owner. Do not re-litigate without real friction.
    in `examples/multiplayer`.
 2. **One npm package, `better-poker-engine`,** with subpath exports: the core,
    `/phh`, `/analysis`, `/sqlite`. Importing the core never loads TOML, SQL or
-   analysis code. Unscoped name, MIT, published once parity is green.
+   analysis code. Unscoped name, MIT. Releases do not wait for full parity,
+   but every file in `parity/required.ts` must be green to release.
 3. **Runtimes:** pure ESM, no Bun-only APIs in the package. Bun is the dev
    loop, test runner and build tool.
 4. **Money:** integer amounts in the table's smallest unit. Decimals exist only

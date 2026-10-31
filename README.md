@@ -5,8 +5,8 @@ A type-safe, immutable poker engine for TypeScript. It is a rewrite of
 UIs, servers, hand-history tools and bots, and it is held to pokerkit's own
 test suite.
 
-> **Status: under construction.** Nothing is published yet. The package ships
-> to npm once every pokerkit test passes.
+> **Status: early.** Released before full parity with pokerkit; porting its
+> remaining tests is in progress.
 
 ## What it is
 
