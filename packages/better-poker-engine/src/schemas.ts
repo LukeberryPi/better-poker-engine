@@ -2,7 +2,7 @@ import * as z from "zod/mini";
 
 import { allCards, decks } from "./cards.ts";
 import { handRules } from "./evaluation.ts";
-import type { HandEvent } from "./events.ts";
+import type { HandEvent, HandRecord } from "./events.ts";
 import {
   automation,
   type Action,
@@ -11,7 +11,7 @@ import {
   type PlayerAction,
 } from "./hand.ts";
 import type { BettingStructure, Face, Game, Mode, Opening } from "./rules.ts";
-import type { TableCommand, TableSetup } from "./table.ts";
+import type { TableCommand, TableEvent, TableSetup } from "./table.ts";
 import { variantCodes } from "./variants.ts";
 
 function keysOf<Key extends string, Value>(
@@ -240,3 +240,58 @@ export const handEventSchema = object({
   }),
   commentary: z.nullable(z.string()),
 }) satisfies z.ZodMiniType<HandEvent>;
+
+export const handRecordSchema = object({
+  engineVersion: z.string(),
+  variant: z.enum([...variantCodes, "custom"]),
+  mode: z.enum(keysOf(modes)),
+  players: list(
+    object({
+      player: playerId,
+      position: z.number(),
+      startingStack: stack,
+      endingStack: stack,
+      net: z.number(),
+      holeCards: list(holeCard),
+      foldedOnStreet: z.nullable(z.number()),
+      allInOnStreet: z.nullable(z.number()),
+    })
+  ),
+  boards: list(cards),
+  pots: list(
+    object({
+      amount: chips,
+      raked: chips,
+      eligible: list(playerId),
+      winners: list(
+        object({
+          player: playerId,
+          amount: chips,
+          hand: z.nullable(z.string()),
+        })
+      ),
+    })
+  ),
+  rake: chips,
+  unclaimed: chips,
+  runouts: z.number(),
+  streetsReached: z.number(),
+  actions: z.number(),
+  wentToShowdown: z.boolean(),
+}) satisfies z.ZodMiniType<HandRecord>;
+
+export const tableEventSchema = object({
+  seq: z.number(),
+  version: z.number(),
+  body: z.discriminatedUnion("type", [
+    body("joined", { player: playerId, seat: z.number(), stack: chips }),
+    body("left", { player: playerId, seat: z.number(), stack: chips }),
+    body("handStarted", {
+      hand: z.number(),
+      button: z.number(),
+      seats: list(z.number()),
+    }),
+    body("handEvent", { hand: z.number(), event: handEventSchema }),
+    body("handEnded", { hand: z.number(), record: handRecordSchema }),
+  ]),
+}) satisfies z.ZodMiniType<TableEvent>;

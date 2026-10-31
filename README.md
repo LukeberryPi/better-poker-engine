@@ -32,6 +32,14 @@ test suite.
   log, under the same rules as hands; `tableEventsFor` redacts its events.
   Not supported: sitting out, missed or dead blinds, top-ups and tournament
   levels.
+- **An optional SQLite store.** `better-poker-engine/sqlite` keeps tables,
+  their events, hand records and rejected attempts over any SQLite driver
+  you wrap in two functions: `batch`, which runs statements in one
+  transaction and resolves to the rows each changed, and `all`.
+  `saveTransition` writes only if the stored table is still the version the
+  move started from, so two servers acting on one table cannot both land;
+  the loser gets `conflict` and retries from a fresh load. Rows read back
+  are parsed with zod mini.
 - **Pure.** A hand is deeply frozen plain data. `act(hand, action)` returns
   the next hand plus the events it produced, or a typed violation. Nothing
   reads a clock or a random source you did not pass in.

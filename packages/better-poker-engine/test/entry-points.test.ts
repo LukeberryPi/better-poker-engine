@@ -13,12 +13,19 @@ async function bundledModules(entry: string): Promise<readonly string[]> {
   return Object.keys(result.metafile.inputs);
 }
 
-test("the core entry point loads no TOML or PHH code (adrs.md 2)", async () => {
+test("the core entry point loads no TOML, PHH or SQL code (adrs.md 2)", async () => {
   const modules = await bundledModules(
     manifest.exports["."]["@better-poker-engine/source"]
   );
   expect(modules.some((path) => path.endsWith("src/cards.ts"))).toBe(true);
-  expect(modules.filter((path) => /toml|phh/iu.test(path))).toEqual([]);
+  expect(modules.filter((path) => /toml|phh|sqlite/iu.test(path))).toEqual([]);
+});
+
+test("the /sqlite entry point loads the store", async () => {
+  const modules = await bundledModules(
+    manifest.exports["./sqlite"]["@better-poker-engine/source"]
+  );
+  expect(modules.some((path) => path.endsWith("src/sqlite.ts"))).toBe(true);
 });
 
 test("the /phh entry point loads smol-toml and zod", async () => {
