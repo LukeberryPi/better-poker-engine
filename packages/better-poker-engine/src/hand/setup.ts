@@ -101,7 +101,7 @@ function copyStreet(street: Street): Street {
 }
 
 /** A private copy, so later edits to the caller's objects never reach the hand. */
-function copyGame(game: Game): Game {
+export function copyGame(game: Game): Game {
   const { rules, forcedBets, rake } = game;
   const [first, ...rest] = rules.streets;
   const [handType, ...handTypes] = rules.handTypes;

@@ -13,6 +13,7 @@ import {
   type SetupError,
   type Violation,
 } from "./hand.ts";
+import { copyGame } from "./hand/setup.ts";
 import { at, deepFreeze } from "./hand/state.ts";
 import { err, ok, type Result } from "./result.ts";
 import { validateGame, type Game, type GameError } from "./rules.ts";
@@ -187,7 +188,7 @@ export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
   }
   return ok(
     tableFrom({
-      setup,
+      setup: { game: copyGame(setup.game), seats: setup.seats },
       version: 0,
       eventCount: 0,
       seats: Array.from({ length: setup.seats }, () => null),
@@ -225,9 +226,34 @@ export function actAtTable(
     ...change.value.state,
     version,
     eventCount: state.eventCount + events.length,
-    commands: [...state.commands, change.value.command],
+    commands: [...state.commands, copyCommand(change.value.command)],
   };
   return ok({ table: tableFrom(next), events });
+}
+
+function copyAction(action: PlayerAction): PlayerAction {
+  switch (action.type) {
+    case "draw":
+      return { ...action, discard: [...action.discard] };
+    case "show":
+      return action.cards === undefined
+        ? { ...action }
+        : { ...action, cards: [...action.cards] };
+    default:
+      return { ...action };
+  }
+}
+
+/** A private copy, so later edits to the caller's command never reach the table. */
+function copyCommand(command: TableCommand): TableCommand {
+  switch (command.type) {
+    case "startHand":
+      return { ...command, deck: [...command.deck] };
+    case "act":
+      return { ...command, action: copyAction(command.action) };
+    default:
+      return { ...command };
+  }
 }
 
 function applyCommand(

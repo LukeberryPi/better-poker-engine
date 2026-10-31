@@ -357,6 +357,30 @@ describe("a table", () => {
     ]);
   });
 
+  test("keeps none of the caller's objects, frozen or not", () => {
+    const setup = {
+      game: holdem.noLimit({ blinds: [1, 2], minBet: 2 }),
+      seats: 6,
+    };
+    const deck = [...shuffle(decks.standard, seededRandom(10))];
+    const start = Object.freeze({ type: "startHand", deck } as const);
+    const table = run(
+      joinAll([
+        ["a", 0, 100],
+        ["b", 1, 100],
+      ]),
+      [start]
+    ).table;
+    const created = okValue(createTable(setup));
+    const text = serializeTable(table);
+    deck.reverse();
+    expect(Object.isFrozen(setup.game)).toBe(false);
+    expect(Object.isFrozen(deck)).toBe(false);
+    expect(serializeTable(table)).toBe(text);
+    expect(parseTable(text).ok).toBe(true);
+    expect(viewTable(created, auditor).game).toEqual(setup.game);
+  });
+
   test("keeps an earlier table as it was when a caller writes to it", () => {
     const state = tableStateOf(threeSeated);
     expect(() => {
