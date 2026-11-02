@@ -645,25 +645,65 @@ describe("serializeTable and parseTable", () => {
     [{ type: "startHand", deck: shuffle(decks.standard, seededRandom(9)) }]
   ).table;
 
+  test("keep only the running hand's commands, however long the table has run", () => {
+    let current = joinAll([
+      ["a", 0, 100],
+      ["b", 1, 100],
+      ["c", 2, 100],
+    ]);
+    const random = seededRandom(11);
+    for (let hand = 0; hand < 30; hand += 1) {
+      current = run(current, [
+        { type: "startHand", deck: shuffle(decks.standard, random) },
+      ]).table;
+      while (viewTable(current, auditor).hand !== null) {
+        const decision = viewTable(current, auditor).hand?.decision;
+        if (decision?.kind !== "betting") throw new Error("Not betting");
+        current = run(current, [
+          actAs(current, decision.player, { type: "checkOrCall" }),
+        ]).table;
+      }
+    }
+    expect(JSON.parse(serializeTable(current)).commands).toEqual([]);
+    const sinceStart: TableCommand[] = [
+      { type: "startHand", deck: shuffle(decks.standard, random) },
+      { type: "join", player: "d", seat: 3, stack: 50 },
+    ];
+    current = run(current, sinceStart).table;
+    const decision = viewTable(current, auditor).hand?.decision;
+    if (decision?.kind !== "betting") throw new Error("Not betting");
+    const call = actAs(current, decision.player, { type: "checkOrCall" });
+    current = run(current, [call]).table;
+    const text = serializeTable(current);
+    const stamped = {
+      ...call,
+      action: { ...call.action, player: call.player },
+    };
+    expect(JSON.parse(text).commands).toEqual([...sinceStart, stamped]);
+    const parsed = okValue(parseTable(text));
+    expect(viewTable(parsed, auditor)).toEqual(viewTable(current, auditor));
+    expect(summarizeSession(parsed)).toEqual(summarizeSession(current));
+  });
+
   test("refuse a command the replay rejects", () => {
     const stored = JSON.parse(serializeTable(table));
-    stored.commands[0].stack = 0;
+    stored.checkpoint.seats[1] = null;
     expect(parseTable(JSON.stringify(stored))).toEqual({
       ok: false,
       error: {
         code: "rejected",
         index: 0,
-        violation: { code: "invalid_buy_in", stack: 0 },
+        violation: { code: "not_enough_players", players: 1 },
       },
     });
   });
 
   test("name the first field that does not parse", () => {
     const stored = JSON.parse(serializeTable(table));
-    stored.commands[2].deck[0] = "Zz";
+    stored.checkpoint.seats[0].stack = "all of it";
     expect(parseTable(JSON.stringify(stored))).toMatchObject({
       ok: false,
-      error: { code: "invalid_format", path: "commands.2.deck.0" },
+      error: { code: "invalid_format", path: "checkpoint.seats.0.stack" },
     });
   });
 

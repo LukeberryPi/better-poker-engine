@@ -66,6 +66,11 @@ Agreed with the project owner. Do not re-litigate without real friction.
 19. **Table automation.** Table hands automate every step except betting and
     drawing. Run-it-twice and voluntary shows are available in single hands
     but not at tables in v1.
+20. **Stored tables stay small.** A stored table is the table as it stood
+    before the running hand, plus the commands since. `parseTable` replays
+    only those, so loading and acting cost the same however many hands the
+    table has played. Stacks and the session at that point are trusted as
+    stored; the event log and hand records are the audit trail.
 
 ## Out of scope for v1
 

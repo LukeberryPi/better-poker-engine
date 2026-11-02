@@ -148,6 +148,9 @@ type RunningHand = {
   readonly hand: Hand;
   /** The seat at each position. */
   readonly seats: readonly number[];
+  /** The table before this hand started, and every command since: what storage replays. */
+  readonly from: TableCheckpoint;
+  readonly commands: readonly TableCommand[];
 };
 
 type SessionEntry = {
@@ -157,18 +160,22 @@ type SessionEntry = {
   readonly hands: number;
 };
 
-export type TableState = Brandable<"Table"> & {
-  readonly setup: TableSetup;
+/** A table with no hand running. */
+export type TableCheckpoint = {
   readonly version: number;
   readonly eventCount: number;
   readonly seats: readonly (SeatedPlayer | null)[];
   readonly button: number | null;
   readonly hands: number;
-  readonly hand: RunningHand | null;
   readonly lastHand: HandRecord | null;
   readonly session: readonly SessionEntry[];
-  readonly commands: readonly TableCommand[];
 };
+
+export type TableState = Brandable<"Table"> &
+  TableCheckpoint & {
+    readonly setup: TableSetup;
+    readonly hand: RunningHand | null;
+  };
 
 export function tableStateOf(table: Table): TableState {
   // SAFETY: only `tableFrom` creates a Table, from a TableState.
@@ -197,9 +204,19 @@ export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
       hand: null,
       lastHand: null,
       session: [],
-      commands: [],
     })
   );
+}
+
+export function checkpointOf(state: TableState): TableCheckpoint {
+  const { version, eventCount, seats, button, hands, lastHand, session } =
+    state;
+  return { version, eventCount, seats, button, hands, lastHand, session };
+}
+
+/** `empty` is a new table from `createTable`, which checked its setup. */
+export function resumeTable(empty: Table, checkpoint: TableCheckpoint): Table {
+  return tableFrom({ ...tableStateOf(empty), ...checkpoint });
 }
 
 type Change = {
@@ -222,11 +239,18 @@ export function actAtTable(
     version,
     body,
   }));
+  const { hand } = change.value.state;
   const next: TableState = {
     ...change.value.state,
     version,
     eventCount: state.eventCount + events.length,
-    commands: [...state.commands, copyCommand(change.value.command)],
+    hand:
+      hand === null
+        ? null
+        : {
+            ...hand,
+            commands: [...hand.commands, copyCommand(change.value.command)],
+          },
   };
   return ok({ table: tableFrom(next), events });
 }
@@ -400,7 +424,12 @@ function deal(
   const { hand, events } = started.value;
   return ok(
     settle(
-      { ...state, button, hands: number, hand: { number, hand, seats } },
+      {
+        ...state,
+        button,
+        hands: number,
+        hand: { number, hand, seats, from: checkpointOf(state), commands: [] },
+      },
       [
         { type: "handStarted", hand: number, button, seats },
         ...handEvents(number, events),

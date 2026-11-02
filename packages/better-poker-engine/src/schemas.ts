@@ -11,7 +11,12 @@ import {
   type PlayerAction,
 } from "./hand.ts";
 import type { BettingStructure, Face, Game, Mode, Opening } from "./rules.ts";
-import type { TableCommand, TableEvent, TableSetup } from "./table.ts";
+import type {
+  TableCheckpoint,
+  TableCommand,
+  TableEvent,
+  TableSetup,
+} from "./table.ts";
 import { variantCodes } from "./variants.ts";
 
 function keysOf<Key extends string, Value>(
@@ -295,3 +300,20 @@ export const tableEventSchema = object({
     body("handEnded", { hand: z.number(), record: handRecordSchema }),
   ]),
 }) satisfies z.ZodMiniType<TableEvent>;
+
+export const tableCheckpointSchema = object({
+  version: z.number(),
+  eventCount: z.number(),
+  seats: list(z.nullable(object({ player: playerId, stack: chips }))),
+  button: z.nullable(z.number()),
+  hands: z.number(),
+  lastHand: z.nullable(handRecordSchema),
+  session: list(
+    object({
+      player: playerId,
+      boughtIn: chips,
+      cashedOut: chips,
+      hands: z.number(),
+    })
+  ),
+}) satisfies z.ZodMiniType<TableCheckpoint>;
