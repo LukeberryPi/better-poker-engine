@@ -30,10 +30,18 @@ test suite.
   a rejection comes back with the attempt so you can store it. Each hand
   deals a whole shuffled deck you pass in, and automates every step except
   betting and drawing, so voluntary shows, mucks and run-it-twice are
-  refused. `serializeTable` and `parseTable` store a table as its command
-  log, under the same rules as hands; `tableEventsFor` redacts its events.
-  Not supported: sitting out, missed or dead blinds, top-ups and tournament
-  levels.
+  refused. `serializeTable` and `parseTable` store a table as it stood
+  before the running hand plus the commands since, so a table loads as fast
+  at hand 1,000 as at hand 1. Only those commands are replayed: stacks and
+  the session before the hand are trusted as stored, so sign the text if you
+  need tamper evidence. `tableEventsFor` redacts its events. A player who
+  steps away sends `sitOut`: they keep their seat and stack, play out any
+  hand they hold cards in, and are dealt out from the next hand until
+  `sitIn`. Seat views and events show it. The engine never times anyone out,
+  so your server decides when an absent player sits out. No missed or dead
+  blinds are charged, so a player who sits out over the blinds pays none
+  when they return. Not supported: missed or dead blinds, top-ups and
+  tournament levels.
 - **An optional SQLite store.** `better-poker-engine/sqlite` keeps tables,
   their events, hand records and rejected attempts over any SQLite driver
   you wrap in two functions: `batch`, which runs statements in one

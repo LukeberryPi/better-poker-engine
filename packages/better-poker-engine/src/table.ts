@@ -49,6 +49,9 @@ export type TableCommand =
       readonly stack: Chips;
     }
   | { readonly type: "leave"; readonly player: PlayerId }
+  /** Keeps the seat and stack but deals the player out from the next hand. */
+  | { readonly type: "sitOut"; readonly player: PlayerId }
+  | { readonly type: "sitIn"; readonly player: PlayerId }
   /** `deck` is the game's whole deck, shuffled. */
   | { readonly type: "startHand"; readonly deck: Deck }
   /** `player` is who the caller authenticated; it replaces `action.player`. */
@@ -81,6 +84,8 @@ export type TableViolation =
   | { readonly code: "invalid_buy_in"; readonly stack: number }
   | { readonly code: "not_seated"; readonly player: PlayerId }
   | { readonly code: "in_hand"; readonly player: PlayerId }
+  | { readonly code: "already_sitting_out"; readonly player: PlayerId }
+  | { readonly code: "not_sitting_out"; readonly player: PlayerId }
   | { readonly code: "hand_running" }
   | { readonly code: "no_hand" }
   | { readonly code: "not_enough_players"; readonly players: number }
@@ -109,6 +114,12 @@ export type TableEventBody =
       readonly seat: number;
       readonly stack: Chips;
     }
+  | {
+      readonly type: "satOut";
+      readonly player: PlayerId;
+      readonly seat: number;
+    }
+  | { readonly type: "satIn"; readonly player: PlayerId; readonly seat: number }
   | {
       readonly type: "handStarted";
       readonly hand: number;
@@ -141,13 +152,20 @@ export type TableTransition = {
   readonly events: readonly TableEvent[];
 };
 
-type SeatedPlayer = { readonly player: PlayerId; readonly stack: Chips };
+type SeatedPlayer = {
+  readonly player: PlayerId;
+  readonly stack: Chips;
+  readonly sittingOut: boolean;
+};
 
 type RunningHand = {
   readonly number: number;
   readonly hand: Hand;
   /** The seat at each position. */
   readonly seats: readonly number[];
+  /** The table before this hand started, and every command since: what storage replays. */
+  readonly from: TableCheckpoint;
+  readonly commands: readonly TableCommand[];
 };
 
 type SessionEntry = {
@@ -157,18 +175,22 @@ type SessionEntry = {
   readonly hands: number;
 };
 
-export type TableState = Brandable<"Table"> & {
-  readonly setup: TableSetup;
+/** A table with no hand running. */
+export type TableCheckpoint = {
   readonly version: number;
   readonly eventCount: number;
   readonly seats: readonly (SeatedPlayer | null)[];
   readonly button: number | null;
   readonly hands: number;
-  readonly hand: RunningHand | null;
   readonly lastHand: HandRecord | null;
   readonly session: readonly SessionEntry[];
-  readonly commands: readonly TableCommand[];
 };
+
+export type TableState = Brandable<"Table"> &
+  TableCheckpoint & {
+    readonly setup: TableSetup;
+    readonly hand: RunningHand | null;
+  };
 
 export function tableStateOf(table: Table): TableState {
   // SAFETY: only `tableFrom` creates a Table, from a TableState.
@@ -197,9 +219,19 @@ export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
       hand: null,
       lastHand: null,
       session: [],
-      commands: [],
     })
   );
+}
+
+export function checkpointOf(state: TableState): TableCheckpoint {
+  const { version, eventCount, seats, button, hands, lastHand, session } =
+    state;
+  return { version, eventCount, seats, button, hands, lastHand, session };
+}
+
+/** `empty` is a new table from `createTable`, which checked its setup. */
+export function resumeTable(empty: Table, checkpoint: TableCheckpoint): Table {
+  return tableFrom({ ...tableStateOf(empty), ...checkpoint });
 }
 
 type Change = {
@@ -222,11 +254,18 @@ export function actAtTable(
     version,
     body,
   }));
+  const { hand } = change.value.state;
   const next: TableState = {
     ...change.value.state,
     version,
     eventCount: state.eventCount + events.length,
-    commands: [...state.commands, copyCommand(change.value.command)],
+    hand:
+      hand === null
+        ? null
+        : {
+            ...hand,
+            commands: [...hand.commands, copyCommand(change.value.command)],
+          },
   };
   return ok({ table: tableFrom(next), events });
 }
@@ -265,6 +304,9 @@ function applyCommand(
       return join(state, command);
     case "leave":
       return leave(state, command);
+    case "sitOut":
+    case "sitIn":
+      return sit(state, command);
     case "startHand":
       return deal(state, command);
     case "act":
@@ -319,7 +361,7 @@ function join(
   return ok({
     state: {
       ...state,
-      seats: state.seats.with(seat, { player, stack }),
+      seats: state.seats.with(seat, { player, stack, sittingOut: false }),
       session: updateSession(state.session, player, (entry) => ({
         ...entry,
         boughtIn: entry.boughtIn + stack,
@@ -353,6 +395,31 @@ function leave(
   });
 }
 
+function sit(
+  state: TableState,
+  command: Extract<TableCommand, { type: "sitOut" | "sitIn" }>
+): Result<Change, TableViolation> {
+  const { player } = command;
+  const seat = seatOf(state, player);
+  if (seat === null) return err({ code: "not_seated", player });
+  const seated = occupant(state, seat);
+  const sittingOut = command.type === "sitOut";
+  if (seated.sittingOut === sittingOut) {
+    return err({
+      code: sittingOut ? "already_sitting_out" : "not_sitting_out",
+      player,
+    });
+  }
+  return ok({
+    state: {
+      ...state,
+      seats: state.seats.with(seat, { ...seated, sittingOut }),
+    },
+    bodies: [{ type: sittingOut ? "satOut" : "satIn", player, seat }],
+    command,
+  });
+}
+
 function isWholeDeck(deck: Deck, whole: Deck): boolean {
   const cards = new Set(deck);
   return (
@@ -379,7 +446,7 @@ function deal(
     return err({ code: "not_a_full_deck" });
   }
   const dealt = state.seats.flatMap((seated, seat) =>
-    seated !== null && seated.stack > 0 ? [seat] : []
+    seated !== null && seated.stack > 0 && !seated.sittingOut ? [seat] : []
   );
   if (dealt.length < 2) {
     return err({ code: "not_enough_players", players: dealt.length });
@@ -400,7 +467,12 @@ function deal(
   const { hand, events } = started.value;
   return ok(
     settle(
-      { ...state, button, hands: number, hand: { number, hand, seats } },
+      {
+        ...state,
+        button,
+        hands: number,
+        hand: { number, hand, seats, from: checkpointOf(state), commands: [] },
+      },
       [
         { type: "handStarted", hand: number, button, seats },
         ...handEvents(number, events),
@@ -479,6 +551,8 @@ export type SeatView = {
   /** Chips behind as of the last hand's end; the running hand's view has live stacks. */
   readonly stack: Chips;
   readonly inHand: boolean;
+  /** Not dealt in from the next hand on; a running hand they hold cards in still needs them. */
+  readonly sittingOut: boolean;
 };
 
 export type TableView = {

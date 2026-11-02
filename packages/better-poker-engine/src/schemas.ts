@@ -11,7 +11,12 @@ import {
   type PlayerAction,
 } from "./hand.ts";
 import type { BettingStructure, Face, Game, Mode, Opening } from "./rules.ts";
-import type { TableCommand, TableEvent, TableSetup } from "./table.ts";
+import type {
+  TableCheckpoint,
+  TableCommand,
+  TableEvent,
+  TableSetup,
+} from "./table.ts";
 import { variantCodes } from "./variants.ts";
 
 function keysOf<Key extends string, Value>(
@@ -160,6 +165,8 @@ export const tableSetupSchema = object({
 export const tableCommandSchema = z.discriminatedUnion("type", [
   action("join", { player: playerId, seat: z.number(), stack: chips }),
   action("leave", { player: playerId }),
+  action("sitOut", { player: playerId }),
+  action("sitIn", { player: playerId }),
   action("startHand", { deck: cards }),
   action("act", {
     player: playerId,
@@ -286,6 +293,8 @@ export const tableEventSchema = object({
   body: z.discriminatedUnion("type", [
     body("joined", { player: playerId, seat: z.number(), stack: chips }),
     body("left", { player: playerId, seat: z.number(), stack: chips }),
+    body("satOut", { player: playerId, seat: z.number() }),
+    body("satIn", { player: playerId, seat: z.number() }),
     body("handStarted", {
       hand: z.number(),
       button: z.number(),
@@ -295,3 +304,24 @@ export const tableEventSchema = object({
     body("handEnded", { hand: z.number(), record: handRecordSchema }),
   ]),
 }) satisfies z.ZodMiniType<TableEvent>;
+
+export const tableCheckpointSchema = object({
+  version: z.number(),
+  eventCount: z.number(),
+  seats: list(
+    z.nullable(
+      object({ player: playerId, stack: chips, sittingOut: z.boolean() })
+    )
+  ),
+  button: z.nullable(z.number()),
+  hands: z.number(),
+  lastHand: z.nullable(handRecordSchema),
+  session: list(
+    object({
+      player: playerId,
+      boughtIn: chips,
+      cashedOut: chips,
+      hands: z.number(),
+    })
+  ),
+}) satisfies z.ZodMiniType<TableCheckpoint>;

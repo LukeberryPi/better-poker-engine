@@ -225,6 +225,71 @@ describe("a table", () => {
     expect(viewTable(table, auditor).seats[5]).toBeNull();
   });
 
+  test("deals a player who sits out out of the next hand, with seat and stack kept", () => {
+    const started = run(threeSeated, [
+      { type: "startHand", deck: shuffle(decks.standard, seededRandom(6)) },
+      { type: "sitOut", player: "a" },
+    ]);
+    expect(started.events.at(-1)?.body).toEqual({
+      type: "satOut",
+      player: "a",
+      seat: 1,
+    });
+    expect(viewTable(started.table, auditor).seats[1]).toEqual({
+      player: "a",
+      stack: 100,
+      inHand: true,
+      sittingOut: true,
+    });
+    let table = started.table;
+    while (viewTable(table, auditor).hand !== null) {
+      const decision = viewTable(table, auditor).hand?.decision;
+      if (decision?.kind !== "betting") throw new Error("Not betting");
+      table = run(table, [
+        actAs(table, decision.player, { type: "fold" }),
+      ]).table;
+    }
+    const sittingOut = foldRound(table);
+    expect(startedSeats(sittingOut.events)).toEqual([[3, 4, 3]]);
+    expect(stacksOf(sittingOut.table)[1]).toBe(stacksOf(table)[1]);
+    expect(refusal(sittingOut.table, { type: "sitOut", player: "a" })).toEqual({
+      code: "already_sitting_out",
+      player: "a",
+    });
+    expect(refusal(sittingOut.table, { type: "sitIn", player: "b" })).toEqual({
+      code: "not_sitting_out",
+      player: "b",
+    });
+    expect(refusal(sittingOut.table, { type: "sitOut", player: "z" })).toEqual({
+      code: "not_seated",
+      player: "z",
+    });
+    const back = foldRound(
+      run(sittingOut.table, [{ type: "sitIn", player: "a" }]).table
+    );
+    expect(startedSeats(back.events)).toEqual([[4, 1, 3, 4]]);
+  });
+
+  test("needs two players sitting in to deal, and lets one sitting out leave", () => {
+    const headsUp = joinAll([
+      ["a", 0, 100],
+      ["b", 1, 100],
+    ]);
+    const away = run(headsUp, [{ type: "sitOut", player: "b" }]).table;
+    const start = {
+      type: "startHand",
+      deck: shuffle(decks.standard, seededRandom(7)),
+    } as const;
+    expect(refusal(away, start)).toEqual({
+      code: "not_enough_players",
+      players: 1,
+    });
+    const left = run(away, [{ type: "leave", player: "b" }]);
+    expect(left.events.map(({ body }) => body)).toEqual([
+      { type: "left", player: "b", seat: 1, stack: 100 },
+    ]);
+  });
+
   test("acts only as the authenticated player, whatever the action names", () => {
     const { table } = run(threeSeated, [
       { type: "startHand", deck: shuffle(decks.standard, seededRandom(5)) },
@@ -479,10 +544,13 @@ function randomSession(seed: number): Session {
         (seated.stack === 0 || chance(10, random))
       ) {
         send({ type: "leave", player: seated.player });
+      } else if (seated !== null && chance(15, random)) {
+        const type = seated.sittingOut ? "sitIn" : "sitOut";
+        send({ type, player: seated.player });
       }
     }
     const dealt = viewTable(table, auditor).seats.filter(
-      (seated) => seated !== null && seated.stack > 0
+      (seated) => seated !== null && seated.stack > 0 && !seated.sittingOut
     );
     if (dealt.length < 2) continue;
     send({
@@ -645,25 +713,65 @@ describe("serializeTable and parseTable", () => {
     [{ type: "startHand", deck: shuffle(decks.standard, seededRandom(9)) }]
   ).table;
 
+  test("keep only the running hand's commands, however long the table has run", () => {
+    let current = joinAll([
+      ["a", 0, 100],
+      ["b", 1, 100],
+      ["c", 2, 100],
+    ]);
+    const random = seededRandom(11);
+    for (let hand = 0; hand < 30; hand += 1) {
+      current = run(current, [
+        { type: "startHand", deck: shuffle(decks.standard, random) },
+      ]).table;
+      while (viewTable(current, auditor).hand !== null) {
+        const decision = viewTable(current, auditor).hand?.decision;
+        if (decision?.kind !== "betting") throw new Error("Not betting");
+        current = run(current, [
+          actAs(current, decision.player, { type: "checkOrCall" }),
+        ]).table;
+      }
+    }
+    expect(JSON.parse(serializeTable(current)).commands).toEqual([]);
+    const sinceStart: TableCommand[] = [
+      { type: "startHand", deck: shuffle(decks.standard, random) },
+      { type: "join", player: "d", seat: 3, stack: 50 },
+    ];
+    current = run(current, sinceStart).table;
+    const decision = viewTable(current, auditor).hand?.decision;
+    if (decision?.kind !== "betting") throw new Error("Not betting");
+    const call = actAs(current, decision.player, { type: "checkOrCall" });
+    current = run(current, [call]).table;
+    const text = serializeTable(current);
+    const stamped = {
+      ...call,
+      action: { ...call.action, player: call.player },
+    };
+    expect(JSON.parse(text).commands).toEqual([...sinceStart, stamped]);
+    const parsed = okValue(parseTable(text));
+    expect(viewTable(parsed, auditor)).toEqual(viewTable(current, auditor));
+    expect(summarizeSession(parsed)).toEqual(summarizeSession(current));
+  });
+
   test("refuse a command the replay rejects", () => {
     const stored = JSON.parse(serializeTable(table));
-    stored.commands[0].stack = 0;
+    stored.checkpoint.seats[1] = null;
     expect(parseTable(JSON.stringify(stored))).toEqual({
       ok: false,
       error: {
         code: "rejected",
         index: 0,
-        violation: { code: "invalid_buy_in", stack: 0 },
+        violation: { code: "not_enough_players", players: 1 },
       },
     });
   });
 
   test("name the first field that does not parse", () => {
     const stored = JSON.parse(serializeTable(table));
-    stored.commands[2].deck[0] = "Zz";
+    stored.checkpoint.seats[0].stack = "all of it";
     expect(parseTable(JSON.stringify(stored))).toMatchObject({
       ok: false,
-      error: { code: "invalid_format", path: "commands.2.deck.0" },
+      error: { code: "invalid_format", path: "checkpoint.seats.0.stack" },
     });
   });
 

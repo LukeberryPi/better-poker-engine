@@ -12,12 +12,15 @@ import { err, ok, type Result } from "./result.ts";
 import {
   handEventSchema,
   handSetupSchema,
+  tableCheckpointSchema,
   tableCommandSchema,
   tableSetupSchema,
 } from "./schemas.ts";
 import {
   actAtTable,
+  checkpointOf,
   createTable,
+  resumeTable,
   tableStateOf,
   type Table,
   type TableSetupError,
@@ -128,17 +131,24 @@ function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
 }
 
 const storedTableSchema = z.object({
-  format: z.literal(1),
+  format: z.literal(2),
   setup: tableSetupSchema,
+  checkpoint: tableCheckpointSchema,
   commands: z.readonly(z.array(tableCommandSchema)),
 });
 
 type StoredTable = z.output<typeof storedTableSchema>;
 
-/** Auditor data: every deck the table dealt. Never send it to a client. */
+/** Auditor data: the running hand's deck and the last hand's hole cards. Never send it to a client. */
 export function serializeTable(table: Table): string {
-  const { setup, commands } = tableStateOf(table);
-  return JSON.stringify({ format: 1, setup, commands } satisfies StoredTable);
+  const state = tableStateOf(table);
+  const { setup, hand } = state;
+  return JSON.stringify({
+    format: 2,
+    setup,
+    checkpoint: hand?.from ?? checkpointOf(state),
+    commands: hand?.commands ?? [],
+  } satisfies StoredTable);
 }
 
 export type TableParseError =
@@ -151,7 +161,7 @@ export type TableParseError =
     }
   | { readonly code: "unplayable"; readonly cause: unknown };
 
-/** Rebuilds the table by replaying its commands; the same limits as `parseHand` apply. */
+/** Replays the running hand's commands onto the stored checkpoint, which is trusted as stored. */
 export function parseTable(text: string): Result<Table, TableParseError> {
   const stored = parseJson(storedTableSchema, text);
   if (!stored.ok) return stored;
@@ -164,11 +174,12 @@ export function parseTable(text: string): Result<Table, TableParseError> {
 
 function replayTable({
   setup,
+  checkpoint,
   commands,
 }: StoredTable): Result<Table, TableParseError> {
   const created = createTable(setup);
   if (!created.ok) return err({ code: "setup", error: created.error });
-  let table = created.value;
+  let table = resumeTable(created.value, checkpoint);
   for (const [index, command] of commands.entries()) {
     const next = actAtTable(table, command);
     if (!next.ok) {

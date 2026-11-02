@@ -96,6 +96,14 @@ export function createApp(
     send(c, (player) => ({ type: "leave", player }))
   );
 
+  app.post("/tables/:id/sit-out", (c) =>
+    send(c, (player) => ({ type: "sitOut", player }))
+  );
+
+  app.post("/tables/:id/sit-in", (c) =>
+    send(c, (player) => ({ type: "sitIn", player }))
+  );
+
   app.post("/tables/:id/deal", (c) =>
     send(c, () => ({
       type: "startHand",
