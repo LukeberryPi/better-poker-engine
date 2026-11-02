@@ -4,18 +4,19 @@
   "type": "module",
   "packageManager": "bun@1.4.4",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/multiplayer"
   ],
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "NODE_OPTIONS=--experimental-strip-types oxlint --deny-warnings && NODE_OPTIONS=--experimental-strip-types oxlint -c .oxlintrc.rules.json --deny-warnings tools/oxlint/anti-slop",
-    "typecheck": "tsc -p packages/better-poker-engine/tsconfig.json && tsc -p packages/better-poker-engine/tsconfig.test.json && tsc -p parity/tsconfig.json && tsc -p tools/tarball/tsconfig.json",
-    "test": "bun test --conditions=@better-poker-engine/source packages parity",
+    "typecheck": "tsc -p packages/better-poker-engine/tsconfig.json && tsc -p packages/better-poker-engine/tsconfig.test.json && tsc -p parity/tsconfig.json && tsc -p tools/tarball/tsconfig.json && tsc -p examples/multiplayer/tsconfig.json",
+    "test": "bun test --conditions=@better-poker-engine/source packages parity examples/multiplayer",
     "test:lint-rules": "bun test tools/oxlint/anti-slop/rules.test.ts",
     "test:tarball": "bun test tools/tarball",
-    "parity": "mkdir -p parity/.results && bun test --conditions=@better-poker-engine/source --reporter=junit --reporter-outfile=parity/.results/junit.xml packages parity && bun parity/check.ts parity/.results/junit.xml",
+    "parity": "mkdir -p parity/.results && bun test --conditions=@better-poker-engine/source --reporter=junit --reporter-outfile=parity/.results/junit.xml packages parity examples/multiplayer && bun parity/check.ts parity/.results/junit.xml",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:lint-rules && bun run parity && bun run test:tarball"
   },
   "devDependencies": {

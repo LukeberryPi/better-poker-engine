@@ -1,5 +1,5 @@
 import type { Brandable } from "../brand.ts";
-import { isKnownCard, type Card, type KnownCard } from "../cards.ts";
+import { isKnownCard, type Card, type Deck, type KnownCard } from "../cards.ts";
 import type { Chips, Stack } from "../chips.ts";
 import { evaluate, type HandValue } from "../evaluation.ts";
 import type { HandEvent } from "../events.ts";
@@ -13,6 +13,12 @@ export type Position = number;
 export type PotState = {
   raked: Chips;
   unraked: Chips;
+  readonly eligible: readonly Position[];
+};
+
+/** A pot as it stood when betting closed for good, before anyone showed or mucked. */
+export type ContestedPot = {
+  readonly amount: Chips;
   readonly eligible: readonly Position[];
 };
 
@@ -81,6 +87,7 @@ export type HandState = Brandable<"Hand"> & {
   readonly blinds: readonly number[];
   readonly startingStacks: readonly Stack[];
   version: number;
+  readonly startingDeck: Deck;
   deck: Card[];
   /** Hashed from the starting deck, so players can't predict a reshuffle. */
   readonly reshuffleSeed: Seed;
@@ -105,6 +112,8 @@ export type HandState = Brandable<"Hand"> & {
   runoutCountSelected: boolean;
   /** Frozen once chips pushing begins. */
   pots: PotState[] | null;
+  /** Mucks can merge `pots`, as in pokerkit; the record reports these instead. */
+  contestedPots: readonly ContestedPot[] | null;
   phase: Phase;
   events: readonly HandEvent[];
 };
@@ -114,9 +123,19 @@ export function stateOf(hand: Hand): HandState {
   return hand as HandState;
 }
 
+/** Skips frozen objects: everything a hand holds was frozen whole when first reached. */
+export function deepFreeze<T extends {}>(value: T): T {
+  if (Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) {
+    if (child !== null && child !== undefined) deepFreeze(child);
+  }
+  return value;
+}
+
 export function handFrom(state: HandState): Hand {
   // SAFETY: HandState carries the optional Hand brand; this grants it.
-  return state as Hand;
+  return deepFreeze(state) as Hand;
 }
 
 function clonePhase(phase: Phase): Phase {

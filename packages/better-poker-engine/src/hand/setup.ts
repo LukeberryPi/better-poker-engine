@@ -101,7 +101,7 @@ function copyStreet(street: Street): Street {
 }
 
 /** A private copy, so later edits to the caller's objects never reach the hand. */
-function copyGame(game: Game): Game {
+export function copyGame(game: Game): Game {
   const { rules, forcedBets, rake } = game;
   const [first, ...rest] = rules.streets;
   const [handType, ...handTypes] = rules.handTypes;
@@ -134,6 +134,7 @@ export function initialState(setup: HandSetup): HandState {
     blinds: perPosition(game.forcedBets.blinds.entries(), count),
     startingStacks: [...setup.stacks],
     version: 0,
+    startingDeck: [...setup.deck],
     deck: [...setup.deck],
     reshuffleSeed: seedFrom(setup.deck.join(" ")),
     boards: [],
@@ -153,6 +154,7 @@ export function initialState(setup: HandSetup): HandState {
     runoutCount: null,
     runoutCountSelected: false,
     pots: null,
+    contestedPots: null,
     phase: { kind: "complete" },
     events: [],
   };

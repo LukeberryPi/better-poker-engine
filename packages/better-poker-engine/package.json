@@ -30,6 +30,11 @@
       "@better-poker-engine/source": "./src/phh.ts",
       "types": "./dist/phh.d.ts",
       "default": "./dist/phh.js"
+    },
+    "./sqlite": {
+      "@better-poker-engine/source": "./src/sqlite.ts",
+      "types": "./dist/sqlite.d.ts",
+      "default": "./dist/sqlite.js"
     }
   },
   "scripts": {

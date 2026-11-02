@@ -4,7 +4,7 @@ import type { HoleCard } from "../hand.ts";
 import { err, ok, type Result } from "../result.ts";
 import type { Face } from "../rules.ts";
 import { returnToDeck, takeCards } from "./dealing.ts";
-import { potsOf } from "./pots.ts";
+import { contestPots, potsOf } from "./pots.ts";
 import { notEligible, pendingPlayer, type Refusal } from "./refusal.ts";
 import {
   activeCount,
@@ -45,6 +45,7 @@ export function canWinNow(state: HandState, position: Position): boolean {
 }
 
 export function beginShowdown(state: HandState): void {
+  contestPots(state);
   const selecting =
     !state.runoutCountSelected &&
     state.game.mode !== "tournament" &&

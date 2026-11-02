@@ -1,4 +1,5 @@
 import { isKnownCard } from "../cards.ts";
+import type { Chips } from "../chips.ts";
 import { describeHand } from "../evaluation.ts";
 import type {
   HandEvent,
@@ -17,6 +18,7 @@ import {
   positionsOf,
   sum,
   upHandOf,
+  type ContestedPot,
   type HandState,
   type Position,
 } from "./state.ts";
@@ -76,33 +78,96 @@ function playerRecord(state: HandState, position: Position): PlayerRecord {
   };
 }
 
-function potRecords(state: HandState): PotRecord[] {
-  return (state.pots ?? []).map((pot, index) => {
-    const winners = state.events.flatMap(({ body }) => {
-      if (body.type !== "chipsPushed" || body.pot !== index) return [];
-      const { board, handType } = body;
-      return body.awards.map(({ player, amount }) => {
-        const position = state.players.indexOf(player);
-        const value =
-          board !== null && handType !== null
-            ? upHandOf(state, position, board, handType)
-            : allFaceUp(state, position)
-              ? upHandOf(state, position, 0, 0)
-              : null;
-        return {
-          player,
-          amount,
-          hand: value === null ? null : describeHand(value),
-        };
-      });
+type Winner = PotRecord["winners"][number];
+
+function winnersOf(state: HandState, pot: number): Winner[] {
+  return state.events.flatMap(({ body }) => {
+    if (body.type !== "chipsPushed" || body.pot !== pot) return [];
+    const { board, handType } = body;
+    return body.awards.map(({ player, amount }) => {
+      const position = state.players.indexOf(player);
+      const value =
+        board !== null && handType !== null
+          ? upHandOf(state, position, board, handType)
+          : allFaceUp(state, position)
+            ? upHandOf(state, position, 0, 0)
+            : null;
+      return {
+        player,
+        amount,
+        hand: value === null ? null : describeHand(value),
+      };
     });
-    return {
-      amount:
-        pot.raked + pot.unraked + sum(winners.map(({ amount }) => amount)),
-      raked: pot.raked,
-      eligible: pot.eligible.map((position) => playerAt(state, position)),
-      winners,
-    };
+  });
+}
+
+/** The contested pots that a pushed pot merged, main pot first. */
+function partsOf(contested: ContestedPot[], amount: Chips): ContestedPot[] {
+  const parts: ContestedPot[] = [];
+  let covered = 0;
+  while (covered < amount) {
+    const part = contested.shift();
+    if (part === undefined) throw new Error("Contested pots ran out");
+    parts.push(part);
+    covered += part.amount;
+  }
+  if (covered !== amount) throw new Error("Contested pots split a pushed pot");
+  return parts;
+}
+
+/** Each row is a part's share of every flow, by largest remainder; rows and columns add up. */
+function apportion(
+  parts: readonly Chips[],
+  flows: readonly Chips[]
+): Chips[][] {
+  const remaining = flows.map(BigInt);
+  let left = BigInt(sum(parts));
+  return parts.map((part) => {
+    const size = BigInt(part);
+    const shares = remaining.map((flow) => (flow * size) / left);
+    const remainders = remaining.map((flow) => (flow * size) % left);
+    let short = size - shares.reduce((total, share) => total + share, 0n);
+    const order = remainders
+      .map((remainder, index) => ({ remainder, index }))
+      .filter(({ remainder }) => remainder > 0n)
+      .sort((a, b) =>
+        a.remainder === b.remainder ? 0 : a.remainder > b.remainder ? -1 : 1
+      );
+    for (const { index } of order) {
+      if (short === 0n) break;
+      shares[index] = at(shares, index) + 1n;
+      short -= 1n;
+    }
+    for (const [index, share] of shares.entries()) {
+      remaining[index] = at(remaining, index) - share;
+    }
+    left -= size;
+    return shares.map(Number);
+  });
+}
+
+function potRecords(state: HandState): PotRecord[] {
+  const contested = [...(state.contestedPots ?? [])];
+  return (state.pots ?? []).flatMap((pot, index) => {
+    const winners = winnersOf(state, index);
+    const awarded = winners.map(({ amount }) => amount);
+    const parts = partsOf(contested, pot.raked + pot.unraked + sum(awarded));
+    const shares = apportion(
+      parts.map(({ amount }) => amount),
+      [pot.raked, pot.unraked, ...awarded]
+    );
+    return parts.map((part, row): PotRecord => {
+      const [raked = 0, , ...awards] = at(shares, row);
+      return {
+        amount: part.amount,
+        raked,
+        eligible: part.eligible.map((position) => playerAt(state, position)),
+        winners: winners.flatMap((winner, column) => {
+          const amount = awards[column] ?? 0;
+          return amount === 0 ? [] : [{ ...winner, amount }];
+        }),
+      };
+    });
   });
 }
 

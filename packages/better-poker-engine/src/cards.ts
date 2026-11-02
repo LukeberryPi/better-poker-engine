@@ -42,6 +42,12 @@ export function cardOf(rank: Rank, suit: Suit): KnownCard {
   return `${rank}${suit}`;
 }
 
+export const allCards = [
+  ...ranks.flatMap((rank) => suits.map((suit) => cardOf(rank, suit))),
+  ...ranks.map((rank): PartlyKnownCard => `${rank}?`),
+  "??",
+] satisfies Card[];
+
 export function rankOf(card: Card): RankSymbol {
   // SAFETY: every card is a rank symbol followed by a suit symbol.
   return card.charAt(0) as RankSymbol;

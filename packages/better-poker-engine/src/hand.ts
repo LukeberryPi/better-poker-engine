@@ -184,6 +184,12 @@ export type DealerAction =
 export type Action = PlayerAction | DealerAction;
 
 export type Violation =
+  /** The action was decided against an earlier version of the hand. */
+  | {
+      readonly code: "stale_version";
+      readonly expected: number;
+      readonly current: number;
+    }
   | {
       readonly code: "not_now";
       readonly attempted: Action["type"];
@@ -265,12 +271,26 @@ function copyAction(action: Action): Action {
   }
 }
 
+export type ActOptions = {
+  readonly commentary?: string;
+  /** The `version` the actor saw; any other version refuses the action. */
+  readonly expectedVersion?: number;
+};
+
 export function act(
   hand: Hand,
   action: Action,
-  options: { readonly commentary?: string } = {}
+  options: ActOptions = {}
 ): Result<Transition, Violation> {
   const current = stateOf(hand);
+  const { expectedVersion } = options;
+  if (expectedVersion !== undefined && expectedVersion !== current.version) {
+    return err({
+      code: "stale_version",
+      expected: expectedVersion,
+      current: current.version,
+    });
+  }
   const state = cloneState(current);
   const events = apply(state, copyAction(action), options.commentary ?? null);
   if (!events.ok) return events;
