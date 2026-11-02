@@ -165,6 +165,8 @@ export const tableSetupSchema = object({
 export const tableCommandSchema = z.discriminatedUnion("type", [
   action("join", { player: playerId, seat: z.number(), stack: chips }),
   action("leave", { player: playerId }),
+  action("sitOut", { player: playerId }),
+  action("sitIn", { player: playerId }),
   action("startHand", { deck: cards }),
   action("act", {
     player: playerId,
@@ -291,6 +293,8 @@ export const tableEventSchema = object({
   body: z.discriminatedUnion("type", [
     body("joined", { player: playerId, seat: z.number(), stack: chips }),
     body("left", { player: playerId, seat: z.number(), stack: chips }),
+    body("satOut", { player: playerId, seat: z.number() }),
+    body("satIn", { player: playerId, seat: z.number() }),
     body("handStarted", {
       hand: z.number(),
       button: z.number(),
@@ -304,7 +308,11 @@ export const tableEventSchema = object({
 export const tableCheckpointSchema = object({
   version: z.number(),
   eventCount: z.number(),
-  seats: list(z.nullable(object({ player: playerId, stack: chips }))),
+  seats: list(
+    z.nullable(
+      object({ player: playerId, stack: chips, sittingOut: z.boolean() })
+    )
+  ),
   button: z.nullable(z.number()),
   hands: z.number(),
   lastHand: z.nullable(handRecordSchema),

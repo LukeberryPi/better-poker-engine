@@ -33,8 +33,8 @@ Agreed with the project owner. Do not re-litigate without real friction.
    impossible, or a JavaScript built-in does the job.
 9. **Sessions:** a table runs consecutive hands: seats mapped to positions,
    button movement including heads-up, stacks carried over, joining and leaving
-   between hands. Not in scope: sit-out, missed or dead blinds, top-ups,
-   tournament levels.
+   between hands, and sitting out: seated with chips but not dealt in. Not in
+   scope: missed or dead blinds, top-ups, tournament levels.
 10. **Audit:** per-transition events plus one wide record per hand and per
     session. Rejected attempts are recorded. Views redact per audience
     (player, spectator, auditor). Persistence is the optional `/sqlite` module

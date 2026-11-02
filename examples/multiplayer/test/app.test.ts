@@ -123,3 +123,20 @@ test("refuses dealer steps and requests without a player", async () => {
   expect(dealBoard.status).toBe(400);
   expect((await post("/tables/t1/leave", null)).status).toBe(401);
 });
+
+test("sits the authenticated player out of the next hand and back in", async () => {
+  const { post, stored } = await dealtTable();
+  const away = await post("/tables/t1/sit-out", "b");
+  const view = viewTable(await stored(), { kind: "player", player: "b" });
+  expect(await away.json()).toEqual(wire(view));
+  expect(view.seats[1]).toEqual({
+    player: "b",
+    stack: 100,
+    inHand: true,
+    sittingOut: true,
+  });
+  expect((await post("/tables/t1/sit-out", "b")).status).toBe(422);
+  const back = await post("/tables/t1/sit-in", "b");
+  expect(back.status).toBe(200);
+  expect(viewTable(await stored(), auditor).seats[1]?.sittingOut).toBe(false);
+});

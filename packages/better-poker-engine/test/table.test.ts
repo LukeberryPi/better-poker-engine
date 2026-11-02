@@ -225,6 +225,71 @@ describe("a table", () => {
     expect(viewTable(table, auditor).seats[5]).toBeNull();
   });
 
+  test("deals a player who sits out out of the next hand, with seat and stack kept", () => {
+    const started = run(threeSeated, [
+      { type: "startHand", deck: shuffle(decks.standard, seededRandom(6)) },
+      { type: "sitOut", player: "a" },
+    ]);
+    expect(started.events.at(-1)?.body).toEqual({
+      type: "satOut",
+      player: "a",
+      seat: 1,
+    });
+    expect(viewTable(started.table, auditor).seats[1]).toEqual({
+      player: "a",
+      stack: 100,
+      inHand: true,
+      sittingOut: true,
+    });
+    let table = started.table;
+    while (viewTable(table, auditor).hand !== null) {
+      const decision = viewTable(table, auditor).hand?.decision;
+      if (decision?.kind !== "betting") throw new Error("Not betting");
+      table = run(table, [
+        actAs(table, decision.player, { type: "fold" }),
+      ]).table;
+    }
+    const sittingOut = foldRound(table);
+    expect(startedSeats(sittingOut.events)).toEqual([[3, 4, 3]]);
+    expect(stacksOf(sittingOut.table)[1]).toBe(stacksOf(table)[1]);
+    expect(refusal(sittingOut.table, { type: "sitOut", player: "a" })).toEqual({
+      code: "already_sitting_out",
+      player: "a",
+    });
+    expect(refusal(sittingOut.table, { type: "sitIn", player: "b" })).toEqual({
+      code: "not_sitting_out",
+      player: "b",
+    });
+    expect(refusal(sittingOut.table, { type: "sitOut", player: "z" })).toEqual({
+      code: "not_seated",
+      player: "z",
+    });
+    const back = foldRound(
+      run(sittingOut.table, [{ type: "sitIn", player: "a" }]).table
+    );
+    expect(startedSeats(back.events)).toEqual([[4, 1, 3, 4]]);
+  });
+
+  test("needs two players sitting in to deal, and lets one sitting out leave", () => {
+    const headsUp = joinAll([
+      ["a", 0, 100],
+      ["b", 1, 100],
+    ]);
+    const away = run(headsUp, [{ type: "sitOut", player: "b" }]).table;
+    const start = {
+      type: "startHand",
+      deck: shuffle(decks.standard, seededRandom(7)),
+    } as const;
+    expect(refusal(away, start)).toEqual({
+      code: "not_enough_players",
+      players: 1,
+    });
+    const left = run(away, [{ type: "leave", player: "b" }]);
+    expect(left.events.map(({ body }) => body)).toEqual([
+      { type: "left", player: "b", seat: 1, stack: 100 },
+    ]);
+  });
+
   test("acts only as the authenticated player, whatever the action names", () => {
     const { table } = run(threeSeated, [
       { type: "startHand", deck: shuffle(decks.standard, seededRandom(5)) },
@@ -479,10 +544,13 @@ function randomSession(seed: number): Session {
         (seated.stack === 0 || chance(10, random))
       ) {
         send({ type: "leave", player: seated.player });
+      } else if (seated !== null && chance(15, random)) {
+        const type = seated.sittingOut ? "sitIn" : "sitOut";
+        send({ type, player: seated.player });
       }
     }
     const dealt = viewTable(table, auditor).seats.filter(
-      (seated) => seated !== null && seated.stack > 0
+      (seated) => seated !== null && seated.stack > 0 && !seated.sittingOut
     );
     if (dealt.length < 2) continue;
     send({
