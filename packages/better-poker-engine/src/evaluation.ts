@@ -1,4 +1,11 @@
-import { isKnownCard, type Card, type KnownCard } from "./cards.ts";
+import {
+  cardOf,
+  isKnownCard,
+  rankOrders,
+  suits,
+  type Card,
+  type KnownCard,
+} from "./cards.ts";
 import { combinations } from "./combinations.ts";
 import {
   cardKeyOf,
@@ -178,4 +185,167 @@ export function compareHands<T extends HandType>(
 /** pokerkit's `str(hand)`, e.g. `Straight flush (6s7s8s9sTs)`. */
 export function describeHand(value: HandValue): string {
   return `${categoryLabels[value.category]} (${value.cards.join("")})`;
+}
+
+type SevenCardTables = {
+  /** By a card's character codes: its rank index, or -1. */
+  readonly ranks: Int8Array;
+  /** By a card's character codes: its suit index, or -1. */
+  readonly suits: Int8Array;
+  readonly primes: readonly number[];
+  /** By the 13-bit rank mask of a suit holding five cards or more. */
+  readonly flushes: Uint16Array;
+  /** By the product of the seven cards' rank primes, when no suit holds five. */
+  readonly others: ReadonlyMap<number, number>;
+};
+
+let sevenCardTables: SevenCardTables | null = null;
+
+/** Visits each rank multiset of `size` cards, at most four of a rank, as rank indices;
+ * `visit` must not keep the array, which the walk reuses. */
+function forEachRankMultiset(
+  size: number,
+  visit: (ranks: readonly number[]) => void
+): void {
+  const held: number[] = [];
+  const walk = (from: number, left: number): void => {
+    if (left === 0) {
+      visit(held);
+      return;
+    }
+    if (from === rankOrders.standard.length) return;
+    for (let count = 0; count <= Math.min(4, left); count += 1) {
+      for (let added = 0; added < count; added += 1) held.push(from);
+      walk(from + 1, left - count);
+      held.length -= count;
+    }
+  };
+  walk(0, size);
+}
+
+/** Entry indices of five-card hands by their rank primes' product, suited or not. */
+function fiveCardIndices(
+  table: Lookup,
+  primes: readonly number[],
+  suited: boolean
+): Map<number, number> {
+  const indices = new Map<number, number>();
+  const all = [0, 1, 2, 3, 4];
+  forEachRankMultiset(5, (multiset) => {
+    const keys = multiset.map((rank, position) => ({
+      prime: primes[rank] ?? 0,
+      suit: suited ? 1 : 1 << (position % 4),
+    }));
+    const entry = entryAt(table, keys, all);
+    if (entry !== null) {
+      indices.set(
+        keys.reduce((product, key) => product * key.prime, 1),
+        entry.index
+      );
+    }
+  });
+  return indices;
+}
+
+/** The best five of seven: each product less two of its primes is a five-card hand. */
+function bestOfSeven(
+  primes: readonly number[],
+  fives: ReadonlyMap<number, number>
+): number {
+  const product = primes.reduce((total, prime) => total * prime, 1);
+  let best = 0;
+  for (let first = 0; first < primes.length; first += 1) {
+    for (let second = first + 1; second < primes.length; second += 1) {
+      const dropped = (primes[first] ?? 1) * (primes[second] ?? 1);
+      best = Math.max(best, fives.get(product / dropped) ?? 0);
+    }
+  }
+  return best;
+}
+
+/** Built once, from the lookup `evaluate` uses, so the two agree on every hand. */
+function tablesForSevenCards(): SevenCardTables {
+  if (sevenCardTables !== null) return sevenCardTables;
+  const table = lookup("standard");
+  const ranks = rankOrders.standard;
+  const primes = ranks.map((rank) => cardKeyOf(cardOf(rank, "c")).prime);
+  const suited = fiveCardIndices(table, primes, true);
+  const unsuited = fiveCardIndices(table, primes, false);
+  const flushes = new Uint16Array(1 << ranks.length);
+  for (let mask = 0; mask < flushes.length; mask += 1) {
+    const held = ranks.flatMap((_, rank) => ((mask >> rank) & 1 ? [rank] : []));
+    if (held.length === 5) {
+      const product = held.reduce(
+        (total, rank) => total * (primes[rank] ?? 1),
+        1
+      );
+      flushes[mask] = suited.get(product) ?? 0;
+    } else if (held.length > 5 && held.length <= 7) {
+      // Masks with one rank fewer are smaller numbers, so they are already filled in.
+      for (const rank of held) {
+        flushes[mask] = Math.max(
+          flushes[mask] ?? 0,
+          flushes[mask ^ (1 << rank)] ?? 0
+        );
+      }
+    }
+  }
+  const others = new Map<number, number>();
+  forEachRankMultiset(7, (multiset) => {
+    const held = multiset.map((rank) => primes[rank] ?? 1);
+    others.set(
+      held.reduce((total, prime) => total * prime, 1),
+      bestOfSeven(held, unsuited)
+    );
+  });
+  const rankCodes = new Int8Array(128).fill(-1);
+  for (const [rank, symbol] of ranks.entries()) {
+    rankCodes[symbol.charCodeAt(0)] = rank;
+  }
+  const suitCodes = new Int8Array(128).fill(-1);
+  for (const [suit, symbol] of suits.entries()) {
+    suitCodes[symbol.charCodeAt(0)] = suit;
+  }
+  sevenCardTables = {
+    ranks: rankCodes,
+    suits: suitCodes,
+    primes,
+    flushes,
+    others,
+  };
+  return sevenCardTables;
+}
+
+/** `evaluate(...)?.strength` without finding which five cards play. Seven-card
+ * standard high hands, which equity simulations need, take one table lookup. */
+export function evaluateStrength(
+  type: HandType,
+  hole: readonly Card[],
+  board: readonly Card[]
+): number | null {
+  if (type !== "standardHigh" || hole.length + board.length !== 7) {
+    return evaluate(type, hole, board)?.strength ?? null;
+  }
+  const tables = tablesForSevenCards();
+  let product = 1;
+  let counts = 0;
+  let lowSuits = 0;
+  let highSuits = 0;
+  for (let index = 0; index < 7; index += 1) {
+    const card = index < hole.length ? hole[index] : board[index - hole.length];
+    const rank = tables.ranks[card?.charCodeAt(0) ?? 0] ?? -1;
+    const suit = tables.suits[card?.charCodeAt(1) ?? 0] ?? -1;
+    if (rank === -1 || suit === -1) return null;
+    product *= tables.primes[rank] ?? 1;
+    counts += 1 << (suit * 3);
+    if (suit < 2) lowSuits |= 1 << (suit * 13 + rank);
+    else highSuits |= 1 << ((suit - 2) * 13 + rank);
+  }
+  for (let suit = 0; suit < 4; suit += 1) {
+    if (((counts >> (suit * 3)) & 7) >= 5) {
+      const suits = suit < 2 ? lowSuits : highSuits;
+      return tables.flushes[(suits >> ((suit % 2) * 13)) & 0x1fff] ?? null;
+    }
+  }
+  return tables.others.get(product) ?? null;
 }

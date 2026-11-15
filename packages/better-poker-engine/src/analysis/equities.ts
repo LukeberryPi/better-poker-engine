@@ -1,5 +1,5 @@
 import type { KnownCard } from "../cards.ts";
-import { evaluate, type HandType } from "../evaluation.ts";
+import { evaluateStrength, type HandType } from "../evaluation.ts";
 import { randomBelow, type RandomSource } from "../random.ts";
 import { err, ok, type Result } from "../result.ts";
 import type { Range } from "./ranges.ts";
@@ -143,10 +143,10 @@ function withShares(
   handTypes: readonly HandType[]
 ): readonly number[] | null {
   const outcomes = handTypes.flatMap((type) => {
-    const strengths = deal.holes.map(
-      (hole) => evaluate(type, hole, deal.board)?.strength
+    const strengths = deal.holes.map((hole) =>
+      evaluateStrength(type, hole, deal.board)
     );
-    const formed = strengths.filter((strength) => strength !== undefined);
+    const formed = strengths.filter((strength) => strength !== null);
     if (formed.length === 0) return [];
     const best = Math.max(...formed);
     const winners = formed.filter((strength) => strength === best).length;

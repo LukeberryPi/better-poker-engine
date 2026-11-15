@@ -27,6 +27,7 @@ export {
   compareHands,
   describeHand,
   evaluate,
+  evaluateStrength,
   type HandType,
   type HandValue,
 } from "./evaluation.ts";
