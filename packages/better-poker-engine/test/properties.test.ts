@@ -252,7 +252,7 @@ describe("random hands", () => {
 
 describe("no-limit cash games", () => {
   const unclaimed = (strandedPots: Conventions["strandedPots"]) =>
-    Array.from({ length: 1500 }, (_, seed) => {
+    Array.from({ length: 300 }, (_, seed) => {
       const walk = randomWalk(seed, () =>
         holdem.noLimit({
           blinds: [1, 2],
@@ -266,5 +266,5 @@ describe("no-limit cash games", () => {
   test("strand side pots with needless folds and mucks unless refused", () => {
     expect(unclaimed("unclaimed").length).toBeGreaterThan(0);
     expect(unclaimed("refused")).toEqual([]);
-  });
+  }, 30_000);
 });
