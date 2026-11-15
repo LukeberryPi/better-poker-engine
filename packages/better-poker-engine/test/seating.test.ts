@@ -204,6 +204,17 @@ describe("planHand, missed blinds", () => {
     expect(next.seats[3]?.owes).toBe("bigBlind");
   });
 
+  test("charges a newcomer who sits out in last hand's big blind seat the big blind only", () => {
+    const first = plan(four, null, "dead", 0);
+    const newcomer = four.with(2, {
+      ...seated("e", "bigBlind"),
+      sittingOut: true,
+    });
+    const next = plan(newcomer, first.rotation);
+    expect(next.smallBlind).toBe(null);
+    expect(next.seats[2]?.owes).toBe("bigBlind");
+  });
+
   test("charges the small blind to a sitting-out big blind when the table drops to heads-up", () => {
     const first = plan(four, null, "dead", 0);
     const two = four

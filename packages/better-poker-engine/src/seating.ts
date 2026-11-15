@@ -100,8 +100,11 @@ function settled(seat: SeatState): SeatState {
   return { ...seat, owes: "nothing", posting: false };
 }
 
+/** Only a newcomer can owe the big blind when the small blind passes them, and a newcomer
+ * owes the big blind alone, as card rooms charge new players. */
 function owingAlso(owes: Owed, blind: "smallBlind" | "bigBlind"): Owed {
   if (owes === "nothing" || owes === blind) return blind;
+  if (owes === "bigBlind") return owes;
   return "bothBlinds";
 }
 
