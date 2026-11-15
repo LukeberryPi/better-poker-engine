@@ -83,7 +83,8 @@ export type Conventions = {
   /** "unclaimed" is pokerkit, which hand histories need: a fold or muck may leave a pot
    * nobody can win. "refused" refuses those actions, so every chip finds a winner. */
   readonly strandedPots: "refused" | "unclaimed";
-  /** Preflop, the largest blind is a full bet: a short all-in over it reopens nothing. */
+  /** TDA Rule 47: the big blind is a full bet, and a short all-in reopens betting only for
+   * a player who has not acted, or who now faces a full raise since acting. */
   readonly bigBlindIsFullBet: boolean;
   /** Preflop, calls and raises are priced from the largest blind even when it posted short. */
   readonly nominalBigBlind: boolean;

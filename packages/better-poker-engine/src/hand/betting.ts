@@ -141,10 +141,13 @@ export function priceOf(state: HandState): Chips {
     : largest;
 }
 
-/** pokerkit counts any first raise as full; TDA Rule 47 counts the blind as the full bet. */
+/** pokerkit counts any first wager as full. TDA Rule 47 opens each street with a full bet:
+ * the largest blind preflop, the minimum bet after, so shorter all-ins reopen nothing. */
 function openingFullBet(state: HandState): Chips {
-  const { bigBlindIsFullBet } = state.game.conventions;
-  return state.street === 0 && bigBlindIsFullBet ? nominalBlind(state) : 0;
+  if (!state.game.conventions.bigBlindIsFullBet) return 0;
+  return state.street === 0
+    ? nominalBlind(state)
+    : currentStreet(state).minCompletionBetOrRaise;
 }
 
 export function beginBetting(state: HandState): void {
@@ -328,11 +331,12 @@ export function raiseRange(
   const largest = priceOf(state);
   // pokerkit checks this last and reports a stack that only covers a call as a short all-in.
   if (!exceeds(stack, largest - bet)) return err({ code: "call_is_all_in" });
-  // pokerkit refuses a raise to anyone facing less than a full raise, right only while the
-  // blinds count for nothing; with the blind as a full bet, who has acted decides below.
+  // pokerkit refuses a raise to anyone facing less than a full raise. With the blind as a
+  // full bet that would take the blinds' option too, so it binds only those who have acted.
   if (
     !phase.bringIn &&
-    !state.game.conventions.bigBlindIsFullBet &&
+    (!state.game.conventions.bigBlindIsFullBet ||
+      phase.acted.includes(actor)) &&
     shortOfReopening(state, callAmount(state, actor), phase)
   ) {
     return err({ code: "action_not_reopened" });

@@ -109,6 +109,47 @@ describe("bigBlindIsFullBet", () => {
   });
 });
 
+describe("bigBlindIsFullBet after the flop", () => {
+  const limpedThrough = [call, call, call, call];
+
+  test("on, judges each player by what they faced when they last acted", () => {
+    const table = played(
+      noLimit(conventions.tda2024),
+      [10000, 250, 10000, 300],
+      [...limpedThrough, raiseTo(100), raiseTo(150), call, raiseTo(200)]
+    );
+    expect(auditor(table.hand).decision).toMatchObject({
+      player: "p1",
+      betOrRaiseTo: { kind: "raise", min: 300 },
+    });
+    table.act(call);
+    expect(auditor(table.hand).decision).toMatchObject({
+      player: "p3",
+      checkOrCall: { kind: "call", amount: 50 },
+      betOrRaiseTo: null,
+    });
+  });
+
+  const shortBetAfterCheck = (rules: Conventions) =>
+    played(
+      noLimit(rules),
+      [1000, 150, 1000],
+      [call, call, call, call, raiseTo(50), call]
+    );
+
+  test("off, as in pokerkit: a short all-in bet lets the player who checked raise", () => {
+    expect(
+      auditor(shortBetAfterCheck(conventions.tournament).hand).decision
+    ).toMatchObject({ player: "p1", betOrRaiseTo: { kind: "raise" } });
+  });
+
+  test("on: the player who checked may only call or fold", () => {
+    expect(
+      auditor(shortBetAfterCheck(conventions.tda2024).hand).decision
+    ).toMatchObject({ player: "p1", betOrRaiseTo: null });
+  });
+});
+
 describe("nominalBigBlind", () => {
   test("off, as in pokerkit: a big blind all-in for 60 prices the call at 60", () => {
     const table = played(noLimit(conventions.tournament), [1000, 60, 1000], []);
