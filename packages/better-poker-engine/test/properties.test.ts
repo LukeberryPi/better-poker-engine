@@ -18,6 +18,7 @@ import {
   type HistoryExportError,
 } from "../src/phh.ts";
 import { err } from "../src/result.ts";
+import { conventions, holdem, type Conventions } from "../src/rules.ts";
 import { randomWalk, type Walk } from "./random-hands.ts";
 
 const walks = Array.from({ length: 150 }, (_, seed) => randomWalk(seed));
@@ -72,7 +73,15 @@ function refusalOf(walk: Walk): HistoryExportError | null {
   if (game.boards !== 1) return { code: "boards", boards: game.boards };
   const runouts = summarizeHand(walk.hand)?.runouts ?? 1;
   if (runouts !== 1) return { code: "runouts", runouts };
-  return game.rake.kind === "none" ? null : { code: "rake" };
+  if (game.rake.kind !== "none") return { code: "rake" };
+  const { bigBlindIsFullBet, nominalBigBlind, antePrecedence, oddChips } =
+    game.conventions;
+  const pokerkitRules =
+    !bigBlindIsFullBet &&
+    !nominalBigBlind &&
+    antePrecedence === "ante" &&
+    oddChips === "firstShare";
+  return pokerkitRules ? null : { code: "conventions" };
 }
 
 describe("random hands", () => {
@@ -185,6 +194,9 @@ describe("random hands", () => {
       );
       const record = summarizeHand(walk.hand);
       if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
+      if (walk.setup.game.conventions.strandedPots === "refused") {
+        expect(record.unclaimed).toBe(0);
+      }
       const nets = record.players.map((player) => player.net);
       const kept = record.rake + record.unclaimed;
       expect(nets.reduce((sum, net) => sum + net, kept)).toBe(0);
@@ -224,7 +236,7 @@ describe("random hands", () => {
     });
     expect(differing).toEqual([]);
     expect(refused).toEqual(
-      new Set(["custom_variant", "boards", "runouts", "rake"])
+      new Set(["custom_variant", "boards", "runouts", "rake", "conventions"])
     );
     expect(
       new Set(played.map((seed) => walks[seed]?.setup.game.variant)).size
@@ -236,4 +248,23 @@ describe("random hands", () => {
     if (walk === undefined) throw new Error("No random hands");
     expect(summarizeHand(walk.hand)?.engineVersion).toBe(packageJson.version);
   });
+});
+
+describe("no-limit cash games", () => {
+  const unclaimed = (strandedPots: Conventions["strandedPots"]) =>
+    Array.from({ length: 300 }, (_, seed) => {
+      const walk = randomWalk(seed, () =>
+        holdem.noLimit({
+          blinds: [1, 2],
+          minBet: 2,
+          conventions: { ...conventions.cashGame, strandedPots },
+        })
+      );
+      return summarizeHand(walk.hand)?.unclaimed ?? 0;
+    }).filter((chips) => chips > 0);
+
+  test("strand side pots with needless folds and mucks unless refused", () => {
+    expect(unclaimed("unclaimed").length).toBeGreaterThan(0);
+    expect(unclaimed("refused")).toEqual([]);
+  }, 30_000);
 });

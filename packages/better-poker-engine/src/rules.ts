@@ -59,11 +59,70 @@ export type Rake =
       readonly kind: "percentage";
       /** Hundredths of a percent; the raked amount rounds half to even. */
       readonly basisPoints: number;
-      readonly cap: Chips | null;
+      readonly cap: RakeCap | null;
       readonly noFlopNoDrop: boolean;
     };
 
+export type RakeCap = {
+  readonly amount: Chips;
+  /** "pot" is pokerkit: each pot is capped alone. "hand" caps the hand, main pot first. */
+  readonly per: "pot" | "hand";
+};
+
+/** pokerkit's modes, which name the presets `conventions.tournament` and `.cashGame`. */
 export type Mode = "tournament" | "cashGame";
+
+/** Rules that pokerkit and card rooms settle differently. `conventions` holds presets. */
+export type Conventions = {
+  /** Folding when a check is free. */
+  readonly needlessFolds: "allowed" | "refused";
+  /** Who decides how many times an all-in board runs out. */
+  readonly runouts: "playersChoose" | "once";
+  /** Whether a show may keep some hole cards down. */
+  readonly partialShows: "allowed" | "refused";
+  /** "unclaimed" is pokerkit, which hand histories need: a fold or muck may leave a pot
+   * nobody can win. "refused" refuses those actions, so every chip finds a winner. */
+  readonly strandedPots: "refused" | "unclaimed";
+  /** TDA Rule 47: the big blind is a full bet, and a short all-in reopens betting only for
+   * a player who has not acted, or who now faces a full raise since acting. */
+  readonly bigBlindIsFullBet: boolean;
+  /** Preflop, calls and raises are priced from the largest blind even when it posted short. */
+  readonly nominalBigBlind: boolean;
+  /** What a stack too short for both posts first. */
+  readonly antePrecedence: "ante" | "blind";
+  /** Odd chips of a split: all to the first share, or one each from the first on. */
+  readonly oddChips: "firstShare" | "oneEach";
+};
+
+const tournament = {
+  needlessFolds: "refused",
+  runouts: "once",
+  partialShows: "refused",
+  strandedPots: "refused",
+  bigBlindIsFullBet: false,
+  nominalBigBlind: false,
+  antePrecedence: "ante",
+  oddChips: "firstShare",
+} as const satisfies Conventions;
+
+/** pokerkit's two modes, except that pots are never stranded, and the 2024 TDA rules
+ * card rooms play: https://www.pokertda.com/view-poker-tda-rules/ */
+export const conventions = {
+  tournament,
+  cashGame: {
+    ...tournament,
+    needlessFolds: "allowed",
+    runouts: "playersChoose",
+    partialShows: "allowed",
+  },
+  tda2024: {
+    ...tournament,
+    bigBlindIsFullBet: true,
+    nominalBigBlind: true,
+    antePrecedence: "blind",
+    oddChips: "oneEach",
+  },
+} as const satisfies Readonly<Record<string, Conventions>>;
 
 /** Plain configuration; `startHand` validates it. */
 export type Game = {
@@ -71,7 +130,7 @@ export type Game = {
   readonly rules: Rules;
   readonly forcedBets: ForcedBets;
   readonly rake: Rake;
-  readonly mode: Mode;
+  readonly conventions: Conventions;
   /** Boards dealt from the first street, e.g. 2 for double-board games. */
   readonly boards: number;
 };
@@ -93,10 +152,14 @@ export type GameError =
       readonly minBet: Chips;
     };
 
-type Options = {
+/** A preset by its mode, or every convention spelled out; the default is "tournament". */
+type ConventionOptions =
+  | { readonly mode?: Mode; readonly conventions?: never }
+  | { readonly mode?: never; readonly conventions: Conventions };
+
+type Options = ConventionOptions & {
   readonly antes?: Antes;
   readonly rake?: Rake;
-  readonly mode?: Mode;
   readonly anteTrimming?: boolean;
   readonly boards?: number;
 };
@@ -263,7 +326,8 @@ function gameOf(
       anteTrimming: options.anteTrimming ?? false,
     },
     rake: options.rake ?? { kind: "none" },
-    mode: options.mode ?? "tournament",
+    conventions:
+      options.conventions ?? conventions[options.mode ?? "tournament"],
     boards: options.boards ?? 1,
   };
 }
@@ -522,8 +586,8 @@ function rakeError(rake: Rake): GameError | null {
   if (!isChips(rake.basisPoints) || rake.basisPoints > 10_000) {
     return invalid("rake.basisPoints", rake.basisPoints);
   }
-  if (rake.cap !== null && !isChips(rake.cap)) {
-    return invalid("rake.cap", rake.cap);
+  if (rake.cap !== null && !isChips(rake.cap.amount)) {
+    return invalid("rake.cap.amount", rake.cap.amount);
   }
   return null;
 }

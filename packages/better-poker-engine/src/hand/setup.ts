@@ -102,7 +102,7 @@ function copyStreet(street: Street): Street {
 
 /** A private copy, so later edits to the caller's objects never reach the hand. */
 export function copyGame(game: Game): Game {
-  const { rules, forcedBets, rake } = game;
+  const { rules, forcedBets, rake, conventions } = game;
   const [first, ...rest] = rules.streets;
   const [handType, ...handTypes] = rules.handTypes;
   const antes: Antes =
@@ -117,7 +117,11 @@ export function copyGame(game: Game): Game {
       streets: [copyStreet(first), ...rest.map(copyStreet)],
     },
     forcedBets: { ...forcedBets, antes, blinds: [...forcedBets.blinds] },
-    rake: { ...rake },
+    rake:
+      rake.kind === "percentage" && rake.cap !== null
+        ? { ...rake, cap: { ...rake.cap } }
+        : { ...rake },
+    conventions: { ...conventions },
   };
 }
 

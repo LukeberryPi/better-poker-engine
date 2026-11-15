@@ -184,7 +184,7 @@ export function summarize(state: HandState): HandRecord | null {
   return {
     engineVersion,
     variant: state.game.variant,
-    mode: state.game.mode,
+    conventions: state.game.conventions,
     players,
     boards: Array.from({ length: boardCount(state) }, (_, board) =>
       boardCards(state, board)

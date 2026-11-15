@@ -14,6 +14,7 @@ import {
 import { randomBelow, seededRandom, type RandomSource } from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import {
+  conventions,
   draw,
   holdem,
   kuhn,
@@ -27,6 +28,7 @@ import {
   type Antes,
   type Game,
   type Rake,
+  type RakeCap,
 } from "../src/rules.ts";
 import { viewHand, type HandView } from "../src/views.ts";
 
@@ -60,7 +62,10 @@ function randomOptions(random: RandomSource) {
       {
         kind: "percentage",
         basisPoints: pick([500, 1000, 2500], random),
-        cap: pick([null, 3], random),
+        cap: pick<RakeCap | null>(
+          [null, { amount: 3, per: "pot" }, { amount: 3, per: "hand" }],
+          random
+        ),
         noFlopNoDrop: chance(50, random),
       },
     ],
@@ -69,7 +74,13 @@ function randomOptions(random: RandomSource) {
   return {
     antes,
     rake,
-    mode: pick(["tournament", "cashGame"] as const, random),
+    conventions: {
+      ...pick(
+        [conventions.tournament, conventions.cashGame, conventions.tda2024],
+        random
+      ),
+      strandedPots: pick(["refused", "unclaimed"] as const, random),
+    },
     anteTrimming: chance(50, random),
   };
 }
@@ -148,8 +159,12 @@ function randomAutomation(random: RandomSource): Automation {
 }
 
 /** Bounded stacks only, so chips add up; short ones force all-ins and side pots. */
-export function randomSetup(random: RandomSource): HandSetup {
-  const game = pick(games, random)(random);
+export function randomSetup(
+  random: RandomSource,
+  makeGame: (random: RandomSource) => Game = (random) =>
+    pick(games, random)(random)
+): HandSetup {
+  const game = makeGame(random);
   const players = between(2, Math.min(6, maxPlayers(game)), random);
   const deep = chance(50, random);
   return {
@@ -239,7 +254,9 @@ function plausibleAction(
       };
     case "showdown":
       return pick<Action>(
-        [{ type: "show" }, { type: "muck" }, { type: "timeout" }],
+        decision.mayMuck
+          ? [{ type: "show" }, { type: "muck" }, { type: "timeout" }]
+          : [{ type: "show" }, { type: "timeout" }],
         random
       );
     case "dealer":
@@ -304,9 +321,12 @@ export type Walk = {
 const maxSteps = 2000;
 
 /** A random hand played to completion, refused attempts included. */
-export function randomWalk(seed: number): Walk {
+export function randomWalk(
+  seed: number,
+  makeGame?: (random: RandomSource) => Game
+): Walk {
   const random = seededRandom(seed);
-  const setup = randomSetup(random);
+  const setup = randomSetup(random, makeGame);
   const started = startHand(setup);
   if (!started.ok) {
     throw new Error(`Seed ${seed}: ${JSON.stringify(started.error)}`);

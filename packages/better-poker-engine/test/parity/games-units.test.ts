@@ -3,7 +3,14 @@ import { expect } from "bun:test";
 import { unitTest } from "../../../../parity/harness.ts";
 import { decks } from "../../src/cards.ts";
 import { automation, type Hand } from "../../src/hand.ts";
-import { kuhn, omaha, rhodeIsland, royal, type Game } from "../../src/rules.ts";
+import {
+  conventions,
+  kuhn,
+  omaha,
+  rhodeIsland,
+  royal,
+  type Game,
+} from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -162,7 +169,7 @@ unitTest(
         anteTrimming: true,
       },
       rake: { kind: "none" },
-      mode: "tournament",
+      conventions: conventions.tournament,
       boards: 1,
     };
     const state1 = kuhn.fixedLimit();

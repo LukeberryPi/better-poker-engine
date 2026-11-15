@@ -71,6 +71,18 @@ Agreed with the project owner. Do not re-litigate without real friction.
     only those, so loading and acting cost the same however many hands the
     table has played. Stacks and the session at that point are trusted as
     stored; the event log and hand records are the audit trail.
+21. **Conventions.** Where pokerkit and card rooms rule differently,
+    `Game.conventions` says which rule a game plays. pokerkit's rules stay the
+    default, so parity holds; `conventions.tda2024` is the card-room preset,
+    and `mode` names pokerkit's two presets.
+22. **No stranded pots by default.** pokerkit lets a needless fold or a muck
+    leave a pot that nobody can win, and burns it. Hand histories need that;
+    a game that moves value can't afford it. `strandedPots: "refused"` is
+    the default; PHH replays and the parity tests that strand pots opt into
+    `"unclaimed"`.
+23. **Servers act through `actAs`.** It names the authenticated player,
+    requires `expectedVersion` and accepts player actions only. `act` keeps
+    pokerkit's calling conventions (decision 16) for replays and tools.
 
 ## Out of scope for v1
 

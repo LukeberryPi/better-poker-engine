@@ -42,11 +42,13 @@ export type {
 } from "./events.ts";
 export {
   act,
+  actAs,
   automation,
   replayHand,
   startHand,
   summarizeHand,
   type Action,
+  type ActAsOptions,
   type ActOptions,
   type AutomatedStep,
   type Automation,
@@ -103,6 +105,7 @@ export {
 } from "./table.ts";
 export { err, ok, type Result } from "./result.ts";
 export {
+  conventions,
   draw,
   holdem,
   kuhn,
@@ -117,6 +120,7 @@ export {
   type AnteStakes,
   type BettingStructure,
   type BlindStakes,
+  type Conventions,
   type Face,
   type FixedLimitStakes,
   type ForcedBets,
@@ -127,11 +131,13 @@ export {
   type NonEmpty,
   type Opening,
   type Rake,
+  type RakeCap,
   type Rules,
   type Street,
   type StudStakes,
 } from "./rules.ts";
 export type { VariantCode } from "./variants.ts";
+export { engineVersion } from "./version.ts";
 export {
   eventsFor,
   viewHand,

@@ -98,6 +98,7 @@ describe("viewHand", () => {
     expect(spectator(table.hand).decision).toEqual({
       kind: "showdown",
       player: "p1",
+      mayMuck: true,
     });
     table.act({ type: "show" });
     table.act({ type: "muck" });

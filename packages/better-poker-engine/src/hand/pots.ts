@@ -1,7 +1,7 @@
 import { addToStack, type Chips } from "../chips.ts";
 import type { EventBody, PlayerAmount } from "../events.ts";
 import { err, ok, type Result } from "../result.ts";
-import type { Rake } from "../rules.ts";
+import type { Conventions, Rake } from "../rules.ts";
 import { effectiveAnte } from "./forced.ts";
 import { pendingPlayer, type Refusal } from "./refusal.ts";
 import {
@@ -19,8 +19,14 @@ import {
   type SubPot,
 } from "./state.ts";
 
-/** pokerkit's `rake`, exactly: basis points of the pot, rounded half to even. */
-export function rakePot(amount: Chips, rake: Rake, flopDealt: boolean) {
+/** pokerkit's `rake`, exactly: basis points of the pot, rounded half to even. `capLeft`
+ * is what a per-hand cap still allows. */
+export function rakePot(
+  amount: Chips,
+  rake: Rake,
+  flopDealt: boolean,
+  capLeft = Infinity
+) {
   if (rake.kind === "none" || (rake.noFlopNoDrop && !flopDealt)) {
     return { raked: 0, unraked: amount };
   }
@@ -29,10 +35,8 @@ export function rakePot(amount: Chips, rake: Rake, flopDealt: boolean) {
   const remainder = product % 10_000n;
   const roundsUp =
     remainder > 5_000n || (remainder === 5_000n && quotient % 2n === 1n);
-  const raked = Math.min(
-    Number(quotient) + (roundsUp ? 1 : 0),
-    rake.cap ?? Infinity
-  );
+  const cap = rake.cap?.per === "pot" ? rake.cap.amount : capLeft;
+  const raked = Math.min(Number(quotient) + (roundsUp ? 1 : 0), cap);
   return { raked, unraked: amount - raked };
 }
 
@@ -42,6 +46,18 @@ export function splitChips(
   ways: number
 ): readonly [quotient: Chips, remainder: Chips] {
   return [Math.floor(amount / ways), amount % ways];
+}
+
+/** Share `order` of `ways`, whose odd chips go out as `oddChips` says. */
+export function shareOf(
+  amount: Chips,
+  ways: number,
+  order: number,
+  oddChips: Conventions["oddChips"]
+): Chips {
+  const [quotient, remainder] = splitChips(amount, ways);
+  if (oddChips === "oneEach") return quotient + (order < remainder ? 1 : 0);
+  return quotient + (order === 0 ? remainder : 0);
 }
 
 function sameEligible(a: readonly Position[], b: readonly Position[]): boolean {
@@ -67,6 +83,11 @@ export function potsOf(state: HandState): readonly PotState[] {
     }
   }
   const flopDealt = state.boards.some((slot) => slot.length > 0);
+  const { rake } = state.game;
+  let capLeft =
+    rake.kind === "percentage" && rake.cap?.per === "hand"
+      ? rake.cap.amount
+      : Infinity;
   const pots: PotState[] = [];
   let previous = 0;
   for (const level of [...new Set(contributions)].sort((a, b) => a - b)) {
@@ -79,11 +100,14 @@ export function potsOf(state: HandState): readonly PotState[] {
     let last = pots.at(-1);
     while (last !== undefined && sameEligible(last.eligible, eligible)) {
       amount += last.raked + last.unraked;
+      capLeft += last.raked;
       pots.pop();
       last = pots.at(-1);
     }
     if (amount !== 0) {
-      pots.push({ ...rakePot(amount, state.game.rake, flopDealt), eligible });
+      const pot = rakePot(amount, rake, flopDealt, capLeft);
+      capLeft -= pot.raked;
+      pots.push({ ...pot, eligible });
     }
     amount = 0;
     previous = level;
@@ -128,7 +152,11 @@ export function beginChipsPushing(state: HandState): void {
   state.pots = pots;
   const subPots: SubPot[] = [];
   const active = activeCount(state);
+  const { oddChips, strandedPots } = state.game.conventions;
   for (const [index, pot] of pots.entries()) {
+    if (pot.eligible.length === 0 && strandedPots === "refused") {
+      throw new Error(`Pot ${index} was stranded with nobody left to win it`);
+    }
     if (active === 1) {
       subPots.push({
         amount: pot.unraked,
@@ -140,9 +168,8 @@ export function beginChipsPushing(state: HandState): void {
     }
     if (active === 0) continue;
     const boards = boardCount(state);
-    const [perBoard, boardRemainder] = splitChips(pot.unraked, boards);
     for (let board = 0; board < boards; board += 1) {
-      const boardAmount = perBoard + (board === 0 ? boardRemainder : 0);
+      const boardAmount = shareOf(pot.unraked, boards, board, oddChips);
       const handTypes = handTypesInPlay(state, board, pot.eligible);
       if (handTypes.length === 0) {
         if (boardAmount > 0) {
@@ -155,12 +182,8 @@ export function beginChipsPushing(state: HandState): void {
         }
         continue;
       }
-      const [perType, typeRemainder] = splitChips(
-        boardAmount,
-        handTypes.length
-      );
       for (const [order, handType] of handTypes.entries()) {
-        const amount = perType + (order === 0 ? typeRemainder : 0);
+        const amount = shareOf(boardAmount, handTypes.length, order, oddChips);
         if (amount > 0) subPots.push({ amount, pot: index, board, handType });
       }
     }
@@ -196,9 +219,9 @@ export function pushChips(state: HandState): Result<EventBody, Refusal> {
   const awards: PlayerAmount[] = [];
   if (winners.length > 0) {
     pot.unraked -= subPot.amount;
-    const [share, remainder] = splitChips(subPot.amount, winners.length);
+    const { oddChips } = state.game.conventions;
     for (const [order, position] of winners.entries()) {
-      const amount = share + (order === 0 ? remainder : 0);
+      const amount = shareOf(subPot.amount, winners.length, order, oddChips);
       state.bets[position] = at(state.bets, position) + amount;
       if (amount > 0)
         awards.push({ player: playerAt(state, position), amount });

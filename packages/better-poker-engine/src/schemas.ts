@@ -10,7 +10,13 @@ import {
   type HandSetup,
   type PlayerAction,
 } from "./hand.ts";
-import type { BettingStructure, Face, Game, Mode, Opening } from "./rules.ts";
+import type {
+  BettingStructure,
+  Conventions,
+  Face,
+  Game,
+  Opening,
+} from "./rules.ts";
 import type {
   TableCheckpoint,
   TableCommand,
@@ -86,7 +92,18 @@ const structures = {
   noLimit: true,
 } satisfies Record<BettingStructure, true>;
 
-const modes = { tournament: true, cashGame: true } satisfies Record<Mode, true>;
+const allowedOrRefused = z.enum(["allowed", "refused"]);
+
+const conventionsSchema = object({
+  needlessFolds: allowedOrRefused,
+  runouts: z.enum(["playersChoose", "once"]),
+  partialShows: allowedOrRefused,
+  strandedPots: z.enum(["refused", "unclaimed"]),
+  bigBlindIsFullBet: z.boolean(),
+  nominalBigBlind: z.boolean(),
+  antePrecedence: z.enum(["ante", "blind"]),
+  oddChips: z.enum(["firstShare", "oneEach"]),
+}) satisfies z.ZodMiniType<Conventions>;
 
 function object<Fields extends Readonly<Record<string, z.core.SomeType>>>(
   fields: Fields
@@ -125,7 +142,7 @@ const rake = z.discriminatedUnion("kind", [
   object({
     kind: z.literal("percentage"),
     basisPoints: z.number(),
-    cap: z.nullable(chips),
+    cap: z.nullable(object({ amount: chips, per: z.enum(["pot", "hand"]) })),
     noFlopNoDrop: z.boolean(),
   }),
 ]);
@@ -145,7 +162,7 @@ export const gameSchema = object({
     anteTrimming: z.boolean(),
   }),
   rake,
-  mode: z.enum(keysOf(modes)),
+  conventions: conventionsSchema,
   boards: z.number(),
 }) satisfies z.ZodMiniType<Game>;
 
@@ -251,7 +268,7 @@ export const handEventSchema = object({
 export const handRecordSchema = object({
   engineVersion: z.string(),
   variant: z.enum([...variantCodes, "custom"]),
-  mode: z.enum(keysOf(modes)),
+  conventions: conventionsSchema,
   players: list(
     object({
       player: playerId,
