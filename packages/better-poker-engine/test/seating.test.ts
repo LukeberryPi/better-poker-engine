@@ -195,6 +195,26 @@ describe("planHand, dead button", () => {
   });
 });
 
+describe("planHand, missed blinds", () => {
+  test("charges a busted player the big blind the table plays past", () => {
+    const first = plan(four, null, "dead", 0);
+    const busted = four.with(3, { ...seated("d"), stack: 0 });
+    const next = plan(busted, first.rotation);
+    expect(next.bigBlind).toBe(0);
+    expect(next.seats[3]?.owes).toBe("bigBlind");
+  });
+
+  test("charges the small blind to a sitting-out big blind when the table drops to heads-up", () => {
+    const first = plan(four, null, "dead", 0);
+    const two = four
+      .with(2, { ...seated("c"), sittingOut: true })
+      .with(3, null);
+    const next = plan(two, first.rotation);
+    expect(next.positions).toEqual([0, 1]);
+    expect(next.seats[2]?.owes).toBe("smallBlind");
+  });
+});
+
 describe("planHand, heads-up", () => {
   test("from three to two, nobody posts the big blind twice in a row", () => {
     const three = table("a", "b", "c");
@@ -235,7 +255,7 @@ describe("planHand over random sessions", () => {
         randomBelow(3, random) === 0 ? null : seated(`p${seat}`)
       );
       let rotation: Rotation | null = null;
-      let lastBigBlind: number | null = null;
+      let lastBigBlind: string | null = null;
       for (let hand = 0; hand < 40; hand += 1) {
         const seat = randomBelow(6, random);
         const occupant = seats[seat];
@@ -263,15 +283,16 @@ describe("planHand over random sessions", () => {
         });
         if (!planned.ok) continue;
         const { positions, bigBlind } = planned.value;
+        const bigBlindPlayer = seats[bigBlind]?.player ?? null;
         if (!positions.includes(bigBlind))
           problems.push(`${session}/${hand}: big blind out`);
-        if (positions.length > 2 && bigBlind === lastBigBlind) {
+        if (bigBlindPlayer === lastBigBlind) {
           problems.push(`${session}/${hand}: big blind twice`);
         }
         if (posts(seats, planned.value).length === 0) {
           problems.push(`${session}/${hand}: nothing posted`);
         }
-        lastBigBlind = bigBlind;
+        lastBigBlind = bigBlindPlayer;
         rotation = planned.value.rotation;
         seats = [...planned.value.seats];
       }

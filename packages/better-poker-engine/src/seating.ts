@@ -267,25 +267,24 @@ export function planHand(
             playable.includes(seat)
           ) ?? rotation.button)
     );
+  // A seat the blinds pass while it can't play owes them: sitting out, or busted at a rebuy.
+  const charged = planned === null || last === null ? null : last;
   const missedBig = new Set(
-    last === null || input.button !== "dead"
+    charged === null
       ? []
-      : clockwise(last.big, count).filter(
+      : clockwise(charged.big, count).filter(
           (seat) =>
-            within(last.big, layout.bigBlind, seat, count) &&
+            within(charged.big, layout.bigBlind, seat, count) &&
             seat !== layout.bigBlind
         )
   );
-  const missedSmall =
-    input.button === "dead" && planned !== null && layout.smallBlind === null
-      ? (last?.big ?? null)
-      : null;
+  const missedSmall = charged?.big ?? null;
   return ok({
     ...layout,
     seats: seats.map((seat, index) => {
       if (seat === null) return null;
       if (layout.positions.includes(index)) return settled(seat);
-      if (!seat.sittingOut) return seat;
+      if (playable.includes(index)) return seat;
       if (missedBig.has(index)) {
         return { ...seat, owes: owingAlso(seat.owes, "bigBlind") };
       }
