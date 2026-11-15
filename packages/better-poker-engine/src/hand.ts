@@ -257,7 +257,6 @@ export function startHand(setup: HandSetup): Result<Transition, SetupError> {
   const events: HandEvent[] = [];
   settle(state);
   automate(state, events);
-  state.events = events;
   return ok({ hand: handFrom(state), events });
 }
 
@@ -297,9 +296,11 @@ export function act(
     });
   }
   const state = cloneState(current);
-  const events = apply(state, copyAction(action), options.commentary ?? null);
+  const copied = copyAction(action);
+  const commentary = options.commentary ?? null;
+  const events = apply(state, copied, commentary);
   if (!events.ok) return events;
-  state.events = [...current.events, ...events.value];
+  state.log = [...current.log, { action: copied, commentary }];
   return ok({ hand: handFrom(state), events: events.value });
 }
 
@@ -322,7 +323,35 @@ export function actAs(
 
 /** Null until the hand is complete. Auditor data: it holds every hole card. */
 export function summarizeHand(hand: Hand): HandRecord | null {
-  return summarize(stateOf(hand));
+  const state = stateOf(hand);
+  if (state.phase.kind !== "complete") return null;
+  return summarize(state, eventsOf(hand));
+}
+
+/** Every event so far, replayed from the setup and the actions the hand logged. */
+export function eventsOf(hand: Hand): HandEvent[] {
+  const state = stateOf(hand);
+  const started = startHand({
+    game: state.game,
+    players: state.players,
+    stacks: state.startingStacks,
+    deck: state.startingDeck,
+    automate: state.automate,
+  });
+  if (!started.ok) throw new Error("A hand no longer starts from its setup");
+  let replayed = started.value.hand;
+  const events = [...started.value.events];
+  for (const { action, commentary } of state.log) {
+    const next = act(
+      replayed,
+      action,
+      commentary === null ? {} : { commentary }
+    );
+    if (!next.ok) throw new Error("A hand no longer replays its own log");
+    replayed = next.value.hand;
+    events.push(...next.value.events);
+  }
+  return events;
 }
 
 export type ReplayError =
@@ -340,12 +369,14 @@ export function replayHand(
   const started = startHand(setup);
   if (!started.ok) return err({ code: "setup", error: started.error });
   let { hand } = started.value;
+  const events = [...started.value.events];
   for (const [index, action] of actions.entries()) {
     const next = act(hand, action);
     if (!next.ok) {
       return err({ code: "rejected", index, violation: next.error });
     }
     hand = next.value.hand;
+    events.push(...next.value.events);
   }
-  return ok({ hand, events: stateOf(hand).events });
+  return ok({ hand, events });
 }

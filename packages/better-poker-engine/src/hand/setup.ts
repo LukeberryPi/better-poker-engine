@@ -160,7 +160,7 @@ export function initialState(setup: HandSetup): HandState {
     pots: null,
     contestedPots: null,
     phase: { kind: "complete" },
-    events: [],
+    log: [],
   };
   beginAntePosting(state);
   return state;

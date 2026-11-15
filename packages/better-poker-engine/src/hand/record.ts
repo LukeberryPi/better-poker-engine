@@ -24,10 +24,14 @@ import {
 } from "./state.ts";
 
 /** Hole cards as dealt, minus discards, face up once shown; a show keeps no card back. */
-function heldCards(state: HandState, position: Position): HoleCard[] {
+function heldCards(
+  state: HandState,
+  events: readonly HandEvent[],
+  position: Position
+): HoleCard[] {
   const player = playerAt(state, position);
   let held: HoleCard[] = [];
-  for (const { body } of state.events) {
+  for (const { body } of events) {
     if (body.type === "holeDealt" && body.player === player) {
       held = [...held, ...body.cards];
     } else if (body.type === "drew" && body.player === player) {
@@ -58,7 +62,11 @@ function streetOfFirst(
   return event === undefined ? null : (event.street ?? 0);
 }
 
-function playerRecord(state: HandState, position: Position): PlayerRecord {
+function playerRecord(
+  state: HandState,
+  events: readonly HandEvent[],
+  position: Position
+): PlayerRecord {
   const player = playerAt(state, position);
   return {
     player,
@@ -66,13 +74,13 @@ function playerRecord(state: HandState, position: Position): PlayerRecord {
     startingStack: at(state.startingStacks, position),
     endingStack: at(state.stacks, position),
     net: at(state.payoffs, position),
-    holeCards: heldCards(state, position),
+    holeCards: heldCards(state, events, position),
     foldedOnStreet: streetOfFirst(
-      state.events,
+      events,
       ({ body }) => body.type === "folded" && body.player === player
     ),
     allInOnStreet: streetOfFirst(
-      state.events,
+      events,
       ({ after }) => after.stacks[position] === 0
     ),
   };
@@ -80,8 +88,12 @@ function playerRecord(state: HandState, position: Position): PlayerRecord {
 
 type Winner = PotRecord["winners"][number];
 
-function winnersOf(state: HandState, pot: number): Winner[] {
-  return state.events.flatMap(({ body }) => {
+function winnersOf(
+  state: HandState,
+  events: readonly HandEvent[],
+  pot: number
+): Winner[] {
+  return events.flatMap(({ body }) => {
     if (body.type !== "chipsPushed" || body.pot !== pot) return [];
     const { board, handType } = body;
     return body.awards.map(({ player, amount }) => {
@@ -146,10 +158,13 @@ function apportion(
   });
 }
 
-function potRecords(state: HandState): PotRecord[] {
+function potRecords(
+  state: HandState,
+  events: readonly HandEvent[]
+): PotRecord[] {
   const contested = [...(state.contestedPots ?? [])];
   return (state.pots ?? []).flatMap((pot, index) => {
-    const winners = winnersOf(state, index);
+    const winners = winnersOf(state, events, index);
     const awarded = winners.map(({ amount }) => amount);
     const parts = partsOf(contested, pot.raked + pot.unraked + sum(awarded));
     const shares = apportion(
@@ -171,14 +186,16 @@ function potRecords(state: HandState): PotRecord[] {
   });
 }
 
-/** Null until the hand is complete. */
-export function summarize(state: HandState): HandRecord | null {
-  if (state.phase.kind !== "complete") return null;
+/** `events` are every event of the complete hand. */
+export function summarize(
+  state: HandState,
+  events: readonly HandEvent[]
+): HandRecord {
   const players = positionsOf(state).map((position) =>
-    playerRecord(state, position)
+    playerRecord(state, events, position)
   );
   const pots = state.pots ?? [];
-  const streets = state.events.flatMap(({ street }) =>
+  const streets = events.flatMap(({ street }) =>
     street === null ? [] : [street]
   );
   return {
@@ -189,12 +206,12 @@ export function summarize(state: HandState): HandRecord | null {
     boards: Array.from({ length: boardCount(state) }, (_, board) =>
       boardCards(state, board)
     ),
-    pots: potRecords(state),
+    pots: potRecords(state, events),
     rake: sum(pots.map((pot) => pot.raked)),
     unclaimed: sum(pots.map((pot) => pot.unraked)),
     runouts: state.runoutCount ?? 1,
     streetsReached: streets.length === 0 ? 0 : Math.max(...streets) + 1,
-    actions: state.events.filter(({ cause }) => cause.kind === "action").length,
+    actions: events.filter(({ cause }) => cause.kind === "action").length,
     wentToShowdown:
       players.filter(({ foldedOnStreet }) => foldedOnStreet === null).length >
       1,

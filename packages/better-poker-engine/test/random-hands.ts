@@ -35,6 +35,7 @@ import {
   type RakeCap,
 } from "../src/rules.ts";
 import { viewHand, type HandView } from "../src/views.ts";
+import { rawJson } from "./support.ts";
 
 function pick<T>(items: readonly T[], random: RandomSource): T {
   const item = items[randomBelow(items.length, random)];
@@ -347,7 +348,7 @@ export function randomWalk(
     const action = stray ? strayAction(spectated, random) : plausible;
     const before = {
       before: hand,
-      beforeJson: JSON.stringify(hand),
+      beforeJson: rawJson(hand),
       spectated,
     };
     const result = act(hand, action);

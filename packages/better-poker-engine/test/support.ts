@@ -7,9 +7,30 @@ import {
   type Card,
   type KnownCard,
 } from "../src/cards.ts";
+import type { Hand, Transition, Violation } from "../src/hand.ts";
+import { stateOf } from "../src/hand/state.ts";
 import { entryOf, type Lookup } from "../src/lookups.ts";
 import type { RandomSource } from "../src/random.ts";
 import type { Result } from "../src/result.ts";
+import { serializeHand } from "../src/storage.ts";
+
+/** A hand's own fields as JSON, past the seal that keeps stray logs from printing them. */
+export function rawJson(hand: Hand): string {
+  return JSON.stringify({ ...stateOf(hand) });
+}
+
+export function sameTransition(
+  a: Result<Transition, Violation>,
+  b: Result<Transition, Violation>
+): boolean {
+  if (a.ok && b.ok) {
+    return (
+      serializeHand(a.value.hand) === serializeHand(b.value.hand) &&
+      JSON.stringify(a.value.events) === JSON.stringify(b.value.events)
+    );
+  }
+  return !a.ok && !b.ok && JSON.stringify(a.error) === JSON.stringify(b.error);
+}
 
 export function okValue<T, E>(result: Result<T, E>): T {
   if (!result.ok) throw new Error(`Not ok: ${JSON.stringify(result.error)}`);

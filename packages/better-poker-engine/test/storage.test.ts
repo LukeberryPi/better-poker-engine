@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
+import { inspect } from "node:util";
 
 import { decks, shuffle } from "../src/cards.ts";
 import { act, automation, type Hand } from "../src/hand.ts";
 import { insecureSeededRandom } from "../src/random.ts";
 import { holdem, kuhn } from "../src/rules.ts";
+import { actAtTable, createTable, type Table } from "../src/table.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
 import { auditor, start } from "./driver.ts";
 import { randomWalk } from "./random-hands.ts";
+import { sameTransition } from "./support.ts";
 
 const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
 
@@ -34,6 +37,39 @@ function tampered(hand: Hand, edit: (data: Stored) => void): string {
   return JSON.stringify(data);
 }
 
+describe("a raw hand or table", () => {
+  const seated = (): Table => {
+    const created = createTable({ game, seats: 2 });
+    if (!created.ok) throw new Error(JSON.stringify(created.error));
+    let table = created.value;
+    for (const command of [
+      { type: "join", player: "ann", seat: 0, stack: 200 },
+      { type: "join", player: "bo", seat: 1, stack: 200 },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(3)),
+      },
+    ] as const) {
+      const next = actAtTable(table, command);
+      if (!next.ok) throw new Error(JSON.stringify(next.error));
+      table = next.value.table;
+    }
+    return table;
+  };
+
+  test("refuses JSON, so a log line or a response body can't carry the deck", () => {
+    expect(() => JSON.stringify(threeHanded())).toThrow(/serializeHand/u);
+    expect(() => JSON.stringify({ table: seated() })).toThrow(
+      /serializeTable/u
+    );
+  });
+
+  test("shows Node's inspector no card", () => {
+    expect(inspect(threeHanded())).toBe("Hand [sealed]");
+    expect(inspect(seated())).toBe("Table [sealed]");
+  });
+});
+
 describe("serializeHand and parseHand", () => {
   const walks = Array.from({ length: 80 }, (_, seed) => randomWalk(seed));
 
@@ -45,9 +81,9 @@ describe("serializeHand and parseHand", () => {
         const parsed = parseHand(text);
         if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
         expect(serializeHand(parsed.value)).toBe(text);
-        expect(JSON.stringify(act(parsed.value, step.action))).toBe(
-          JSON.stringify(step.result)
-        );
+        expect(
+          sameTransition(act(parsed.value, step.action), step.result)
+        ).toBe(true);
       }
       const parsed = parseHand(serializeHand(walk.hand));
       if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));

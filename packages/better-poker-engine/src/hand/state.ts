@@ -2,8 +2,13 @@ import type { Brandable } from "../brand.ts";
 import { isKnownCard, type Card, type Deck, type KnownCard } from "../cards.ts";
 import type { Chips, Stack } from "../chips.ts";
 import { evaluate, type HandValue } from "../evaluation.ts";
-import type { HandEvent } from "../events.ts";
-import type { AutomatedStep, Hand, HoleCard, PlayerId } from "../hand.ts";
+import type {
+  Action,
+  AutomatedStep,
+  Hand,
+  HoleCard,
+  PlayerId,
+} from "../hand.ts";
 import type { Seed } from "../random.ts";
 import type { Face, Game, Street } from "../rules.ts";
 
@@ -78,6 +83,11 @@ export type Phase =
 
 export type Runout = { readonly returnStreet: number; remaining: number };
 
+export type LoggedAction = {
+  readonly action: Action;
+  readonly commentary: string | null;
+};
+
 /** pokerkit's `State` fields, mutated in place on a private copy per action. */
 export type HandState = Brandable<"Hand"> & {
   readonly game: Game;
@@ -115,7 +125,8 @@ export type HandState = Brandable<"Hand"> & {
   /** Mucks can merge `pots`, as in pokerkit; the record reports these instead. */
   contestedPots: readonly ContestedPot[] | null;
   phase: Phase;
-  events: readonly HandEvent[];
+  /** Accepted actions only: events replay from them, so a hand stays small. */
+  log: readonly LoggedAction[];
 };
 
 export function stateOf(hand: Hand): HandState {
@@ -133,9 +144,27 @@ export function deepFreeze<T extends {}>(value: T): T {
   return value;
 }
 
+const nodeInspect = Symbol.for("nodejs.util.inspect.custom");
+
+/** Hands and tables hold the deck and every hole card, so `JSON.stringify` throws and
+ * Node's inspector prints nothing: a stray log line or `res.json` can't leak them. */
+export function sealed<T extends {}>(value: T, kind: "Hand" | "Table"): T {
+  Object.defineProperties(value, {
+    toJSON: {
+      value: () => {
+        throw new TypeError(
+          `A ${kind} holds the deck and every hole card: store it with serialize${kind} and send view${kind} to clients`
+        );
+      },
+    },
+    [nodeInspect]: { value: () => `${kind} [sealed]` },
+  });
+  return value;
+}
+
 export function handFrom(state: HandState): Hand {
   // SAFETY: HandState carries the optional Hand brand; this grants it.
-  return deepFreeze(state) as Hand;
+  return deepFreeze(sealed(state, "Hand")) as Hand;
 }
 
 function clonePhase(phase: Phase): Phase {

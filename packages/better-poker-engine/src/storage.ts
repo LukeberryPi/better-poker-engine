@@ -2,6 +2,7 @@ import * as z from "zod/mini";
 
 import {
   act,
+  eventsOf,
   startHand,
   type Hand,
   type SetupError,
@@ -47,7 +48,7 @@ export function serializeHand(hand: Hand): string {
       deck: state.startingDeck,
       automate: state.automate,
     },
-    events: state.events,
+    events: eventsOf(hand),
   } satisfies StoredHand;
   return JSON.stringify(stored);
 }
@@ -109,14 +110,15 @@ function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
   const started = startHand(setup);
   if (!started.ok) return err({ code: "setup", error: started.error });
   let { hand } = started.value;
+  const replayed = [...started.value.events];
   for (const { cause, commentary, seq } of events) {
     if (cause.kind !== "action") continue;
     const options = commentary === null ? {} : { commentary };
     const next = act(hand, cause.action, options);
     if (!next.ok) return err({ code: "rejected", seq, violation: next.error });
     hand = next.value.hand;
+    replayed.push(...next.value.events);
   }
-  const replayed = stateOf(hand).events;
   const length = Math.max(replayed.length, events.length);
   for (let index = 0; index < length; index += 1) {
     const event = handEventSchema.safeParse(replayed[index]);

@@ -2,8 +2,7 @@ import { expect } from "bun:test";
 
 import type { Card } from "../../src/cards.ts";
 import type { EventBody, HandEvent } from "../../src/events.ts";
-import type { Hand } from "../../src/hand.ts";
-import { stateOf } from "../../src/hand/state.ts";
+import { eventsOf, type Hand } from "../../src/hand.ts";
 import { formatPhh } from "../../src/phh.ts";
 import { accept, type Move } from "../driver.ts";
 import { exported, parsed, replayed } from "../phh-support.ts";
@@ -42,16 +41,12 @@ export function replaysWithout(
   const hh = exported(hand);
   let newState = replayed(hh).final;
 
-  expect(operations(stateOf(newState).events)).toEqual(
-    operations(stateOf(hand).events)
-  );
+  expect(operations(eventsOf(newState))).toEqual(operations(eventsOf(hand)));
 
   const newHh = parsed(formatPhh(hh));
   // pokerkit replays `hh` again here, evidently meaning `new_hh`.
   newState = replayed(newHh).final;
 
-  expect(operations(stateOf(newState).events)).toEqual(
-    operations(stateOf(hand).events)
-  );
+  expect(operations(eventsOf(newState))).toEqual(operations(eventsOf(hand)));
   expect(formatPhh(hh)).toBe(formatPhh(newHh));
 }
