@@ -110,6 +110,17 @@ export {
 } from "./table.ts";
 export { err, ok, type Result } from "./result.ts";
 export {
+  planHand,
+  type BlindSeats,
+  type ButtonRule,
+  type Owed,
+  type Rotation,
+  type SeatState,
+  type SeatingError,
+  type SeatingInput,
+  type SeatingPlan,
+} from "./seating.ts";
+export {
   conventions,
   draw,
   holdem,

@@ -12,6 +12,7 @@ import { stateOf } from "./hand/state.ts";
 import { err, ok, type Result } from "./result.ts";
 import {
   handEventSchema,
+  handRecordSchema,
   handSetupSchema,
   tableCheckpointSchema,
   tableCommandSchema,
@@ -133,7 +134,7 @@ function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
 }
 
 const storedTableSchema = z.object({
-  format: z.literal(2),
+  format: z.literal(3),
   setup: tableSetupSchema,
   checkpoint: tableCheckpointSchema,
   commands: z.readonly(z.array(tableCommandSchema)),
@@ -141,12 +142,62 @@ const storedTableSchema = z.object({
 
 type StoredTable = z.output<typeof storedTableSchema>;
 
+/** Format 2, from 0.2.0: a moving button only, and nobody owing blinds. */
+const storedTableSchemaV2 = z.object({
+  format: z.literal(2),
+  setup: tableSetupSchema,
+  checkpoint: z.object({
+    version: z.number(),
+    eventCount: z.number(),
+    seats: z.readonly(
+      z.array(
+        z.nullable(
+          z.object({
+            player: z.string(),
+            stack: z.number(),
+            sittingOut: z.boolean(),
+          })
+        )
+      )
+    ),
+    button: z.nullable(z.number()),
+    hands: z.number(),
+    lastHand: z.nullable(handRecordSchema),
+    session: z.readonly(
+      z.array(
+        z.object({
+          player: z.string(),
+          boughtIn: z.number(),
+          cashedOut: z.number(),
+          hands: z.number(),
+        })
+      )
+    ),
+  }),
+  commands: z.readonly(z.array(tableCommandSchema)),
+});
+
+function fromV2(stored: z.output<typeof storedTableSchemaV2>): StoredTable {
+  const { button, seats, ...checkpoint } = stored.checkpoint;
+  return {
+    ...stored,
+    format: 3,
+    checkpoint: {
+      ...checkpoint,
+      seats: seats.map((seat) =>
+        seat === null ? null : { ...seat, owes: "nothing", posting: false }
+      ),
+      rotation: button === null ? null : { button, blinds: null },
+    },
+  };
+}
+
 /** Auditor data: the running hand's deck and the last hand's hole cards. Never send it to a client. */
 export function serializeTable(table: Table): string {
   const state = tableStateOf(table);
   const { setup, hand } = state;
   return JSON.stringify({
-    format: 2,
+    format: 3,
     setup,
     checkpoint: hand?.from ?? checkpointOf(state),
     commands: hand?.commands ?? [],
@@ -163,15 +214,23 @@ export type TableParseError =
     }
   | { readonly code: "unplayable"; readonly cause: unknown };
 
-/** Replays the running hand's commands onto the stored checkpoint, which is trusted as stored. */
+/** Replays the running hand's commands onto the stored checkpoint, which is trusted as stored.
+ * Reads format 2 from 0.2.0 too, as a table with a moving button. */
 export function parseTable(text: string): Result<Table, TableParseError> {
-  const stored = parseJson(storedTableSchema, text);
+  const stored = parseStoredTable(text);
   if (!stored.ok) return stored;
   try {
     return replayTable(stored.value);
   } catch (cause) {
     return err({ code: "unplayable", cause });
   }
+}
+
+function parseStoredTable(text: string): Result<StoredTable, FormatError> {
+  const current = parseJson(storedTableSchema, text);
+  if (current.ok) return current;
+  const legacy = parseJson(storedTableSchemaV2, text);
+  return legacy.ok ? ok(fromV2(legacy.value)) : current;
 }
 
 function replayTable({

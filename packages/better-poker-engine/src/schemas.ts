@@ -177,6 +177,7 @@ export const handSetupSchema = object({
 export const tableSetupSchema = object({
   game: gameSchema,
   seats: z.number(),
+  button: z.exactOptional(z.enum(["moving", "dead"])),
 }) satisfies z.ZodMiniType<TableSetup>;
 
 export const tableCommandSchema = z.discriminatedUnion("type", [
@@ -184,7 +185,8 @@ export const tableCommandSchema = z.discriminatedUnion("type", [
   action("leave", { player: playerId }),
   action("sitOut", { player: playerId }),
   action("sitIn", { player: playerId }),
-  action("startHand", { deck: cards }),
+  action("postBlinds", { player: playerId }),
+  action("startHand", { deck: cards, button: z.exactOptional(z.number()) }),
   action("act", {
     player: playerId,
     expectedVersion: z.number(),
@@ -312,25 +314,41 @@ export const tableEventSchema = object({
     body("left", { player: playerId, seat: z.number(), stack: chips }),
     body("satOut", { player: playerId, seat: z.number() }),
     body("satIn", { player: playerId, seat: z.number() }),
+    body("postingBlinds", { player: playerId, seat: z.number() }),
     body("handStarted", {
       hand: z.number(),
       button: z.number(),
       seats: list(z.number()),
+      smallBlind: z.nullable(z.number()),
+      bigBlind: z.number(),
     }),
     body("handEvent", { hand: z.number(), event: handEventSchema }),
     body("handEnded", { hand: z.number(), record: handRecordSchema }),
   ]),
 }) satisfies z.ZodMiniType<TableEvent>;
 
+const owed = z.enum(["nothing", "smallBlind", "bigBlind", "bothBlinds"]);
+
 export const tableCheckpointSchema = object({
   version: z.number(),
   eventCount: z.number(),
   seats: list(
     z.nullable(
-      object({ player: playerId, stack: chips, sittingOut: z.boolean() })
+      object({
+        player: playerId,
+        stack: chips,
+        sittingOut: z.boolean(),
+        owes: owed,
+        posting: z.boolean(),
+      })
     )
   ),
-  button: z.nullable(z.number()),
+  rotation: z.nullable(
+    object({
+      button: z.number(),
+      blinds: z.nullable(object({ small: z.number(), big: z.number() })),
+    })
+  ),
   hands: z.number(),
   lastHand: z.nullable(handRecordSchema),
   session: list(
