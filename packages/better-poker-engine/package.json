@@ -1,6 +1,6 @@
 {
   "name": "better-poker-engine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Type-safe, immutable poker engine for TypeScript: a pokerkit rewrite with test parity",
   "license": "MIT",
   "type": "module",

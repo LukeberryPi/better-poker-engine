@@ -16,7 +16,9 @@ Agreed with the project owner. Do not re-litigate without real friction.
    explicit `unbounded` value, never `Infinity` or a float.
 5. **Purity:** the engine never reads a clock, a random source, globals, or
    does I/O. Deck order comes from an explicit deck or an injected random
-   source. State is immutable plain data and JSON-serializable.
+   source. State is immutable plain data. Hands and tables refuse
+   `JSON.stringify` and Node's inspector, since they hold the deck and every
+   hole card: `serializeHand` and `serializeTable` store them.
 6. **Errors:** game-rule violations are returned values (`Result`), never
    thrown. Each violation is a closed union carrying the numbers involved.
 7. **Formats:** PHH (read/write), ACPC and Pluribus export. The six online-site
@@ -33,8 +35,10 @@ Agreed with the project owner. Do not re-litigate without real friction.
    impossible, or a JavaScript built-in does the job.
 9. **Sessions:** a table runs consecutive hands: seats mapped to positions,
    button movement including heads-up, stacks carried over, joining and leaving
-   between hands, and sitting out: seated with chips but not dealt in. Not in
-   scope: missed or dead blinds, top-ups, tournament levels.
+   between hands, and sitting out: seated with chips but not dealt in. A table
+   moves its button, or keeps a dead button with missed blinds, waiting for
+   the big blind or posting it (decision 25). Not in scope: top-ups and
+   tournament levels, which belong to the server.
 10. **Audit:** per-transition events plus one wide record per hand and per
     session. Rejected attempts are recorded. Views redact per audience
     (player, spectator, auditor). Persistence is the optional `/sqlite` module
@@ -51,8 +55,8 @@ Agreed with the project owner. Do not re-litigate without real friction.
     `summarizeHand`, `replayHand`) is the engine and the pokerkit parity
     surface. The table module (`createTable`, `actAtTable`, `viewTable`,
     `summarizeSession`) is for play: identities, sessions, persistence.
-15. **Opaque state.** Hands and tables are opaque JSON; everything else is
-    plain data. Brands exist only on those two types and on redacted event
+15. **Opaque state.** Hands and tables are opaque and sealed (decision 5);
+    everything else is plain data. Brands exist only on those two types and on redacted event
     views, because a redacted event has the same structure as a raw one.
 16. **Players are named by id everywhere.** Positions only describe order.
     An action that names no player belongs to the next player in order; one
@@ -83,6 +87,14 @@ Agreed with the project owner. Do not re-litigate without real friction.
 23. **Servers act through `actAs`.** It names the authenticated player,
     requires `expectedVersion` and accepts player actions only. `act` keeps
     pokerkit's calling conventions (decision 16) for replays and tools.
+24. **Hands keep their inputs.** A hand holds its setup and the actions it
+    accepted; events replay from them when a record, a stored hand or a PHH
+    history needs them. Events are outputs, and copying each one's snapshot
+    into every later hand made hands grow with every action.
+25. **Seating is data.** `planHand` decides who plays the next hand, where,
+    and for which blinds, from seats, the last hand's blind seats and the
+    button rule. Tables use it, and a server that keeps its own table state
+    can call it directly. Time, money and product policy stay with the server.
 
 ## Out of scope for v1
 
