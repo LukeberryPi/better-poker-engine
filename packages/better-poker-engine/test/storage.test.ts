@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { decks, shuffle } from "../src/cards.ts";
 import { act, automation, type Hand } from "../src/hand.ts";
-import { seededRandom } from "../src/random.ts";
+import { insecureSeededRandom } from "../src/random.ts";
 import { holdem, kuhn } from "../src/rules.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
 import { auditor, start } from "./driver.ts";
@@ -11,7 +11,7 @@ import { randomWalk } from "./random-hands.ts";
 const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
 
 function threeHanded(): Hand {
-  const deck = shuffle(decks.standard, seededRandom(7));
+  const deck = shuffle(decks.standard, insecureSeededRandom(7));
   return start(game, [200, 200, 200], automation.all, deck);
 }
 

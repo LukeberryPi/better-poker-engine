@@ -30,7 +30,7 @@ import { anteVector, perPosition } from "../../src/hand/setup.ts";
 import { maxOrNull, minOrNull } from "../../src/hand/state.ts";
 import { parseAmount } from "../../src/phh-actions.ts";
 import { parsePhh } from "../../src/phh.ts";
-import { seededRandom } from "../../src/random.ts";
+import { insecureSeededRandom } from "../../src/random.ts";
 import { err, ok, type Result } from "../../src/result.ts";
 import { cards, known } from "../support.ts";
 
@@ -205,7 +205,7 @@ doctest("pokerkit.utilities.Deck", (example) => {
 doctest("pokerkit.utilities.shuffled", (example) => {
   let shuffled: readonly KnownCard[];
   example(1, () => {
-    shuffled = shuffle(known("AcAdAhAs"), seededRandom(0));
+    shuffled = shuffle(known("AcAdAhAs"), insecureSeededRandom(0));
   });
   example(2, () => expect(shuffled.map(rankOf)).toEqual(["A", "A", "A", "A"]));
 });

@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
 
 import { decks, shuffle } from "../src/cards.ts";
-import { seededRandom } from "../src/random.ts";
+import { insecureSeededRandom } from "../src/random.ts";
 import { holdem } from "../src/rules.ts";
 import {
   sqliteStore,
@@ -60,7 +60,7 @@ function seated(): Table {
 
 const deal = {
   type: "startHand",
-  deck: shuffle(decks.standard, seededRandom(1)),
+  deck: shuffle(decks.standard, insecureSeededRandom(1)),
 } as const;
 
 /** Folds or calls each decision until the hand ends, loading and saving each time. */

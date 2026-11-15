@@ -11,7 +11,11 @@ import {
   type Transition,
   type Violation,
 } from "../src/hand.ts";
-import { randomBelow, seededRandom, type RandomSource } from "../src/random.ts";
+import {
+  randomBelow,
+  insecureSeededRandom,
+  type RandomSource,
+} from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import {
   conventions,
@@ -325,7 +329,7 @@ export function randomWalk(
   seed: number,
   makeGame?: (random: RandomSource) => Game
 ): Walk {
-  const random = seededRandom(seed);
+  const random = insecureSeededRandom(seed);
   const setup = randomSetup(random, makeGame);
   const started = startHand(setup);
   if (!started.ok) {
