@@ -121,3 +121,29 @@ test("TypeScript types every runtime export of every entry point", async () => {
     )
   ).toBe("");
 });
+
+test("the README's TypeScript compiles and runs against the tarball", async () => {
+  const readme = await Bun.file(
+    path.join(packageDir, "../../README.md")
+  ).text();
+  const blocks = Array.from(
+    readme.matchAll(/^```ts\n(?<code>[\s\S]*?)^```$/gmu),
+    (match) => match.groups?.["code"] ?? ""
+  );
+  expect(blocks.length).toBeGreaterThan(0);
+  const files = blocks.map((_, index) => `readme-${index}.ts`);
+  for (const [index, code] of blocks.entries()) {
+    await writeFile(path.join(consumer, `readme-${index}.ts`), code);
+  }
+  await writeFile(
+    path.join(consumer, "tsconfig.readme.json"),
+    JSON.stringify({
+      compilerOptions: { strict: true, noEmit: true, skipLibCheck: false },
+      files,
+    })
+  );
+  expect(
+    run([tsc, "-p", "tsconfig.readme.json", "--module", "nodenext"], consumer)
+  ).toBe("");
+  for (const file of files) run([process.execPath, file], consumer);
+});
