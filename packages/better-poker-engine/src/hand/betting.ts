@@ -328,8 +328,11 @@ export function raiseRange(
   const largest = priceOf(state);
   // pokerkit checks this last and reports a stack that only covers a call as a short all-in.
   if (!exceeds(stack, largest - bet)) return err({ code: "call_is_all_in" });
+  // pokerkit refuses a raise to anyone facing less than a full raise, right only while the
+  // blinds count for nothing; with the blind as a full bet, who has acted decides below.
   if (
     !phase.bringIn &&
+    !state.game.conventions.bigBlindIsFullBet &&
     shortOfReopening(state, callAmount(state, actor), phase)
   ) {
     return err({ code: "action_not_reopened" });

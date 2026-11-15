@@ -60,6 +60,38 @@ describe("bigBlindIsFullBet", () => {
     });
   });
 
+  test("on, keeps every blind's option to raise: small, big, and posted live", () => {
+    const blinds = played(
+      noLimit(conventions.tda2024),
+      [1000, 1000, 1000],
+      [call]
+    );
+    expect(auditor(blinds.hand).decision).toMatchObject({
+      player: "p1",
+      betOrRaiseTo: { kind: "raise", min: 200 },
+    });
+    blinds.act(call);
+    expect(auditor(blinds.hand).decision).toMatchObject({
+      player: "p2",
+      checkOrCall: { kind: "check" },
+      betOrRaiseTo: { kind: "raise", min: 200 },
+    });
+    const posted = played(
+      holdem.noLimit({
+        blinds: [50, 100, 0, -100],
+        minBet: 100,
+        conventions: conventions.tda2024,
+      }),
+      [1000, 1000, 1000, 1000, 1000],
+      [call]
+    );
+    expect(auditor(posted.hand).decision).toMatchObject({
+      player: "p4",
+      checkOrCall: { kind: "check" },
+      betOrRaiseTo: { kind: "raise", min: 200 },
+    });
+  });
+
   test("on, as TDA Rule 47: the limper may only call or fold", () => {
     const table = played(
       noLimit(conventions.tda2024),
