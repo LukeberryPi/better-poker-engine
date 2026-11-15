@@ -14,7 +14,7 @@ import {
   type Violation,
 } from "./hand.ts";
 import { copyGame } from "./hand/setup.ts";
-import { at, deepFreeze } from "./hand/state.ts";
+import { at, deepFreeze, sealed } from "./hand/state.ts";
 import { err, ok, type Result } from "./result.ts";
 import { validateGame, type Game, type GameError } from "./rules.ts";
 import { engineVersion } from "./version.ts";
@@ -199,7 +199,7 @@ export function tableStateOf(table: Table): TableState {
 
 function tableFrom(state: TableState): Table {
   // SAFETY: TableState carries the optional Table brand; this grants it.
-  return deepFreeze(state) as Table;
+  return deepFreeze(sealed(state, "Table")) as Table;
 }
 
 export function createTable(setup: TableSetup): Result<Table, TableSetupError> {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { decks, describeCard, parseCards, shuffle } from "../src/cards.ts";
-import { seededRandom } from "../src/random.ts";
+import { insecureSeededRandom } from "../src/random.ts";
 import { err, ok } from "../src/result.ts";
 import { known, scripted } from "./support.ts";
 
@@ -56,7 +56,7 @@ describe("describeCard", () => {
 
 describe("shuffle", () => {
   test("returns a reordering of the same cards", () => {
-    const shuffled = shuffle(decks.standard, seededRandom(7));
+    const shuffled = shuffle(decks.standard, insecureSeededRandom(7));
     expect(shuffled.toSorted()).toEqual(decks.standard.toSorted());
     expect(shuffled).not.toEqual(decks.standard);
   });
@@ -67,7 +67,7 @@ describe("shuffle", () => {
   });
 
   test("makes every order of three cards about equally likely", () => {
-    const random = seededRandom(2026);
+    const random = insecureSeededRandom(2026);
     const trials = 60_000;
     const counts = new Map<string, number>();
     for (let trial = 0; trial < trials; trial += 1) {

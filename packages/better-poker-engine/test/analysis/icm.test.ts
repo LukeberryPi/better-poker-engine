@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { icm } from "../../src/analysis.ts";
-import { randomBelow, seededRandom } from "../../src/random.ts";
+import { randomBelow, insecureSeededRandom } from "../../src/random.ts";
 import { err, ok } from "../../src/result.ts";
 import { okValue } from "../support.ts";
 
@@ -42,7 +42,7 @@ function transcribedIcm(
 
 describe("icm", () => {
   test("matches a line-by-line transcription of pokerkit to the last bit", () => {
-    const random = seededRandom(13);
+    const random = insecureSeededRandom(13);
     for (let table = 0; table < 300; table += 1) {
       const players = 1 + randomBelow(6, random);
       const stacks = Array.from(
@@ -86,7 +86,7 @@ describe("icm", () => {
   });
 
   test("values players with chips as pokerkit would without the others", () => {
-    const random = seededRandom(29);
+    const random = insecureSeededRandom(29);
     for (let table = 0; table < 300; table += 1) {
       const stacks = Array.from(
         { length: 1 + randomBelow(6, random) },

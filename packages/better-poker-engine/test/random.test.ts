@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   randomBelow,
   secureRandom,
-  seededRandom,
+  insecureSeededRandom,
   type RandomSource,
 } from "../src/random.ts";
 import { scripted } from "./support.ts";
@@ -14,15 +14,15 @@ function draws(random: RandomSource, count: number): number[] {
   return Array.from({ length: count }, () => random.nextUint32());
 }
 
-describe("seededRandom", () => {
+describe("insecureSeededRandom", () => {
   test("matches a reference sfc32 sequence", () => {
-    expect(draws(seededRandom(42), 5)).toEqual(seed42);
+    expect(draws(insecureSeededRandom(42), 5)).toEqual(seed42);
   });
 
   test("gives seeds equal modulo 2 ** 32 the same sequence", () => {
-    expect(draws(seededRandom(42 + 2 ** 32), 5)).toEqual(seed42);
-    expect(draws(seededRandom(-1), 5)).toEqual(
-      draws(seededRandom(2 ** 32 - 1), 5)
+    expect(draws(insecureSeededRandom(42 + 2 ** 32), 5)).toEqual(seed42);
+    expect(draws(insecureSeededRandom(-1), 5)).toEqual(
+      draws(insecureSeededRandom(2 ** 32 - 1), 5)
     );
   });
 });
@@ -35,6 +35,23 @@ describe("secureRandom", () => {
     );
     expect(outOfRange).toEqual([]);
     expect(new Set(values).size).toBeGreaterThan(1);
+  });
+});
+
+describe("secureRandom without Web Crypto", () => {
+  test("throws when called, naming what is missing", () => {
+    const webCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+    Object.defineProperty(globalThis, "crypto", {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      expect(() => secureRandom()).toThrow(/react-native-get-random-values/u);
+    } finally {
+      if (webCrypto !== undefined) {
+        Object.defineProperty(globalThis, "crypto", webCrypto);
+      }
+    }
   });
 });
 

@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { expect, test } from "bun:test";
 
 import {
-  seededRandom,
+  insecureSeededRandom,
   tableEventsFor,
   viewTable,
   type Audience,
@@ -28,7 +28,7 @@ async function dealtTable() {
   const db = new Database(":memory:");
   const store = sqliteStore(bunDriver(db));
   await store.migrate();
-  const app = createApp(store, seededRandom(1));
+  const app = createApp(store, insecureSeededRandom(1));
   const headersFor = (player: PlayerId | null) => {
     const headers = new Headers({ "content-type": "application/json" });
     if (player !== null) headers.set("x-player", player);

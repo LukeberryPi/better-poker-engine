@@ -27,6 +27,7 @@ export {
   compareHands,
   describeHand,
   evaluate,
+  evaluateStrength,
   type HandType,
   type HandValue,
 } from "./evaluation.ts";
@@ -68,7 +69,11 @@ export {
   type Violation,
 } from "./hand.ts";
 export type { HandCategory } from "./lookups.ts";
-export { seededRandom, secureRandom, type RandomSource } from "./random.ts";
+export {
+  insecureSeededRandom,
+  secureRandom,
+  type RandomSource,
+} from "./random.ts";
 export {
   actionSchema,
   playerActionSchema,

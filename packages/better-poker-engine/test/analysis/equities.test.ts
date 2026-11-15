@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { equities, handStrength, type Range } from "../../src/analysis.ts";
 import { decks } from "../../src/cards.ts";
-import { seededRandom } from "../../src/random.ts";
+import { insecureSeededRandom } from "../../src/random.ts";
 import { err, ok } from "../../src/result.ts";
 import { known, okValue, range, scripted } from "../support.ts";
 
@@ -13,7 +13,7 @@ const holdem = {
   deck: decks.standard,
   handTypes: ["standardHigh"],
   samples: 1,
-  random: seededRandom(7),
+  random: insecureSeededRandom(7),
 } as const;
 
 /** One Kuhn card each from J, Q and K of spades; the higher card wins. */
@@ -85,9 +85,13 @@ describe("equities", () => {
       board: Object.freeze(known("2c7d")),
       samples: 200,
     });
-    const first = equities({ ...input, random: seededRandom(11) });
-    expect(equities({ ...input, random: seededRandom(11) })).toEqual(first);
-    expect(equities({ ...input, random: seededRandom(12) })).not.toEqual(first);
+    const first = equities({ ...input, random: insecureSeededRandom(11) });
+    expect(equities({ ...input, random: insecureSeededRandom(11) })).toEqual(
+      first
+    );
+    expect(
+      equities({ ...input, random: insecureSeededRandom(12) })
+    ).not.toEqual(first);
   });
 
   test("returns nothing for no players", () => {
@@ -140,7 +144,7 @@ describe("equities", () => {
         ...kuhn,
         ranges: [anyCards, anyCards, anyCards],
         boardCount: 1,
-        random: seededRandom(8),
+        random: insecureSeededRandom(8),
       })
     ).toEqual(err({ code: "not_enough_cards", needed: 4, available: 3 }));
   });

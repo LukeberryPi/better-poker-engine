@@ -19,7 +19,9 @@ import {
 } from "../src/phh.ts";
 import { err } from "../src/result.ts";
 import { conventions, holdem, type Conventions } from "../src/rules.ts";
+import { parseHand, serializeHand } from "../src/storage.ts";
 import { randomWalk, type Walk } from "./random-hands.ts";
+import { rawJson, sameTransition } from "./support.ts";
 
 const walks = Array.from({ length: 150 }, (_, seed) => randomWalk(seed));
 
@@ -114,7 +116,7 @@ describe("random hands", () => {
   test("never change the hand they act on, accepted or refused", () => {
     const changed = walks.flatMap((walk) =>
       walk.steps.flatMap((step, index) =>
-        JSON.stringify(step.before) === step.beforeJson
+        rawJson(step.before) === step.beforeJson
           ? []
           : [{ seed: walk.seed, index }]
       )
@@ -131,18 +133,20 @@ describe("random hands", () => {
     expect(unfrozen).toEqual([]);
   });
 
-  test("act the same on a hand that went through JSON", () => {
+  test("act the same on a hand stored and loaded again", () => {
     const differing = walks.flatMap((walk) =>
       walk.steps.flatMap((step, index) => {
         if (index % 5 !== 0) return [];
-        const result = act(JSON.parse(step.beforeJson), step.action);
-        return JSON.stringify(result) === JSON.stringify(step.result)
+        const loaded = parseHand(serializeHand(step.before));
+        if (!loaded.ok) return [{ seed: walk.seed, index }];
+        const result = act(loaded.value, step.action);
+        return sameTransition(result, step.result)
           ? []
           : [{ seed: walk.seed, index }];
       })
     );
     expect(differing).toEqual([]);
-  });
+  }, 30_000);
 
   test("accept every option their decision offers", () => {
     const refused = walks.flatMap((walk) =>
@@ -179,8 +183,7 @@ describe("random hands", () => {
   test("replay their actions into the same hand", () => {
     const differing = walks.flatMap((walk) => {
       const replayed = replayHand(walk.setup, acceptedActions(walk));
-      return replayed.ok &&
-        JSON.stringify(replayed.value.hand) === JSON.stringify(walk.hand)
+      return replayed.ok && rawJson(replayed.value.hand) === rawJson(walk.hand)
         ? []
         : [walk.seed];
     });

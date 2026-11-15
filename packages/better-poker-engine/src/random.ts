@@ -6,19 +6,30 @@ declare const crypto: {
   readonly getRandomValues: (array: Uint32Array) => Uint32Array;
 };
 
-/** Web Crypto randomness, the default for real games. */
+/** Web Crypto randomness, the default for real games. Throws at once where the runtime
+ * has none, as React Native without a polyfill. */
 export function secureRandom(): RandomSource {
+  let getRandomValues: (array: Uint32Array) => Uint32Array;
+  try {
+    getRandomValues = crypto.getRandomValues.bind(crypto);
+  } catch (cause) {
+    throw new Error(
+      "secureRandom needs Web Crypto's crypto.getRandomValues; on React Native, install a polyfill such as react-native-get-random-values",
+      { cause }
+    );
+  }
   return {
     nextUint32: () => {
-      const words = crypto.getRandomValues(new Uint32Array(1));
+      const words = getRandomValues(new Uint32Array(1));
       return new DataView(words.buffer).getUint32(0);
     },
   };
 }
 
-/** sfc32 seeded by splitmix32: https://github.com/bryc/code/blob/master/jshash/PRNGs.md.
- * A seed, taken modulo 2 ** 32, gives the same sequence on every runtime. */
-export function seededRandom(seed: number): RandomSource {
+/** For tests and replays, never for real games: 2³² seeds reach a sliver of the 52!
+ * decks, and the output gives the state away. sfc32 seeded by splitmix32, modulo 2³²:
+ * https://github.com/bryc/code/blob/master/jshash/PRNGs.md */
+export function insecureSeededRandom(seed: number): RandomSource {
   const next = splitmix32(seed);
   return sfc32([next(), next(), next(), next()]);
 }

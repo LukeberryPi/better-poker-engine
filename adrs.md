@@ -44,7 +44,7 @@ Agreed with the project owner. Do not re-litigate without real friction.
 12. **House rules:** the anti-slop oxlint plugin and `AGENTS.md`.
 13. **Randomness:** the package ships two `RandomSource` adapters,
     `secureRandom()` (Web Crypto `getRandomValues`, the default for real games)
-    and `seededRandom(seed)` (reproducible tests and replays). Engine
+    and `insecureSeededRandom(seed)` (reproducible tests and replays). Engine
     transitions only use a source or deck the caller passes in; only the
     adapter file may touch `crypto`, enforced by lint.
 14. **Two levels.** The hand module (`startHand`, `act`, `viewHand`,

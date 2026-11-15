@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { decks, shuffle, type Card } from "../src/cards.ts";
 import type { PlayerAction, PlayerId } from "../src/hand.ts";
-import { randomBelow, seededRandom, type RandomSource } from "../src/random.ts";
+import {
+  randomBelow,
+  insecureSeededRandom,
+  type RandomSource,
+} from "../src/random.ts";
 import { draw, holdem, stud, type Game } from "../src/rules.ts";
 import { parseTable, serializeTable } from "../src/storage.ts";
 import {
@@ -116,7 +120,7 @@ describe("a table", () => {
 
   function foldRound(
     table: Table,
-    deck = shuffle(decks.standard, seededRandom(1))
+    deck = shuffle(decks.standard, insecureSeededRandom(1))
   ): Run {
     const started = run(table, [{ type: "startHand", deck }]);
     let { table: current } = started;
@@ -159,7 +163,10 @@ describe("a table", () => {
     ]);
     expect(stacksOf(table)).toEqual([null, 100, null, 99, 101, null]);
     const next = run(table, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(2)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(2)),
+      },
     ]);
     const hand = viewTable(next.table, auditor).hand;
     expect(hand?.players.map((player) => player.startingStack)).toEqual([
@@ -171,7 +178,10 @@ describe("a table", () => {
     const { table } = foldRound(threeSeated);
     const twoLeft = run(table, [{ type: "leave", player: "b" }]).table;
     const { events } = run(twoLeft, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(3)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(3)),
+      },
     ]);
     expect(startedSeats(events)).toEqual([[4, 1, 4]]);
     const blinds = handBodies(events).flatMap((body) =>
@@ -218,7 +228,10 @@ describe("a table", () => {
 
   test("deals a player who joins mid-hand into the next hand only", () => {
     const started = run(threeSeated, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(4)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(4)),
+      },
       { type: "join", player: "d", seat: 5, stack: 80 },
     ]);
     expect(viewTable(started.table, auditor).hand?.players.length).toBe(3);
@@ -232,7 +245,10 @@ describe("a table", () => {
 
   test("deals a player who sits out out of the next hand, with seat and stack kept", () => {
     const started = run(threeSeated, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(6)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(6)),
+      },
       { type: "sitOut", player: "a" },
     ]);
     expect(started.events.at(-1)?.body).toEqual({
@@ -283,7 +299,7 @@ describe("a table", () => {
     const away = run(headsUp, [{ type: "sitOut", player: "b" }]).table;
     const start = {
       type: "startHand",
-      deck: shuffle(decks.standard, seededRandom(7)),
+      deck: shuffle(decks.standard, insecureSeededRandom(7)),
     } as const;
     expect(refusal(away, start)).toEqual({
       code: "not_enough_players",
@@ -297,7 +313,10 @@ describe("a table", () => {
 
   test("acts only as the authenticated player, whatever the action names", () => {
     const { table } = run(threeSeated, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(5)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(5)),
+      },
     ]);
     expect(
       refusal(table, actAs(table, "b", { type: "fold", player: "a" }))
@@ -306,7 +325,10 @@ describe("a table", () => {
 
   test("refuses a second click decided against the same version", () => {
     const { table } = run(threeSeated, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(6)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(6)),
+      },
     ]);
     const click = actAs(table, "a", { type: "checkOrCall" });
     const once = run(table, [click]).table;
@@ -322,7 +344,10 @@ describe("a table", () => {
 
   test("refuses voluntary shows, mucks and runout picks (adrs.md 19)", () => {
     const { table } = run(threeSeated, [
-      { type: "startHand", deck: shuffle(decks.standard, seededRandom(7)) },
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(7)),
+      },
     ]);
     const attempts = [
       { type: "show" },
@@ -361,7 +386,7 @@ describe("a table", () => {
   });
 
   test("deals only the game's whole deck, one hand at a time", () => {
-    const whole = shuffle(decks.standard, seededRandom(8));
+    const whole = shuffle(decks.standard, insecureSeededRandom(8));
     const doubled = whole.with(1, whole[0] ?? "As");
     const start = (deck: readonly Card[]) =>
       refusal(threeSeated, { type: "startHand", deck });
@@ -432,7 +457,7 @@ describe("a table", () => {
       game: holdem.noLimit({ blinds: [1, 2], minBet: 2 }),
       seats: 6,
     };
-    const deck = [...shuffle(decks.standard, seededRandom(10))];
+    const deck = [...shuffle(decks.standard, insecureSeededRandom(10))];
     const start = Object.freeze({ type: "startHand", deck } as const);
     const table = run(
       joinAll([
@@ -521,7 +546,7 @@ type Session = {
 };
 
 function randomSession(seed: number): Session {
-  const random = seededRandom(seed);
+  const random = insecureSeededRandom(seed);
   const played = pick(sessionGames, random);
   let table = emptyTable(6, played);
   const checkpoints: Checkpoint[] = [{ table, events: 0 }];
@@ -715,7 +740,12 @@ describe("serializeTable and parseTable", () => {
       ["a", 0, 100],
       ["b", 1, 100],
     ]),
-    [{ type: "startHand", deck: shuffle(decks.standard, seededRandom(9)) }]
+    [
+      {
+        type: "startHand",
+        deck: shuffle(decks.standard, insecureSeededRandom(9)),
+      },
+    ]
   ).table;
 
   test("keep only the running hand's commands, however long the table has run", () => {
@@ -724,7 +754,7 @@ describe("serializeTable and parseTable", () => {
       ["b", 1, 100],
       ["c", 2, 100],
     ]);
-    const random = seededRandom(11);
+    const random = insecureSeededRandom(11);
     for (let hand = 0; hand < 30; hand += 1) {
       current = run(current, [
         { type: "startHand", deck: shuffle(decks.standard, random) },

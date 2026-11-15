@@ -11,7 +11,11 @@ import {
   type Transition,
   type Violation,
 } from "../src/hand.ts";
-import { randomBelow, seededRandom, type RandomSource } from "../src/random.ts";
+import {
+  randomBelow,
+  insecureSeededRandom,
+  type RandomSource,
+} from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import {
   conventions,
@@ -31,6 +35,7 @@ import {
   type RakeCap,
 } from "../src/rules.ts";
 import { viewHand, type HandView } from "../src/views.ts";
+import { rawJson } from "./support.ts";
 
 function pick<T>(items: readonly T[], random: RandomSource): T {
   const item = items[randomBelow(items.length, random)];
@@ -325,7 +330,7 @@ export function randomWalk(
   seed: number,
   makeGame?: (random: RandomSource) => Game
 ): Walk {
-  const random = seededRandom(seed);
+  const random = insecureSeededRandom(seed);
   const setup = randomSetup(random, makeGame);
   const started = startHand(setup);
   if (!started.ok) {
@@ -343,7 +348,7 @@ export function randomWalk(
     const action = stray ? strayAction(spectated, random) : plausible;
     const before = {
       before: hand,
-      beforeJson: JSON.stringify(hand),
+      beforeJson: rawJson(hand),
       spectated,
     };
     const result = act(hand, action);

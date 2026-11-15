@@ -22,10 +22,10 @@
     },
     "packages/better-poker-engine": {
       "name": "better-poker-engine",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
-        "smol-toml": "1.9.1",
-        "zod": "4.6.7",
+        "smol-toml": "^1.9.1",
+        "zod": "^4.6.7",
       },
     },
   },

@@ -9,7 +9,7 @@ import {
   type HandType,
   type HandValue,
 } from "../../src/evaluation.ts";
-import { seededRandom } from "../../src/random.ts";
+import { insecureSeededRandom } from "../../src/random.ts";
 import { ok } from "../../src/result.ts";
 import { known, okValue, range, sortedCombos } from "../support.ts";
 
@@ -309,7 +309,7 @@ doctest("pokerkit.analysis.calculate_equities", (example) => {
         board: known("Tc8d6h4s"),
         ...holdem,
         samples: 1000,
-        random: seededRandom(1),
+        random: insecureSeededRandom(1),
       })
     ).toEqual(ok([0.5, 0.5]));
   });
@@ -320,7 +320,7 @@ doctest("pokerkit.analysis.calculate_equities", (example) => {
         board: known("3s3d4c"),
         ...holdem,
         samples: 1000,
-        random: seededRandom(2),
+        random: insecureSeededRandom(2),
       })
     ).toEqual(ok([0, 1, 0]));
   });
@@ -331,7 +331,7 @@ doctest("pokerkit.analysis.calculate_equities", (example) => {
         board: known("QsJsTs"),
         ...holdem,
         samples: 1000,
-        random: seededRandom(3),
+        random: insecureSeededRandom(3),
       })
     ).toEqual(ok([0, 0, 1]));
   });
@@ -348,7 +348,7 @@ doctest("pokerkit.analysis.calculate_hand_strength", (example) => {
         board: known("3s3d2c2h"),
         ...holdem,
         samples: 1000,
-        random: seededRandom(4),
+        random: insecureSeededRandom(4),
       })
     ).toEqual(ok(1));
   });
@@ -360,7 +360,7 @@ doctest("pokerkit.analysis.calculate_hand_strength", (example) => {
         board: known("QsJsTs"),
         ...holdem,
         samples: 1000,
-        random: seededRandom(5),
+        random: insecureSeededRandom(5),
       })
     ).toEqual(ok(1));
   });
@@ -378,7 +378,7 @@ unitTest(
           board: known(board),
           ...holdem,
           samples: 10_000,
-          random: seededRandom(seed),
+          random: insecureSeededRandom(seed),
         })
       );
     };
@@ -445,7 +445,7 @@ unitTest("pokerkit.tests.test_analysis.HandHistoryTestCase.test_scoops", () => {
     deck: decks.standard,
     handTypes: ["omahaHigh", "omahaEightOrBetterLow"],
     samples: 1,
-    random: seededRandom(6),
+    random: insecureSeededRandom(6),
   });
 
   expect(actual).toEqual(ok([0, 1]));

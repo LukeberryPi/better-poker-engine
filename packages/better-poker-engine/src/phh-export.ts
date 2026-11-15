@@ -1,6 +1,6 @@
 import type { Card } from "./cards.ts";
-import type { EventBody } from "./events.ts";
-import type { Hand, PlayerId } from "./hand.ts";
+import type { EventBody, HandEvent } from "./events.ts";
+import { eventsOf, type Hand, type PlayerId } from "./hand.ts";
 import { stateOf, type HandState } from "./hand/state.ts";
 import type { PhhAction } from "./phh-actions.ts";
 import { fromChips, type AmountScale } from "./phh-amounts.ts";
@@ -95,7 +95,11 @@ function playerAction(
 /** pokerkit's `from_game_state`: dealing is held until another event, then
  * written hole cards first, one action per player. A dealing event with
  * commentary is written alone, so the commentary stays with its cards. */
-function actionsOf(state: HandState, scale: AmountScale): PhhAction[] {
+function actionsOf(
+  state: HandState,
+  events: readonly HandEvent[],
+  scale: AmountScale
+): PhhAction[] {
   const seat: Seat = (player) => state.players.indexOf(player) + 1;
   const actions: PhhAction[] = [];
   const hole = new Map<number, Card[]>();
@@ -113,7 +117,7 @@ function actionsOf(state: HandState, scale: AmountScale): PhhAction[] {
     }
     board.length = 0;
   };
-  for (const { body, commentary } of state.events) {
+  for (const { body, commentary } of events) {
     if (body.type !== "holeDealt" && body.type !== "boardDealt") {
       flush();
       const action = playerAction(body, seat, commentary, scale);
@@ -167,7 +171,7 @@ export function historyFromHand(
     startingStacks: state.startingStacks.map((stack) =>
       stack === "unbounded" ? stack : amount(stack)
     ),
-    actions: actionsOf(state, scale),
+    actions: actionsOf(state, eventsOf(hand), scale),
     author: null,
     event: null,
     url: null,
