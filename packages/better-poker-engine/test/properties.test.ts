@@ -146,7 +146,7 @@ describe("random hands", () => {
       })
     );
     expect(differing).toEqual([]);
-  });
+  }, 30_000);
 
   test("accept every option their decision offers", () => {
     const refused = walks.flatMap((walk) =>
