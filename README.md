@@ -116,10 +116,15 @@ pokerkit, or `per: "hand"`.
   steps away sends `sitOut`: they keep their seat and stack, play out any
   hand they hold cards in, and are dealt out from the next hand until
   `sitIn`. Seat views and events show it. The engine never times anyone out,
-  so your server decides when an absent player sits out. No missed or dead
-  blinds are charged, so a player who sits out over the blinds pays none
-  when they return. Not supported: missed or dead blinds, top-ups and
-  tournament levels.
+  so your server decides when an absent player sits out. By default the
+  button moves to the next player and nobody owes a blind. With
+  `createTable({ ..., button: "dead" })` the table plays card-room rules: the
+  big blind moves one player a hand, the small blind or button may be dead,
+  blinds missed while sitting out are owed, and a new or returning player
+  waits for the big blind or sends `postBlinds`. Pass the first hand's
+  `button` seat in its `startHand` command, picked at random. A server that
+  keeps its own table state gets the same rules from `planHand`. Not
+  supported: top-ups and tournament levels.
 - **An optional SQLite store.** `better-poker-engine/sqlite` keeps tables,
   their events, hand records and rejected attempts over any SQLite driver
   you wrap in two functions: `batch`, which runs statements in one
@@ -130,7 +135,10 @@ pokerkit, or `per: "hand"`.
   are parsed with zod mini.
 - **Pure.** Hands and tables are deeply frozen plain data. `act(hand, action)` returns
   the next hand plus the events it produced, or a typed violation. Nothing
-  reads a clock or a random source you did not pass in.
+  reads a clock or a random source you did not pass in. A hand keeps its
+  setup and the actions it accepted; events replay from them when needed.
+  Hands and tables hold the deck and every hole card, so `JSON.stringify`
+  refuses them and Node's inspector prints `Hand [sealed]`.
 - **Safe to store.** `serializeHand(hand)` and `parseHand(text)` are the only
   supported way to store a hand. The text is the setup plus the event log;
   `parseHand` replays it and, without throwing, returns a typed error unless
@@ -152,6 +160,10 @@ pokerkit, or `per: "hand"`.
   record holds every hole card; give history screens
   `viewRecord(record, audience)` instead.
 - **Hand histories.** Reads and writes PHH, and exports ACPC and Pluribus logs.
+- **Analysis.** `better-poker-engine/analysis` computes equities, hand
+  strength and ICM. `evaluateStrength` rates seven-card high hands with one
+  table lookup. `insecureSeededRandom` makes tests and simulations
+  reproducible; deal real games with `secureRandom`.
 
 ## Parity with pokerkit
 

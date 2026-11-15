@@ -17,6 +17,13 @@ import { copyGame } from "./hand/setup.ts";
 import { at, deepFreeze, sealed } from "./hand/state.ts";
 import { err, ok, type Result } from "./result.ts";
 import { validateGame, type Game, type GameError } from "./rules.ts";
+import {
+  planHand,
+  type ButtonRule,
+  type Owed,
+  type Rotation,
+  type SeatState,
+} from "./seating.ts";
 import { engineVersion } from "./version.ts";
 import {
   eventsFor,
@@ -35,11 +42,17 @@ export type TableSetup = {
   readonly game: Game;
   /** Seats are numbered from 0, clockwise. */
   readonly seats: number;
+  /** "moving" unless given; a dead button takes blinds of `[small, big]`. */
+  readonly button?: ButtonRule;
 };
 
 export type TableSetupError =
   | GameError
-  | { readonly code: "seat_count"; readonly seats: number };
+  | { readonly code: "seat_count"; readonly seats: number }
+  | {
+      readonly code: "blinds_for_dead_button";
+      readonly blinds: readonly number[];
+    };
 
 export type TableCommand =
   | {
@@ -52,8 +65,15 @@ export type TableCommand =
   /** Keeps the seat and stack but deals the player out from the next hand. */
   | { readonly type: "sitOut"; readonly player: PlayerId }
   | { readonly type: "sitIn"; readonly player: PlayerId }
-  /** `deck` is the game's whole deck, shuffled. */
-  | { readonly type: "startHand"; readonly deck: Deck }
+  /** Under a dead button: post the blinds owed at the next hand, not wait for the big blind. */
+  | { readonly type: "postBlinds"; readonly player: PlayerId }
+  /** `deck` is the game's whole deck, shuffled. `button` places the first hand's button,
+   * on that seat or the next player after it: pick it at random. */
+  | {
+      readonly type: "startHand";
+      readonly deck: Deck;
+      readonly button?: number;
+    }
   /** `player` is who the caller authenticated; it replaces `action.player`. */
   | {
       readonly type: "act";
@@ -86,6 +106,7 @@ export type TableViolation =
   | { readonly code: "in_hand"; readonly player: PlayerId }
   | { readonly code: "already_sitting_out"; readonly player: PlayerId }
   | { readonly code: "not_sitting_out"; readonly player: PlayerId }
+  | { readonly code: "nothing_owed"; readonly player: PlayerId }
   | { readonly code: "hand_running" }
   | { readonly code: "no_hand" }
   | { readonly code: "not_enough_players"; readonly players: number }
@@ -121,11 +142,20 @@ export type TableEventBody =
     }
   | { readonly type: "satIn"; readonly player: PlayerId; readonly seat: number }
   | {
+      readonly type: "postingBlinds";
+      readonly player: PlayerId;
+      readonly seat: number;
+    }
+  | {
       readonly type: "handStarted";
       readonly hand: number;
+      /** An empty seat when the button is dead. */
       readonly button: number;
       /** The seat at each position. */
       readonly seats: readonly number[];
+      /** Null when the small blind is dead. */
+      readonly smallBlind: number | null;
+      readonly bigBlind: number;
     }
   | {
       readonly type: "handEvent";
@@ -152,11 +182,7 @@ export type TableTransition = {
   readonly events: readonly TableEvent[];
 };
 
-type SeatedPlayer = {
-  readonly player: PlayerId;
-  readonly stack: Chips;
-  readonly sittingOut: boolean;
-};
+type SeatedPlayer = SeatState;
 
 type RunningHand = {
   readonly number: number;
@@ -180,7 +206,8 @@ export type TableCheckpoint = {
   readonly version: number;
   readonly eventCount: number;
   readonly seats: readonly (SeatedPlayer | null)[];
-  readonly button: number | null;
+  /** Null until the first hand. */
+  readonly rotation: Rotation | null;
   readonly hands: number;
   readonly lastHand: HandRecord | null;
   readonly session: readonly SessionEntry[];
@@ -208,13 +235,21 @@ export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
   if (!Number.isSafeInteger(setup.seats) || setup.seats < 2) {
     return err({ code: "seat_count", seats: setup.seats });
   }
+  const button = setup.button ?? "moving";
+  const { blinds } = setup.game.forcedBets;
+  if (
+    button === "dead" &&
+    (blinds.length !== 2 || !blinds.every((blind) => blind > 0))
+  ) {
+    return err({ code: "blinds_for_dead_button", blinds: [...blinds] });
+  }
   return ok(
     tableFrom({
-      setup: { game: copyGame(setup.game), seats: setup.seats },
+      setup: { game: copyGame(setup.game), seats: setup.seats, button },
       version: 0,
       eventCount: 0,
       seats: Array.from({ length: setup.seats }, () => null),
-      button: null,
+      rotation: null,
       hands: 0,
       hand: null,
       lastHand: null,
@@ -224,9 +259,9 @@ export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
 }
 
 export function checkpointOf(state: TableState): TableCheckpoint {
-  const { version, eventCount, seats, button, hands, lastHand, session } =
+  const { version, eventCount, seats, rotation, hands, lastHand, session } =
     state;
-  return { version, eventCount, seats, button, hands, lastHand, session };
+  return { version, eventCount, seats, rotation, hands, lastHand, session };
 }
 
 /** `empty` is a new table from `createTable`, which checked its setup. */
@@ -307,6 +342,8 @@ function applyCommand(
     case "sitOut":
     case "sitIn":
       return sit(state, command);
+    case "postBlinds":
+      return postBlinds(state, command);
     case "startHand":
       return deal(state, command);
     case "act":
@@ -358,10 +395,20 @@ function join(
   if (!isChips(stack) || stack === 0) {
     return err({ code: "invalid_buy_in", stack });
   }
+  const owes: Owed =
+    state.setup.button === "dead" && state.rotation !== null
+      ? "bigBlind"
+      : "nothing";
   return ok({
     state: {
       ...state,
-      seats: state.seats.with(seat, { player, stack, sittingOut: false }),
+      seats: state.seats.with(seat, {
+        player,
+        stack,
+        sittingOut: false,
+        owes,
+        posting: false,
+      }),
       session: updateSession(state.session, player, (entry) => ({
         ...entry,
         boughtIn: entry.boughtIn + stack,
@@ -420,6 +467,25 @@ function sit(
   });
 }
 
+function postBlinds(
+  state: TableState,
+  command: Extract<TableCommand, { type: "postBlinds" }>
+): Result<Change, TableViolation> {
+  const { player } = command;
+  const seat = seatOf(state, player);
+  if (seat === null) return err({ code: "not_seated", player });
+  const seated = occupant(state, seat);
+  if (seated.owes === "nothing") return err({ code: "nothing_owed", player });
+  return ok({
+    state: {
+      ...state,
+      seats: state.seats.with(seat, { ...seated, posting: true }),
+    },
+    bodies: [{ type: "postingBlinds", player, seat }],
+    command,
+  });
+}
+
 function isWholeDeck(deck: Deck, whole: Deck): boolean {
   const cards = new Set(deck);
   return (
@@ -427,13 +493,6 @@ function isWholeDeck(deck: Deck, whole: Deck): boolean {
     cards.size === whole.length &&
     whole.every((card) => cards.has(card))
   );
-}
-
-/** The first hand's button is the lowest seat dealt in; it then moves to the next one. */
-function nextButton(state: TableState, dealt: readonly number[]): number {
-  const { button } = state;
-  const next = dealt.find((seat) => button === null || seat > button);
-  return button === null ? at(dealt, 0) : (next ?? at(dealt, 0));
 }
 
 function deal(
@@ -445,18 +504,18 @@ function deal(
   if (!isWholeDeck(command.deck, decks[game.rules.deck])) {
     return err({ code: "not_a_full_deck" });
   }
-  const dealt = state.seats.flatMap((seated, seat) =>
-    seated !== null && seated.stack > 0 && !seated.sittingOut ? [seat] : []
-  );
-  if (dealt.length < 2) {
-    return err({ code: "not_enough_players", players: dealt.length });
-  }
-  const button = nextButton(state, dealt);
-  const split = dealt.indexOf(button) + 1;
-  const seats = [...dealt.slice(split), ...dealt.slice(0, split)];
+  const planned = planHand({
+    game,
+    seats: state.seats,
+    button: state.setup.button ?? "moving",
+    rotation: state.rotation,
+    firstButton: command.button ?? 0,
+  });
+  if (!planned.ok) return err(planned.error);
+  const { positions: seats, rotation, smallBlind, bigBlind } = planned.value;
   const players = seats.map((seat) => occupant(state, seat));
   const started = startHand({
-    game,
+    game: planned.value.game,
     players: players.map(({ player }) => player),
     stacks: players.map(({ stack }) => stack),
     deck: command.deck,
@@ -469,12 +528,20 @@ function deal(
     settle(
       {
         ...state,
-        button,
+        seats: planned.value.seats,
+        rotation,
         hands: number,
         hand: { number, hand, seats, from: checkpointOf(state), commands: [] },
       },
       [
-        { type: "handStarted", hand: number, button, seats },
+        {
+          type: "handStarted",
+          hand: number,
+          button: rotation.button,
+          seats,
+          smallBlind,
+          bigBlind,
+        },
         ...handEvents(number, events),
       ],
       command
@@ -553,6 +620,9 @@ export type SeatView = {
   readonly inHand: boolean;
   /** Not dealt in from the next hand on; a running hand they hold cards in still needs them. */
   readonly sittingOut: boolean;
+  /** Under a dead button: blinds to post before the big blind comes round. */
+  readonly owes: Owed;
+  readonly posting: boolean;
 };
 
 export type TableView = {
@@ -579,7 +649,7 @@ export function viewTable(table: Table, audience: Audience): TableView {
         ? null
         : { ...seated, inHand: running?.seats.includes(seat) ?? false }
     ),
-    button: state.button,
+    button: state.rotation?.button ?? null,
     hands: state.hands,
     hand: running === null ? null : viewHand(running.hand, audience),
     lastHand:

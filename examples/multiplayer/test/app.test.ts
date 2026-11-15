@@ -134,6 +134,8 @@ test("sits the authenticated player out of the next hand and back in", async () 
     stack: 100,
     inHand: true,
     sittingOut: true,
+    owes: "nothing",
+    posting: false,
   });
   expect((await post("/tables/t1/sit-out", "b")).status).toBe(422);
   const back = await post("/tables/t1/sit-in", "b");

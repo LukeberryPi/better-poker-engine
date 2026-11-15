@@ -3,6 +3,32 @@
 Every change to the published package. It follows semantic versioning;
 before 1.0, a minor version may change the API.
 
+## 0.3.0
+
+### Added
+
+- `planHand` and the table option `button: "dead"`: the big blind moves one
+  player a hand, the small blind or button may be dead, missed blinds are
+  owed, and new or returning players wait for the big blind or post with the
+  table command `postBlinds`. Heads-up transitions never put the big blind on
+  one player twice running.
+- `startHand` table commands take the first hand's `button` seat.
+- `evaluateStrength`, a table lookup for seven-card high hands; `equities`
+  uses it and runs about twice as fast.
+
+### Changed
+
+- `seededRandom` is now `insecureSeededRandom`.
+- Hands and tables refuse `JSON.stringify` and print as `Hand [sealed]`;
+  store them with `serializeHand` and `serializeTable`.
+- Hands keep the actions they accepted rather than every event; events replay
+  when needed. Stored hands keep their format.
+- Tables store as format 3, with blind seats and what each seat owes;
+  `parseTable` still reads format 2 tables from 0.2.0.
+- `handStarted` table events name the `smallBlind` and `bigBlind` seats.
+- `secureRandom()` throws at once where Web Crypto is missing.
+- `zod` and `smol-toml` take caret ranges.
+
 ## 0.2.0
 
 ### Added

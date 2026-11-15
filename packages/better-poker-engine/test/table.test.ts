@@ -261,6 +261,8 @@ describe("a table", () => {
       stack: 100,
       inHand: true,
       sittingOut: true,
+      owes: "nothing",
+      posting: false,
     });
     let table = started.table;
     while (viewTable(table, auditor).hand !== null) {
@@ -548,7 +550,11 @@ type Session = {
 function randomSession(seed: number): Session {
   const random = insecureSeededRandom(seed);
   const played = pick(sessionGames, random);
-  let table = emptyTable(6, played);
+  const button =
+    played.forcedBets.blinds.length === 2 && chance(50, random)
+      ? "dead"
+      : "moving";
+  let table = okValue(createTable({ game: played, seats: 6, button }));
   const checkpoints: Checkpoint[] = [{ table, events: 0 }];
   const commands: TableCommand[] = [];
   const events: TableEvent[] = [];
@@ -577,6 +583,13 @@ function randomSession(seed: number): Session {
       } else if (seated !== null && chance(15, random)) {
         const type = seated.sittingOut ? "sitIn" : "sitOut";
         send({ type, player: seated.player });
+      } else if (
+        seated !== null &&
+        seated.owes !== "nothing" &&
+        !seated.posting &&
+        chance(40, random)
+      ) {
+        send({ type: "postBlinds", player: seated.player });
       }
     }
     const dealt = viewTable(table, auditor).seats.filter(
@@ -586,6 +599,7 @@ function randomSession(seed: number): Session {
     send({
       type: "startHand",
       deck: shuffle(decks[played.rules.deck], random),
+      button: randomBelow(6, random),
     });
     for (;;) {
       const view = viewTable(table, auditor);
@@ -636,6 +650,138 @@ function cardsIn(value: TableView | readonly TableEventView[]): string[] {
     ([, card]) => card ?? ""
   );
 }
+
+describe("a dead-button table", () => {
+  const deadButton = () =>
+    okValue(createTable({ game, seats: 6, button: "dead" }));
+  const seatedAt = (players: readonly string[]) =>
+    players.map((player, seat): TableCommand => ({
+      type: "join",
+      player,
+      seat,
+      stack: 100,
+    }));
+  const folds = (table: Table) => {
+    let current = table;
+    for (;;) {
+      const view = viewTable(current, auditor);
+      if (view.hand === null) return current;
+      const { decision } = view.hand;
+      if (decision.kind !== "betting") throw new Error(decision.kind);
+      const fold = decision.fold === null ? "checkOrCall" : "fold";
+      current = run(current, [
+        {
+          type: "act",
+          player: decision.player,
+          expectedVersion: view.version,
+          action: { type: fold },
+        },
+      ]).table;
+    }
+  };
+  const started = (run: Run) =>
+    run.events.flatMap(({ body }) =>
+      body.type === "handStarted" ? [body] : []
+    );
+
+  test("puts the first button where the server says, then moves the big blind a seat a hand", () => {
+    const first = run(deadButton(), [
+      ...seatedAt(["a", "b", "c", "d"]),
+      { type: "startHand", deck: decks.standard, button: 2 },
+    ]);
+    expect(started(first)).toEqual([
+      {
+        type: "handStarted",
+        hand: 1,
+        button: 2,
+        seats: [3, 0, 1, 2],
+        smallBlind: 3,
+        bigBlind: 0,
+      },
+    ]);
+    const second = run(folds(first.table), [
+      { type: "leave", player: "a" },
+      { type: "startHand", deck: decks.standard },
+    ]);
+    expect(started(second)).toEqual([
+      {
+        type: "handStarted",
+        hand: 2,
+        button: 3,
+        seats: [1, 2, 3],
+        smallBlind: null,
+        bigBlind: 1,
+      },
+    ]);
+  });
+
+  test("makes a late player wait for the big blind, or deals them in now if they post", () => {
+    const first = folds(
+      run(deadButton(), [
+        ...seatedAt(["a", "b", "c", "d"]),
+        { type: "startHand", deck: decks.standard, button: 0 },
+      ]).table
+    );
+    const joined = run(first, [
+      { type: "join", player: "e", seat: 5, stack: 100 },
+    ]).table;
+    expect(viewTable(joined, auditor).seats[5]?.owes).toBe("bigBlind");
+    const waiting = run(joined, [{ type: "startHand", deck: decks.standard }]);
+    expect(started(waiting)[0]?.seats).toEqual([2, 3, 0, 1]);
+    const posting = run(joined, [
+      { type: "postBlinds", player: "e" },
+      { type: "startHand", deck: decks.standard },
+    ]);
+    expect(started(posting)[0]?.seats).toEqual([2, 3, 5, 0, 1]);
+    expect(viewTable(posting.table, auditor).seats[5]?.owes).toBe("nothing");
+  });
+
+  test("refuses to post for a player who owes nothing, and blinds a dead button can't place", () => {
+    const table = run(deadButton(), seatedAt(["a", "b"])).table;
+    expect(refusal(table, { type: "postBlinds", player: "a" })).toEqual({
+      code: "nothing_owed",
+      player: "a",
+    });
+    const straddled = holdem.noLimit({ blinds: [1, 2, 4], minBet: 2 });
+    expect(createTable({ game: straddled, seats: 6, button: "dead" })).toEqual({
+      ok: false,
+      error: { code: "blinds_for_dead_button", blinds: [1, 2, 4] },
+    });
+  });
+
+  test("loads a table stored by 0.2.0 as a moving-button table", () => {
+    const table = run(emptyTable(), [
+      ...seatedAt(["a", "b"]),
+      { type: "startHand", deck: decks.standard },
+    ]).table;
+    const stored = JSON.parse(serializeTable(table));
+    const { rotation, seats, ...checkpoint } = stored.checkpoint;
+    const legacy = JSON.stringify({
+      ...stored,
+      format: 2,
+      checkpoint: {
+        ...checkpoint,
+        button: rotation === null ? null : rotation.button,
+        seats: seats.map(
+          (
+            seat: { player: string; stack: number; sittingOut: boolean } | null
+          ) =>
+            seat === null
+              ? null
+              : {
+                  player: seat.player,
+                  stack: seat.stack,
+                  sittingOut: seat.sittingOut,
+                }
+        ),
+      },
+    });
+    const parsed = parseTable(legacy);
+    expect(parsed.ok && viewTable(parsed.value, auditor)).toEqual(
+      viewTable(table, auditor)
+    );
+  });
+});
 
 describe("random sessions", () => {
   const sessions = Array.from({ length: 12 }, (_, seed) => randomSession(seed));
