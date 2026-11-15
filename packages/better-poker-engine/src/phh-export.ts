@@ -6,6 +6,7 @@ import type { PhhAction } from "./phh-actions.ts";
 import { fromChips, type AmountScale } from "./phh-amounts.ts";
 import type { Phh } from "./phh.ts";
 import { err, ok, type Result } from "./result.ts";
+import type { Conventions } from "./rules.ts";
 
 /** PHH names pokerkit's games only, deals one board, runs it once and has no
  * rake field: a history of any other hand would replay as a different hand. */
@@ -14,6 +15,8 @@ export type HistoryExportError =
   | { readonly code: "boards"; readonly boards: number }
   | { readonly code: "runouts"; readonly runouts: number }
   | { readonly code: "rake" }
+  /** PHH replays with pokerkit's rules, which these conventions change. */
+  | { readonly code: "conventions" }
   /** PHH requires `bring_in` in stud games. */
   | { readonly code: "no_bring_in" };
 
@@ -130,6 +133,15 @@ function actionsOf(state: HandState, scale: AmountScale): PhhAction[] {
   return actions;
 }
 
+function playsLikePokerkit(conventions: Conventions): boolean {
+  return (
+    !conventions.bigBlindIsFullBet &&
+    !conventions.nominalBigBlind &&
+    conventions.antePrecedence === "ante" &&
+    conventions.oddChips === "firstShare"
+  );
+}
+
 /** pokerkit's `HandHistory.from_game_state`, so `replayHistory` of the result
  * plays the same hand. Metadata such as `players` is left for the caller. */
 export function historyFromHand(
@@ -143,6 +155,7 @@ export function historyFromHand(
   const runouts = state.runoutCount ?? 1;
   if (runouts !== 1) return err({ code: "runouts", runouts });
   if (game.rake.kind !== "none") return err({ code: "rake" });
+  if (!playsLikePokerkit(game.conventions)) return err({ code: "conventions" });
   const scale = options.amountScale ?? 1;
   const amount = (chips: number) => fromChips(chips, scale);
   const [first, ...rest] = game.rules.streets;

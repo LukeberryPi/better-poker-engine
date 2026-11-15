@@ -16,21 +16,21 @@ function headsUpSwapped(state: HandState, position: Position): Position {
   return state.players.length === 2 ? 1 - position : position;
 }
 
+/** A short stack posts the ante first, as pokerkit does, unless `antePrecedence` is "blind". */
 export function effectiveAnte(state: HandState, position: Position): Chips {
-  return capAt(
-    at(state.antes, headsUpSwapped(state, position)),
-    at(state.startingStacks, position)
-  );
+  const ante = at(state.antes, headsUpSwapped(state, position));
+  const stack = at(state.startingStacks, position);
+  return state.game.conventions.antePrecedence === "ante"
+    ? capAt(ante, stack)
+    : capAt(ante, takeFromStack(stack, effectiveBlind(state, position)));
 }
 
 export function effectiveBlind(state: HandState, position: Position): Chips {
-  return capAt(
-    Math.abs(at(state.blinds, headsUpSwapped(state, position))),
-    takeFromStack(
-      at(state.startingStacks, position),
-      effectiveAnte(state, position)
-    )
-  );
+  const blind = Math.abs(at(state.blinds, headsUpSwapped(state, position)));
+  const stack = at(state.startingStacks, position);
+  return state.game.conventions.antePrecedence === "blind"
+    ? capAt(blind, stack)
+    : capAt(blind, takeFromStack(stack, effectiveAnte(state, position)));
 }
 
 export function beginAntePosting(state: HandState): void {

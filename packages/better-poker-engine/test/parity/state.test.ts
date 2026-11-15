@@ -4,6 +4,7 @@ import { doctest } from "../../../../parity/harness.ts";
 import { suitOf } from "../../src/cards.ts";
 import { automation, startHand, type Hand } from "../../src/hand.ts";
 import {
+  conventions,
   draw,
   holdem,
   omaha,
@@ -74,14 +75,14 @@ doctest("pokerkit.state.Automation", (example) => {
 });
 
 doctest("pokerkit.state.Mode", (example) => {
-  example(1, () => expect(noLimit.mode).toBe("tournament"));
+  example(1, () => expect(noLimit.conventions).toEqual(conventions.tournament));
   example(2, () => {
     const cashGame = holdem.noLimit({
       blinds: [1, 2],
       minBet: 2,
       mode: "cashGame",
     });
-    expect(cashGame.mode).toBe("cashGame");
+    expect(cashGame.conventions).toEqual(conventions.cashGame);
   });
 });
 
@@ -128,7 +129,7 @@ function kuhn(maxBetsAndRaises: number | null): Game {
       anteTrimming: true,
     },
     rake: { kind: "none" },
-    mode: "tournament",
+    conventions: conventions.tournament,
     boards: 1,
   };
 }

@@ -15,6 +15,7 @@ import {
 } from "../../src/hand.ts";
 import { lookup } from "../../src/lookups.ts";
 import {
+  conventions,
   draw,
   holdem,
   leduc,
@@ -116,7 +117,7 @@ function kuhn(street: Street, forcedBets: Partial<Game["forcedBets"]>): Game {
       ...forcedBets,
     },
     rake: { kind: "none" },
-    mode: "tournament",
+    conventions: conventions.tournament,
     boards: 1,
   };
 }
@@ -475,7 +476,7 @@ function oneStreet(boardCards: number): Game {
       anteTrimming: true,
     },
     rake: { kind: "none" },
-    mode: "tournament",
+    conventions: conventions.tournament,
     boards: 1,
   };
 }
@@ -892,6 +893,7 @@ unitTest(
   "pokerkit.tests.test_state.StateTestCase.test_unknown_showdown",
   () => {
     const game = holdem.noLimit({
+      conventions: { ...conventions.tournament, strandedPots: "unclaimed" },
       blinds: [1, 2],
       minBet: 2,
       anteTrimming: true,
@@ -981,7 +983,7 @@ unitTest(
       antes: { kind: "everyone", amount: 125 },
       blinds: [250, 500],
       minBet: 125,
-      mode: "cashGame",
+      conventions: { ...conventions.cashGame, strandedPots: "unclaimed" },
     });
     const startingStacks = [2198, 945, 852, 3348, 1687, 1262, 3657, 3966];
     const table = drive(

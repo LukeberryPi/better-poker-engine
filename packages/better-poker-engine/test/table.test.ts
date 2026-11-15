@@ -27,7 +27,12 @@ const auditor = { kind: "auditor" } as const;
 const game = holdem.noLimit({
   blinds: [1, 2],
   minBet: 2,
-  rake: { kind: "percentage", basisPoints: 500, cap: 3, noFlopNoDrop: true },
+  rake: {
+    kind: "percentage",
+    basisPoints: 500,
+    cap: { amount: 3, per: "pot" },
+    noFlopNoDrop: true,
+  },
 });
 
 function emptyTable(seats = 6, played: Game = game): Table {

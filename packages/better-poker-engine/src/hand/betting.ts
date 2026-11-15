@@ -127,6 +127,26 @@ function openerOf(state: HandState, opening: Opening): Position {
   }
 }
 
+/** The largest blind as posted in full, live posts included. */
+function nominalBlind(state: HandState): Chips {
+  return Math.max(0, ...state.blinds.map(Math.abs));
+}
+
+/** The bet to match. Preflop under `nominalBigBlind`, a short blind still prices it in full. */
+export function priceOf(state: HandState): Chips {
+  const largest = maxBet(state);
+  const { nominalBigBlind } = state.game.conventions;
+  return state.street === 0 && nominalBigBlind
+    ? Math.max(largest, nominalBlind(state))
+    : largest;
+}
+
+/** pokerkit counts any first raise as full; TDA Rule 47 counts the blind as the full bet. */
+function openingFullBet(state: HandState): Chips {
+  const { bigBlindIsFullBet } = state.game.conventions;
+  return state.street === 0 && bigBlindIsFullBet ? nominalBlind(state) : 0;
+}
+
 export function beginBetting(state: HandState): void {
   const street = currentStreet(state);
   const opener = openerOf(state, street.opening);
@@ -140,13 +160,13 @@ export function beginBetting(state: HandState): void {
       effectiveStack(state, position) !== 0
   );
   const lone =
-    actors.length === 1 && at(state.bets, at(actors, 0)) >= maxBet(state);
+    actors.length === 1 && at(state.bets, at(actors, 0)) >= priceOf(state);
   state.phase = {
     kind: "betting",
     bringIn,
     completion: bringIn,
     actors: lone ? [] : actors,
-    lastRaise: 0,
+    lastRaise: openingFullBet(state),
     raises: 0,
     acted: [],
     shortAllIns: [],
@@ -199,6 +219,25 @@ function popActor(phase: Betting): Position {
   return actor;
 }
 
+/** With everyone else still in all-in, such a fold could only strand a pot nobody can win,
+ * which pokerkit leaves unclaimed. */
+export function needlessFoldAllowed(
+  state: HandState,
+  actor: Position
+): boolean {
+  const { needlessFolds, strandedPots } = state.game.conventions;
+  if (needlessFolds === "refused") return false;
+  return (
+    strandedPots === "unclaimed" ||
+    positionsOf(state).some(
+      (position) =>
+        position !== actor &&
+        at(state.active, position) &&
+        at(state.stacks, position) !== 0
+    )
+  );
+}
+
 export function fold(
   state: HandState,
   player: Position | undefined
@@ -207,8 +246,8 @@ export function fold(
   if (!turn.ok) return turn;
   const { phase, actor } = turn.value;
   if (phase.bringIn) return err({ code: "bring_in_pending" });
-  const needless = at(state.bets, actor) >= maxBet(state);
-  if (needless && state.game.mode === "tournament") {
+  const needless = at(state.bets, actor) >= priceOf(state);
+  if (needless && !needlessFoldAllowed(state, actor)) {
     return err({ code: "needless_fold" });
   }
   popActor(phase);
@@ -217,7 +256,7 @@ export function fold(
 }
 
 export function callAmount(state: HandState, actor: Position): Chips {
-  return capAt(maxBet(state) - at(state.bets, actor), at(state.stacks, actor));
+  return capAt(priceOf(state) - at(state.bets, actor), at(state.stacks, actor));
 }
 
 export function checkOrCall(
@@ -286,7 +325,7 @@ export function raiseRange(
   const street = currentStreet(state);
   const stack = at(state.stacks, actor);
   const bet = at(state.bets, actor);
-  const largest = maxBet(state);
+  const largest = priceOf(state);
   // pokerkit checks this last and reports a stack that only covers a call as a short all-in.
   if (!exceeds(stack, largest - bet)) return err({ code: "call_is_all_in" });
   if (
@@ -353,7 +392,7 @@ export function betOrRaiseTo(
   if (state.phase.kind !== "betting") return err({ code: "not_now" });
   const phase = state.phase;
   const actor = popActor(phase);
-  const raise = amount - maxBet(state);
+  const raise = amount - priceOf(state);
   placeBet(state, actor, amount - at(state.bets, actor));
   phase.bringIn = false;
   phase.completion = false;

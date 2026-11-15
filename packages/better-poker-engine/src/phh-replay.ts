@@ -25,7 +25,15 @@ import {
 } from "./phh-amounts.ts";
 import type { Phh, PhhStack } from "./phh.ts";
 import { err, ok, type Result } from "./result.ts";
-import { draw, holdem, omaha, shortDeck, stud, type Game } from "./rules.ts";
+import {
+  conventions,
+  draw,
+  holdem,
+  omaha,
+  shortDeck,
+  stud,
+  type Game,
+} from "./rules.ts";
 
 export type ReplayStep = Transition & {
   /** The history's action as `formatPhhAction` writes it, or null for a step
@@ -140,7 +148,8 @@ const studGames = {
   FR: stud.razz,
 };
 
-/** pokerkit's `HandHistory.create_game`: a cash game without rake. */
+/** pokerkit's `HandHistory.create_game`: a cash game without rake, whose stranded pots
+ * stay unclaimed as recorded. */
 function historyGame(
   history: Phh,
   scale: AmountScale
@@ -149,7 +158,7 @@ function historyGame(
   if (!antes.ok) return antes;
   const options = {
     antes: { kind: "byPosition", amounts: antes.value },
-    mode: "cashGame",
+    conventions: { ...conventions.cashGame, strandedPots: "unclaimed" },
     anteTrimming: history.anteTrimming ?? false,
   } as const;
   switch (history.variant) {

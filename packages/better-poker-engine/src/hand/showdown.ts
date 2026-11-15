@@ -48,7 +48,7 @@ export function beginShowdown(state: HandState): void {
   contestPots(state);
   const selecting =
     !state.runoutCountSelected &&
-    state.game.mode !== "tournament" &&
+    state.game.conventions.runouts === "playersChoose" &&
     laterStreets(state).some((street) => street.board > 0);
   state.phase = {
     kind: "showdown",
@@ -228,13 +228,18 @@ export function showOrMuck(
   const turn = showdownTurn(state, player);
   if (!turn.ok) return turn;
   const position = turn.value;
+  // pokerkit takes this no-op before the deal; a PHH history can't place it, as forced bets replay first.
+  if (at(state.hole, position).length === 0) return err({ code: "not_now" });
   const shown = shownHole(state, position, choice);
   if (!shown.ok) return shown;
+  if (shown.value === null && strandsPot(state, position)) {
+    return err({ code: "must_show" });
+  }
   const held = at(state.hole, position).length;
   if (shown.value !== null) {
     const { cards, hole } = shown.value;
     if (
-      state.game.mode === "tournament" &&
+      state.game.conventions.partialShows === "refused" &&
       cards.filter(isKnownCard).length < held
     ) {
       return err({ code: "must_show" });
@@ -268,6 +273,16 @@ export function showOrMuck(
   );
   state.hole[position] = [...shown.value.hole];
   return ok({ type: "shown", player: id, cards: shown.value.cards });
+}
+
+/** The last contender of a pot can't muck it away unless `strandedPots` is "unclaimed". */
+export function strandsPot(state: HandState, position: Position): boolean {
+  return (
+    state.game.conventions.strandedPots === "refused" &&
+    potsOf(state).some(
+      (pot) => pot.eligible.length === 1 && pot.eligible[0] === position
+    )
+  );
 }
 
 export function beginHandKilling(state: HandState): void {

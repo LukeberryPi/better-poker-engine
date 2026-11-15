@@ -7,7 +7,7 @@ import type {
   HoleCard,
   PlayerId,
 } from "./hand.ts";
-import type { Mode } from "./rules.ts";
+import type { Conventions } from "./rules.ts";
 import type { VariantCode } from "./variants.ts";
 import type { Pot } from "./views.ts";
 
@@ -152,7 +152,7 @@ export type PotRecord = {
 export type HandRecord = {
   readonly engineVersion: string;
   readonly variant: VariantCode | "custom";
-  readonly mode: Mode;
+  readonly conventions: Conventions;
   readonly players: readonly PlayerRecord[];
   readonly boards: readonly (readonly Card[])[];
   readonly pots: readonly PotRecord[];

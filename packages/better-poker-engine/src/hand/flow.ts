@@ -17,7 +17,9 @@ import {
   checkOrCall,
   endBetting,
   fold,
+  needlessFoldAllowed,
   postBringIn,
+  priceOf,
   raiseRange,
 } from "./betting.ts";
 import {
@@ -55,12 +57,12 @@ import {
   selectRunoutCount,
   showdownOver,
   showOrMuck,
+  strandsPot,
 } from "./showdown.ts";
 import {
   activeCount,
   at,
   isLastStreet,
-  maxBet,
   playerAt,
   positionsOf,
   type Betting,
@@ -164,12 +166,12 @@ function bettingDecision(state: HandState, phase: Betting): Decision {
       bringIn: bringInAmount(state, actor),
     };
   }
-  const needless = at(state.bets, actor) >= maxBet(state);
+  const needless = at(state.bets, actor) >= priceOf(state);
   const amount = callAmount(state, actor);
   return {
     kind: "betting",
     player,
-    fold: foldKind(state, needless),
+    fold: foldKind(state, actor, needless),
     checkOrCall:
       amount === 0
         ? { kind: "check" }
@@ -181,10 +183,11 @@ function bettingDecision(state: HandState, phase: Betting): Decision {
 
 function foldKind(
   state: HandState,
+  actor: Position,
   needless: boolean
 ): "standard" | "needless" | null {
   if (!needless) return "standard";
-  return state.game.mode === "tournament" ? null : "needless";
+  return needlessFoldAllowed(state, actor) ? "needless" : null;
 }
 
 function dealingDecision(state: HandState, phase: Dealing): Decision {
@@ -209,6 +212,14 @@ function dealingDecision(state: HandState, phase: Dealing): Decision {
   const board = nextBoard(state);
   if (board === null) throw new Error("Dealing has nothing left to deal");
   return { kind: "dealer", step: "boardDealing", ...board };
+}
+
+function showdownDecision(state: HandState, position: Position): Decision {
+  return {
+    kind: "showdown",
+    player: playerAt(state, position),
+    mayMuck: !strandsPot(state, position),
+  };
 }
 
 export function decisionOf(state: HandState): Decision {
@@ -237,7 +248,7 @@ export function decisionOf(state: HandState): Decision {
           maxRunouts: maxRunouts(state),
         };
       }
-      return { kind: "showdown", player: playerAt(state, at(phase.order, 0)) };
+      return showdownDecision(state, at(phase.order, 0));
     case "chipsPushing":
       return { kind: "dealer", step: "chipsPushing" };
     case "complete":

@@ -273,7 +273,13 @@ doctest("pokerkit.utilities.rake", (example) => {
     });
   });
   example(5, () => {
-    expect(rakePot(10.0, { ...elevenPercent, cap: 1.0 }, true)).toEqual({
+    expect(
+      rakePot(
+        10.0,
+        { ...elevenPercent, cap: { amount: 1.0, per: "pot" } },
+        true
+      )
+    ).toEqual({
       raked: 1.0,
       unraked: 9.0,
     });

@@ -16,7 +16,14 @@ import {
   type AmountScale,
   type HistoryReplay,
 } from "../../src/phh.ts";
-import { draw, holdem, omaha, shortDeck, type Game } from "../../src/rules.ts";
+import {
+  conventions,
+  draw,
+  holdem,
+  omaha,
+  shortDeck,
+  type Game,
+} from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -133,7 +140,7 @@ unitTest("pokerkit.tests.test_papers.Kim2023TestCase.test_figure_1", () => {
       anteTrimming: true,
     },
     rake: { kind: "none" },
-    mode: "tournament",
+    conventions: conventions.tournament,
     boards: 1,
   };
   const state = startHand({

@@ -148,7 +148,12 @@ export type Decision =
       /** The most runouts the deck left can deal in full. */
       readonly maxRunouts: number;
     }
-  | { readonly kind: "showdown"; readonly player: PlayerId }
+  | {
+      readonly kind: "showdown";
+      readonly player: PlayerId;
+      /** False while this player alone contests a pot that mucking would strand. */
+      readonly mayMuck: boolean;
+    }
   | DealerDecision
   | { readonly kind: "complete" };
 
@@ -296,6 +301,23 @@ export function act(
   if (!events.ok) return events;
   state.events = [...current.events, ...events.value];
   return ok({ hand: handFrom(state), events: events.value });
+}
+
+export type ActAsOptions = {
+  /** The `version` of the view the player decided on. */
+  readonly expectedVersion: number;
+  readonly commentary?: string;
+};
+
+/** For servers: `player` is who you authenticated and replaces `action.player`, and
+ * dealer steps don't type-check, so a client can never deal or act for another seat. */
+export function actAs(
+  hand: Hand,
+  player: PlayerId,
+  action: PlayerAction,
+  options: ActAsOptions
+): Result<Transition, Violation> {
+  return act(hand, { ...action, player }, options);
 }
 
 /** Null until the hand is complete. Auditor data: it holds every hole card. */
