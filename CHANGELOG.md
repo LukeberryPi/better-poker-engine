@@ -13,6 +13,7 @@ before 1.0, a minor version may change the API.
   Rule 47), a nominal big blind, ante precedence and odd chips.
 - Rake caps per hand: `cap: { amount, per: "hand" }`.
 - `actAs(hand, player, action, { expectedVersion })`, the server entry point.
+- `engineVersion`, to record which engine plays a hand from its start.
 - Showdown decisions carry `mayMuck`.
 - From `main` since 0.1.0: `act`'s `expectedVersion` stale-action guard and
   deeply frozen hands; zod mini `playerActionSchema` and `actionSchema`;
