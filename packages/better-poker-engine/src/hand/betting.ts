@@ -344,7 +344,9 @@ export function raiseRange(
   if (phase.raises === street.maxBetsAndRaises) {
     return err({ code: "betting_capped", limit: phase.raises });
   }
+  // pokerkit's running total of short all-ins; the check above already judges each player.
   if (
+    !state.game.conventions.bigBlindIsFullBet &&
     phase.shortAllIns.length > 0 &&
     shortOfReopening(state, sum(phase.shortAllIns), phase) &&
     phase.acted.includes(actor)

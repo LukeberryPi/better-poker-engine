@@ -109,7 +109,7 @@ describe("bigBlindIsFullBet", () => {
   });
 });
 
-describe("bigBlindIsFullBet after the flop", () => {
+describe("bigBlindIsFullBet, player by player", () => {
   const limpedThrough = [call, call, call, call];
 
   test("on, judges each player by what they faced when they last acted", () => {
@@ -127,6 +127,19 @@ describe("bigBlindIsFullBet after the flop", () => {
       player: "p3",
       checkOrCall: { kind: "call", amount: 50 },
       betOrRaiseTo: null,
+    });
+  });
+
+  test("on, reopens for a player whom three short all-ins have raised a full raise", () => {
+    const table = played(
+      noLimit(conventions.tda2024),
+      [10000, 10000, 10000, 150, 200, 240],
+      [call, raiseTo(150), raiseTo(200), raiseTo(240), call, fold]
+    );
+    expect(auditor(table.hand).decision).toMatchObject({
+      player: "p3",
+      checkOrCall: { kind: "call", amount: 140 },
+      betOrRaiseTo: { kind: "raise", min: 340 },
     });
   });
 

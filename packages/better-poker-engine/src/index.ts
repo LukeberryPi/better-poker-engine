@@ -137,6 +137,7 @@ export {
   type StudStakes,
 } from "./rules.ts";
 export type { VariantCode } from "./variants.ts";
+export { engineVersion } from "./version.ts";
 export {
   eventsFor,
   viewHand,
