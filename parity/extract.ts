@@ -151,7 +151,7 @@ async function pythonFiles(
     withFileTypes: true,
   });
   const files = await Promise.all(
-    entries.map((entry) => {
+    entries.map(async (entry) => {
       const relative = path.posix.join(directory, entry.name);
       if (entry.isDirectory()) {
         return pythonFiles(root, relative);

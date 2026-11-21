@@ -25,6 +25,8 @@ export default defineConfig({
   ],
   rules: {
     ...cloudflare.rules,
+    // The preset allows mixed promise arrays; the correctness category uses the default.
+    "typescript/await-thenable": "error",
     eqeqeq: "error",
     complexity: ["error", { max: 80 }],
     "anti-slop/no-chained-type-assertions": "error",

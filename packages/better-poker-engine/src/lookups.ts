@@ -1,12 +1,4 @@
-import {
-  areRainbow,
-  areSuited,
-  cardOf,
-  rankOf,
-  rankOrders,
-  ranks,
-  suits,
-} from "./cards.ts";
+import { areRainbow, areSuited, rankOf, rankOrders, suitOf } from "./cards.ts";
 import type { Card, KnownCard, Rank, Suit } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 
@@ -364,21 +356,14 @@ export type CardKey = { readonly prime: number; readonly suit: number };
 
 const suitBits = { c: 1, d: 2, h: 4, s: 8 } satisfies Record<Suit, number>;
 
-const cardKeys = new Map(
-  ranks.flatMap((rank) =>
-    suits.map((suit): [KnownCard, CardKey] => [
-      cardOf(rank, suit),
-      { prime: primes[rank], suit: suitBits[suit] },
-    ])
-  )
-);
-
 export function cardKeyOf(card: KnownCard): CardKey {
-  const key = cardKeys.get(card);
-  if (key === undefined) {
-    throw new Error(`Not a known card: ${card}`);
-  }
-  return key;
+  // SAFETY: a known card's rank and suit are both known.
+  return {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- a known card's rank is never "?".
+    prime: primes[rankOf(card) as Rank],
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- a known card's suit is never "?".
+    suit: suitBits[suitOf(card) as Suit],
+  };
 }
 
 /** `entryOf` for the known cards at `positions` of `keys`, without building card sets. */
