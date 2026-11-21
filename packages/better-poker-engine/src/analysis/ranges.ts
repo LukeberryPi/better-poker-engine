@@ -114,7 +114,7 @@ function plus(
     return null;
   }
   const high = order.charAt(Math.max(i0, i1));
-  const kickers = [...order.slice(Math.min(i0, i1), Math.max(i0, i1))];
+  const kickers = Array.from(order.slice(Math.min(i0, i1), Math.max(i0, i1)));
   return unionOf(kickers.map((kicker) => rankPair(high, kicker, suffix)));
 }
 

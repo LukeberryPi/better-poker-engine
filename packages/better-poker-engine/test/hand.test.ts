@@ -534,9 +534,19 @@ describe("dividing chips", () => {
     play(table, [
       ...["As3d9c9h", "AhAdJcJd", "QhQdJhJs", "ThTd9d9s"].map(deal),
       ...repeat(call, 4),
-      ...[burn, board("2c5d7h"), moves.raise, call, call],
-      ...[burn, board("Kc"), moves.raise, call],
-      ...[burn, board("Ks"), call, call],
+      burn,
+      board("2c5d7h"),
+      moves.raise,
+      call,
+      call,
+      burn,
+      board("Kc"),
+      moves.raise,
+      call,
+      burn,
+      board("Ks"),
+      call,
+      call,
     ]);
     expect(
       summarizeHand(table.hand)?.pots.map(({ winners }) => winners)
