@@ -1,14 +1,14 @@
-import { TomlDate, type TomlTable, type TomlValue } from "smol-toml";
-import * as z from "zod/mini";
+import { TomlDate } from "smol-toml";
+import type { TomlTable, TomlValue } from "smol-toml";
+import { z } from "zod/mini";
 
 import type { Unbounded } from "./chips.ts";
-import {
-  formatPhhAction,
-  parsePhhAction,
-  type PhhAction,
-} from "./phh-actions.ts";
-import { canonicalDecimal, type PhhDecimal } from "./phh-amounts.ts";
-import { err, ok, type Result } from "./result.ts";
+import { formatPhhAction, parsePhhAction } from "./phh-actions.ts";
+import type { PhhAction } from "./phh-actions.ts";
+import { canonicalDecimal } from "./phh-amounts.ts";
+import type { PhhDecimal } from "./phh-amounts.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import {
   isTable,
   readToml,
@@ -17,10 +17,10 @@ import {
   tomlString,
   tomlValue,
   userValueOf,
-  type PhhValue,
-  type TomlSyntaxError,
 } from "./toml.ts";
-import { variantCodes, type VariantCode } from "./variants.ts";
+import type { PhhValue, TomlSyntaxError } from "./toml.ts";
+import { variantCodes } from "./variants.ts";
+import type { VariantCode } from "./variants.ts";
 
 export type { PhhAction } from "./phh-actions.ts";
 export {
@@ -75,7 +75,7 @@ const studVariants = ["F7S", "F7S/8", "FR"] as const;
 type ForcedBets =
   | {
       readonly variant: (typeof fixedLimitBlindVariants)[number];
-      readonly blinds: readonly PhhDecimal[];
+      readonly blinds: ReadonlyArray<PhhDecimal>;
       readonly bringIn: null;
       readonly smallBet: PhhDecimal;
       readonly bigBet: PhhDecimal;
@@ -83,7 +83,7 @@ type ForcedBets =
     }
   | {
       readonly variant: (typeof noOrPotLimitBlindVariants)[number];
-      readonly blinds: readonly PhhDecimal[];
+      readonly blinds: ReadonlyArray<PhhDecimal>;
       readonly bringIn: null;
       readonly smallBet: null;
       readonly bigBet: null;
@@ -103,9 +103,9 @@ type ForcedBets =
  * pokerkit, a negative entry in `blinds` is a post bet. */
 export type Phh = ForcedBets & {
   readonly anteTrimming: boolean | null;
-  readonly antes: readonly PhhDecimal[];
-  readonly startingStacks: readonly PhhStack[];
-  readonly actions: readonly PhhAction[];
+  readonly antes: ReadonlyArray<PhhDecimal>;
+  readonly startingStacks: ReadonlyArray<PhhStack>;
+  readonly actions: ReadonlyArray<PhhAction>;
   readonly author: string | null;
   readonly event: string | null;
   readonly url: string | null;
@@ -123,16 +123,16 @@ export type Phh = ForcedBets & {
   readonly year: number | null;
   readonly hand: PhhLabel | null;
   readonly level: number | null;
-  readonly seats: readonly number[] | null;
+  readonly seats: ReadonlyArray<number> | null;
   readonly seatCount: number | null;
   readonly table: PhhLabel | null;
-  readonly players: readonly string[] | null;
-  readonly finishingStacks: readonly PhhStack[] | null;
-  readonly winnings: readonly PhhDecimal[] | null;
+  readonly players: ReadonlyArray<string> | null;
+  readonly finishingStacks: ReadonlyArray<PhhStack> | null;
+  readonly winnings: ReadonlyArray<PhhDecimal> | null;
   readonly currency: string | null;
   readonly currencySymbol: string | null;
   readonly timeLimit: PhhStack | null;
-  readonly timeBanks: readonly PhhDecimal[] | null;
+  readonly timeBanks: ReadonlyArray<PhhDecimal> | null;
   /** Fields the spec does not define, by key; the spec asks them to start with `_`. */
   readonly extra: Readonly<Record<string, PhhValue>>;
 };
@@ -141,7 +141,7 @@ export type Phh = ForcedBets & {
 export type PhhIssue = { readonly path: string; readonly message: string };
 
 type DocumentError =
-  | { readonly code: "schema"; readonly issues: readonly PhhIssue[] }
+  | { readonly code: "schema"; readonly issues: ReadonlyArray<PhhIssue> }
   | { readonly code: "unknown_variant"; readonly variant: string }
   | {
       readonly code: "action_syntax";
@@ -178,7 +178,9 @@ const text = z.string(expected("a string"));
 
 const decimal = z.transform((value: bigint | number, context) => {
   const amount = canonicalDecimal(String(value));
-  if (amount !== null) return amount;
+  if (amount !== null) {
+    return amount;
+  }
   context.issues.push({
     code: "custom",
     message: "expected a number",
@@ -220,7 +222,7 @@ function integerFrom(minimum: bigint, maximum: bigint) {
   const range = expected(`an integer from ${minimum} to ${maximum}`);
   return z.pipe(
     z.bigint(range).check(z.minimum(minimum, range), z.maximum(maximum, range)),
-    z.transform((value) => Number(value))
+    z.transform(Number)
   );
 }
 
@@ -243,7 +245,9 @@ const label = z.union(
 /** Reads a TOML local time as `TomlDate` writes it, e.g. `12:34:56.789`. */
 function localTimeOf(time: string): PhhTime | null {
   const match = /^(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/u.exec(time);
-  if (match === null) return null;
+  if (match === null) {
+    return null;
+  }
   const [, hour = "", minute = "", second = "", fraction = ""] = match;
   return {
     hour: Number(hour),
@@ -264,7 +268,9 @@ const localTime = z.pipe(
     ),
   z.transform((date, context) => {
     const time = localTimeOf(date.toISOString());
-    if (time !== null) return time;
+    if (time !== null) {
+      return time;
+    }
     context.issues.push({
       code: "custom",
       message: "expected a local time",
@@ -323,14 +329,14 @@ const standardFields = new Set([
 ]);
 
 type PlayerArrays = {
-  readonly antes: readonly PhhDecimal[];
-  readonly blinds_or_straddles?: readonly PhhDecimal[];
-  readonly starting_stacks: readonly PhhStack[];
-  readonly seats?: readonly number[] | undefined;
-  readonly players?: readonly string[] | undefined;
-  readonly finishing_stacks?: readonly PhhStack[] | undefined;
-  readonly winnings?: readonly PhhDecimal[] | undefined;
-  readonly time_banks?: readonly PhhDecimal[] | undefined;
+  readonly antes: ReadonlyArray<PhhDecimal>;
+  readonly blinds_or_straddles?: ReadonlyArray<PhhDecimal>;
+  readonly starting_stacks: ReadonlyArray<PhhStack>;
+  readonly seats?: ReadonlyArray<number> | undefined;
+  readonly players?: ReadonlyArray<string> | undefined;
+  readonly finishing_stacks?: ReadonlyArray<PhhStack> | undefined;
+  readonly winnings?: ReadonlyArray<PhhDecimal> | undefined;
+  readonly time_banks?: ReadonlyArray<PhhDecimal> | undefined;
 };
 
 const onePerPlayer = z.superRefine((fields: PlayerArrays, context) => {
@@ -345,7 +351,9 @@ const onePerPlayer = z.superRefine((fields: PlayerArrays, context) => {
     time_banks: fields.time_banks,
   };
   for (const [key, values] of Object.entries(arrays)) {
-    if (values === undefined || values.length === players) continue;
+    if (values === undefined || values.length === players) {
+      continue;
+    }
     context.issues.push({
       code: "custom",
       path: [key],
@@ -466,7 +474,7 @@ const historySchemas = {
   FB: fixedLimitBlinds,
 } satisfies Record<VariantCode, z.core.SomeType>;
 
-function pathOf(path: readonly PropertyKey[]): string {
+function pathOf(path: ReadonlyArray<PropertyKey>): string {
   return path
     .map((key, index) =>
       Number.isInteger(key)
@@ -477,7 +485,7 @@ function pathOf(path: readonly PropertyKey[]): string {
 }
 
 function schemaError(
-  issues: readonly z.core.$ZodIssue[],
+  issues: ReadonlyArray<z.core.$ZodIssue>,
   variant: VariantCode
 ): DocumentError {
   return {
@@ -508,13 +516,15 @@ function variantOf(
 }
 
 function actionsOf(
-  texts: readonly string[],
+  texts: ReadonlyArray<string>,
   players: number
-): Result<readonly PhhAction[], DocumentError> {
-  const actions: PhhAction[] = [];
+): Result<ReadonlyArray<PhhAction>, DocumentError> {
+  const actions: Array<PhhAction> = [];
   for (const [index, text] of texts.entries()) {
     const action = parsePhhAction(text);
-    if (action === null) return err({ code: "action_syntax", index, text });
+    if (action === null) {
+      return err({ code: "action_syntax", index, text });
+    }
     if ("player" in action && action.player > players) {
       return err({
         code: "unknown_player",
@@ -530,7 +540,9 @@ function actionsOf(
 
 function historyFrom(table: TomlTable): Result<Phh, DocumentError> {
   const variant = variantOf(table["variant"]);
-  if (!variant.ok) return variant;
+  if (!variant.ok) {
+    return variant;
+  }
   const entries = Object.entries(table);
   const fields = historySchemas[variant.value].safeParse(
     Object.fromEntries(entries.filter(([key]) => standardFields.has(key)))
@@ -542,7 +554,9 @@ function historyFrom(table: TomlTable): Result<Phh, DocumentError> {
     fields.data.actions,
     fields.data.startingStacks.length
   );
-  if (!actions.ok) return actions;
+  if (!actions.ok) {
+    return actions;
+  }
   const extra = entries
     .filter(([key]) => !standardFields.has(key))
     .map(([key, value]) => [key, userValueOf(value)] as const);
@@ -561,10 +575,12 @@ export function parsePhh(text: string): Result<Phh, PhhError> {
 }
 
 /** Reads a `.phhs` file: a table of histories such as `[1]`, `[2]`, in order. */
-export function parsePhhs(text: string): Result<readonly Phh[], PhhsError> {
+export function parsePhhs(text: string): Result<ReadonlyArray<Phh>, PhhsError> {
   const table = readToml(text);
-  if (!table.ok) return table;
-  const histories: Phh[] = [];
+  if (!table.ok) {
+    return table;
+  }
+  const histories: Array<Phh> = [];
   for (const [document, value] of Object.entries(table.value)) {
     const history: Result<Phh, DocumentError> = isTable(value)
       ? historyFrom(value)
@@ -572,7 +588,9 @@ export function parsePhhs(text: string): Result<readonly Phh[], PhhsError> {
           code: "schema",
           issues: [{ path: "", message: "expected a table" }],
         });
-    if (!history.ok) return err({ ...history.error, document });
+    if (!history.ok) {
+      return err({ ...history.error, document });
+    }
     histories.push(history.value);
   }
   return ok(histories);
@@ -602,14 +620,14 @@ function timeText(time: PhhTime): string {
 }
 
 function listOf<Item>(write: (item: Item) => string) {
-  return (items: readonly Item[]) => tomlArray(items.map(write));
+  return (items: ReadonlyArray<Item>) => tomlArray(items.map(write));
 }
 
 function line<Value>(
   key: string,
   value: Value | null,
   write: (value: Value) => string
-): readonly string[] {
+): ReadonlyArray<string> {
   return value === null ? [] : [`${key} = ${write(value)}`];
 }
 
@@ -647,11 +665,7 @@ export function formatPhh(history: Phh): string {
     ...line("year", history.year, String),
     ...line("hand", history.hand, labelText),
     ...line("level", history.level, String),
-    ...line(
-      "seats",
-      history.seats,
-      listOf((seat: number) => String(seat))
-    ),
+    ...line("seats", history.seats, listOf(String)),
     ...line("seat_count", history.seatCount, String),
     ...line("table", history.table, labelText),
     ...line("players", history.players, listOf(tomlString)),
@@ -670,7 +684,7 @@ export function formatPhh(history: Phh): string {
 }
 
 /** Writes histories as pokerkit's `HandHistory.dumps_all` does: `[1]`, `[2]`, ... */
-export function formatPhhs(histories: readonly Phh[]): string {
+export function formatPhhs(histories: ReadonlyArray<Phh>): string {
   return histories
     .map((history, index) => `[${index + 1}]\n${formatPhh(history)}`)
     .join("\n\n");

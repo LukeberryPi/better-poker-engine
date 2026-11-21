@@ -18,27 +18,27 @@ import {
   positionsOf,
   sum,
   upHandOf,
-  type ContestedPot,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { ContestedPot, HandState, Position } from "./state.ts";
 
 /** Hole cards as dealt, minus discards, face up once shown; a show keeps no card back. */
 function heldCards(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   position: Position
-): HoleCard[] {
+): Array<HoleCard> {
   const player = playerAt(state, position);
-  let held: HoleCard[] = [];
+  let held: Array<HoleCard> = [];
   for (const { body } of events) {
     if (body.type === "holeDealt" && body.player === player) {
-      held = [...held, ...body.cards];
+      held.push(...body.cards);
     } else if (body.type === "drew" && body.player === player) {
       const discarded = [...body.discarded];
       held = held.filter(({ card }) => {
         const index = discarded.indexOf(card);
-        if (index === -1) return true;
+        if (index === -1) {
+          return true;
+        }
         discarded.splice(index, 1);
         return false;
       });
@@ -47,7 +47,9 @@ function heldCards(
         const index = held.findIndex((hole) => hole.card === card);
         const unknown = held.findIndex((hole) => !isKnownCard(hole.card));
         const slot = index === -1 ? unknown : index;
-        if (slot !== -1) held[slot] = { card, face: "up" };
+        if (slot !== -1) {
+          held[slot] = { card, face: "up" };
+        }
       }
     }
   }
@@ -55,7 +57,7 @@ function heldCards(
 }
 
 function streetOfFirst(
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   matches: (event: HandEvent) => boolean
 ): number | null {
   const event = events.find(matches);
@@ -64,7 +66,7 @@ function streetOfFirst(
 
 function playerRecord(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   position: Position
 ): PlayerRecord {
   const player = playerAt(state, position);
@@ -90,11 +92,13 @@ type Winner = PotRecord["winners"][number];
 
 function winnersOf(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   pot: number
-): Winner[] {
+): Array<Winner> {
   return events.flatMap(({ body }) => {
-    if (body.type !== "chipsPushed" || body.pot !== pot) return [];
+    if (body.type !== "chipsPushed" || body.pot !== pot) {
+      return [];
+    }
     const { board, handType } = body;
     return body.awards.map(({ player, amount }) => {
       const position = state.players.indexOf(player);
@@ -114,24 +118,31 @@ function winnersOf(
 }
 
 /** The contested pots that a pushed pot merged, main pot first. */
-function partsOf(contested: ContestedPot[], amount: Chips): ContestedPot[] {
-  const parts: ContestedPot[] = [];
+function partsOf(
+  contested: Array<ContestedPot>,
+  amount: Chips
+): Array<ContestedPot> {
+  const parts: Array<ContestedPot> = [];
   let covered = 0;
   while (covered < amount) {
     const part = contested.shift();
-    if (part === undefined) throw new Error("Contested pots ran out");
+    if (part === undefined) {
+      throw new Error("Contested pots ran out");
+    }
     parts.push(part);
     covered += part.amount;
   }
-  if (covered !== amount) throw new Error("Contested pots split a pushed pot");
+  if (covered !== amount) {
+    throw new Error("Contested pots split a pushed pot");
+  }
   return parts;
 }
 
 /** Each row is a part's share of every flow, by largest remainder; rows and columns add up. */
 function apportion(
-  parts: readonly Chips[],
-  flows: readonly Chips[]
-): Chips[][] {
+  parts: ReadonlyArray<Chips>,
+  flows: ReadonlyArray<Chips>
+): Array<Array<Chips>> {
   const remaining = flows.map(BigInt);
   let left = BigInt(sum(parts));
   return parts.map((part) => {
@@ -140,13 +151,16 @@ function apportion(
     const remainders = remaining.map((flow) => (flow * size) % left);
     let short = size - shares.reduce((total, share) => total + share, 0n);
     const order = remainders
-      .map((remainder, index) => ({ remainder, index }))
-      .filter(({ remainder }) => remainder > 0n)
+      .flatMap((remainder, index) =>
+        remainder > 0n ? [{ remainder, index }] : []
+      )
       .sort((a, b) =>
         a.remainder === b.remainder ? 0 : a.remainder > b.remainder ? -1 : 1
       );
     for (const { index } of order) {
-      if (short === 0n) break;
+      if (short === 0n) {
+        break;
+      }
       shares[index] = at(shares, index) + 1n;
       short -= 1n;
     }
@@ -160,8 +174,8 @@ function apportion(
 
 function potRecords(
   state: HandState,
-  events: readonly HandEvent[]
-): PotRecord[] {
+  events: ReadonlyArray<HandEvent>
+): Array<PotRecord> {
   const contested = [...(state.contestedPots ?? [])];
   return (state.pots ?? []).flatMap((pot, index) => {
     const winners = winnersOf(state, events, index);
@@ -189,7 +203,7 @@ function potRecords(
 /** `events` are every event of the complete hand. */
 export function summarize(
   state: HandState,
-  events: readonly HandEvent[]
+  events: ReadonlyArray<HandEvent>
 ): HandRecord {
   const players = positionsOf(state).map((position) =>
     playerRecord(state, events, position)

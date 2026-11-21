@@ -23,7 +23,7 @@ async function lintFixture(name: string, source: string) {
     [
       path.join(repositoryRoot, "node_modules/.bin/oxlint"),
       "-c",
-      path.join(repositoryRoot, ".oxlintrc.json"),
+      path.join(repositoryRoot, "oxlint.config.ts"),
       "--deny-warnings",
       fixturePath,
     ],

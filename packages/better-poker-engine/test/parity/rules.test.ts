@@ -1,17 +1,11 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { automation, type Hand, type RaiseRange } from "../../src/hand.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand, RaiseRange } from "../../src/hand.ts";
 import { holdem, omaha } from "../../src/rules.ts";
-import {
-  auditor,
-  drive,
-  minimumRaise,
-  moves,
-  play,
-  start,
-  type Driver,
-} from "../driver.ts";
+import { auditor, drive, minimumRaise, moves, play, start } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 const { call, fold, raiseTo } = moves;
 
@@ -24,7 +18,7 @@ unitTest(
       anteTrimming: true,
     });
     const shortAllIn = drive(
-      start(noLimit, [650, 20000, 20000], automation.all)
+      start(noLimit, [650, 20_000, 20_000], automation.all)
     );
     play(shortAllIn, [raiseTo(600), raiseTo(650), call]);
     expect(shortAllIn.can(minimumRaise(shortAllIn))).toBe(false);
@@ -46,7 +40,9 @@ unitTest(
 function raiseRange(table: Driver) {
   expect(table.can(minimumRaise(table))).toBe(true);
   const decision = auditor(table.hand).decision;
-  if (decision.kind !== "betting") throw new Error(decision.kind);
+  if (decision.kind !== "betting") {
+    throw new Error(decision.kind);
+  }
   return decision.betOrRaiseTo;
 }
 
@@ -60,7 +56,7 @@ unitTest(
       anteTrimming: true,
     });
     const table = drive(
-      start(game, [20001, 20001, 20001, 1301, 1701], automation.all)
+      start(game, [20_001, 20_001, 20_001, 1301, 1701], automation.all)
     );
     play(table, [
       raiseTo(500),
@@ -70,7 +66,11 @@ unitTest(
       raiseTo(1700),
     ]);
     const reopenedFor: Hand = table.hand;
-    const range = { kind: "raise", min: 2200, max: 20000 } satisfies RaiseRange;
+    const range = {
+      kind: "raise",
+      min: 2200,
+      max: 20_000,
+    } satisfies RaiseRange;
 
     const afterCall = drive(reopenedFor);
     call(afterCall);

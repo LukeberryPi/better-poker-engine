@@ -2,20 +2,15 @@ import { expect } from "bun:test";
 
 import { doctest } from "../../../../parity/harness.ts";
 import type { DoctestId } from "../../../../parity/manifest.ts";
-import { rankOrders, type Rank } from "../../src/cards.ts";
+import { rankOrders } from "../../src/cards.ts";
+import type { Rank } from "../../src/cards.ts";
 import { handRules } from "../../src/evaluation.ts";
 import type { EventBody } from "../../src/events.ts";
-import { summarizeHand, type Action, type PlayerId } from "../../src/hand.ts";
+import { summarizeHand } from "../../src/hand.ts";
+import type { Action, PlayerId } from "../../src/hand.ts";
 import { definitions } from "../../src/lookups.ts";
-import {
-  draw,
-  holdem,
-  omaha,
-  shortDeck,
-  stud,
-  type Game,
-  type Street,
-} from "../../src/rules.ts";
+import { draw, holdem, omaha, shortDeck, stud } from "../../src/rules.ts";
+import type { Game, Street } from "../../src/rules.ts";
 import {
   allBut,
   boardDealt,
@@ -32,9 +27,8 @@ import {
   stacks,
   start,
   steps,
-  type Driver,
-  type Step,
 } from "../driver.ts";
+import type { Driver, Step } from "../driver.ts";
 import { cards } from "../support.ts";
 
 /** pokerkit's examples deal, burn and select runouts by hand and automate the rest. */
@@ -78,9 +72,9 @@ function discard(text: string): Action {
 /** A burn before each street's board cards, from example `first` on. */
 function burnsAndBoards(
   first: number,
-  streets: readonly (readonly [text: string, board: number])[]
-): Step[] {
-  return streets.flatMap(([text, board], offset): Step[] => [
+  streets: ReadonlyArray<readonly [text: string, board: number]>
+): Array<Step> {
+  return streets.flatMap(([text, board], offset): Array<Step> => [
     [first + 2 * offset, burn("??"), burned("??")],
     [first + 2 * offset + 1, dealBoard(text), boardDealt(text, board)],
   ]);
@@ -162,7 +156,7 @@ gameProperty(
   0
 );
 
-gameProperty<readonly (readonly Rank[])[]>(
+gameProperty<ReadonlyArray<ReadonlyArray<Rank>>>(
   "pokerkit.games.Poker.rank_orders",
   (game) =>
     game.rules.handTypes.map(
@@ -213,7 +207,7 @@ doctest("pokerkit.games.NoLimitTexasHoldem.create_state", (example) => {
     table = drive(
       start(
         game,
-        ["unbounded", 116400, 86900, "unbounded", 50000, "unbounded"],
+        ["unbounded", 116_400, 86_900, "unbounded", 50_000, "unbounded"],
         manualDealing
       )
     );
@@ -229,19 +223,23 @@ doctest("pokerkit.games.NoLimitTexasHoldem.create_state", (example) => {
     [11, { type: "betOrRaiseTo", amount: 2800 }, raised("p5", 2800)],
     [12, fold, folded("p6")],
     [13, checkOrCall, called("p1", 2600)],
-    [14, { type: "betOrRaiseTo", amount: 12600 }, raised("p2", 12600)],
-    [15, checkOrCall, called("p3", 11800)],
+    [14, { type: "betOrRaiseTo", amount: 12_600 }, raised("p2", 12_600)],
+    [15, checkOrCall, called("p3", 11_800)],
     [16, checkOrCall, called("p5", 9800)],
     [17, checkOrCall, called("p1", 9800)],
     [18, burn("??"), burned("??")],
     [19, dealBoard("9hTs9s"), boardDealt("9hTs9s")],
     [20, checkOrCall, checked("p1")],
-    [21, { type: "betOrRaiseTo", amount: 17000 }, bet("p2", 17000)],
-    [22, { type: "betOrRaiseTo", amount: 36000 }, raised("p3", 36000)],
+    [21, { type: "betOrRaiseTo", amount: 17_000 }, bet("p2", 17_000)],
+    [22, { type: "betOrRaiseTo", amount: 36_000 }, raised("p3", 36_000)],
     [23, fold, folded("p5")],
     [24, fold, folded("p1")],
-    [25, { type: "betOrRaiseTo", amount: 103800 }, allIn(raised("p2", 103800))],
-    [26, checkOrCall, allIn(called("p3", 38300))],
+    [
+      25,
+      { type: "betOrRaiseTo", amount: 103_800 },
+      allIn(raised("p2", 103_800)),
+    ],
+    [26, checkOrCall, allIn(called("p3", 38_300))],
     [
       27,
       { type: "selectRunoutCount", count: 4 },
@@ -266,14 +264,14 @@ doctest("pokerkit.games.NoLimitTexasHoldem.create_state", (example) => {
   example(45, () => {
     expect(stacks(table.hand)).toEqual([
       "unbounded",
-      79400,
-      149700,
+      79_400,
+      149_700,
       "unbounded",
-      37400,
+      37_400,
       "unbounded",
     ]);
     expect(summarizeHand(table.hand)?.players.map(({ net }) => net)).toEqual([
-      -12600, -37000, 62800, 0, -12600, -600,
+      -12_600, -37_000, 62_800, 0, -12_600, -600,
     ]);
   });
   example(46, () => {
@@ -283,32 +281,34 @@ doctest("pokerkit.games.NoLimitTexasHoldem.create_state", (example) => {
       minBet: 2000,
       anteTrimming: true,
     });
-    table = drive(start(game, [1125600, "unbounded", 553500], manualDealing));
+    table = drive(
+      start(game, [1_125_600, "unbounded", 553_500], manualDealing)
+    );
   });
   steps(example, () => table, [
     [47, dealHole("Ac2d"), holeDealt("p1", "Ac2d")],
     [48, dealHole("????"), holeDealt("p2", "????")],
     [49, dealHole("7h6h"), holeDealt("p3", "7h6h")],
     [50, { type: "betOrRaiseTo", amount: 7000 }, raised("p3", 7000)],
-    [51, { type: "betOrRaiseTo", amount: 23000 }, raised("p1", 23000)],
+    [51, { type: "betOrRaiseTo", amount: 23_000 }, raised("p1", 23_000)],
     [52, fold, folded("p2")],
-    [53, checkOrCall, called("p3", 16000)],
+    [53, checkOrCall, called("p3", 16_000)],
     ...burnsAndBoards(54, [["Jc3d5c", 0]]),
-    [56, { type: "betOrRaiseTo", amount: 35000 }, bet("p1", 35000)],
-    [57, checkOrCall, called("p3", 35000)],
+    [56, { type: "betOrRaiseTo", amount: 35_000 }, bet("p1", 35_000)],
+    [57, checkOrCall, called("p3", 35_000)],
     ...burnsAndBoards(58, [["4h", 0]]),
-    [60, { type: "betOrRaiseTo", amount: 90000 }, bet("p1", 90000)],
-    [61, { type: "betOrRaiseTo", amount: 232600 }, raised("p3", 232600)],
+    [60, { type: "betOrRaiseTo", amount: 90_000 }, bet("p1", 90_000)],
+    [61, { type: "betOrRaiseTo", amount: 232_600 }, raised("p3", 232_600)],
     [
       62,
-      { type: "betOrRaiseTo", amount: 1067100 },
-      allIn(raised("p1", 1067100)),
+      { type: "betOrRaiseTo", amount: 1_067_100 },
+      allIn(raised("p1", 1_067_100)),
     ],
-    [63, checkOrCall, allIn(called("p3", 262400))],
+    [63, checkOrCall, allIn(called("p3", 262_400))],
     ...burnsAndBoards(64, [["Jh", 0]]),
   ]);
   example(66, () => {
-    expect(stacks(table.hand)).toEqual([572100, "unbounded", 1109500]);
+    expect(stacks(table.hand)).toEqual([572_100, "unbounded", 1_109_500]);
   });
 });
 
@@ -321,7 +321,9 @@ doctest("pokerkit.games.NoLimitShortDeckHoldem.create_state", (example) => {
       minBet: 3000,
       anteTrimming: true,
     });
-    const startingStacks = [495000, 232000, 362000, 403000, 301000, 204000];
+    const startingStacks = [
+      495_000, 232_000, 362_000, 403_000, 301_000, 204_000,
+    ];
     table = drive(start(game, startingStacks, manualDealing));
   });
   steps(example, () => table, [
@@ -333,13 +335,17 @@ doctest("pokerkit.games.NoLimitShortDeckHoldem.create_state", (example) => {
     [7, dealHole("8c7h"), holeDealt("p6", "8c7h")],
     [8, checkOrCall, called("p1", 3000)],
     [9, checkOrCall, called("p2", 3000)],
-    [10, { type: "betOrRaiseTo", amount: 35000 }, raised("p3", 35000)],
+    [10, { type: "betOrRaiseTo", amount: 35_000 }, raised("p3", 35_000)],
     [11, fold, folded("p4")],
-    [12, { type: "betOrRaiseTo", amount: 298000 }, allIn(raised("p5", 298000))],
+    [
+      12,
+      { type: "betOrRaiseTo", amount: 298_000 },
+      allIn(raised("p5", 298_000)),
+    ],
     [13, fold, folded("p6")],
     [14, fold, folded("p1")],
     [15, fold, folded("p2")],
-    [16, checkOrCall, called("p3", 263000)],
+    [16, checkOrCall, called("p3", 263_000)],
     ...burnsAndBoards(17, [
       ["9h6cKc", 0],
       ["Jh", 0],
@@ -348,7 +354,7 @@ doctest("pokerkit.games.NoLimitShortDeckHoldem.create_state", (example) => {
   ]);
   example(23, () => {
     expect(stacks(table.hand)).toEqual([
-      489000, 226000, 684000, 400000, 0, 198000,
+      489_000, 226_000, 684_000, 400_000, 0, 198_000,
     ]);
   });
 });
@@ -357,31 +363,39 @@ doctest("pokerkit.games.PotLimitOmahaHoldem.create_state", (example) => {
   let table: Driver;
   example(1, () => {
     const game = omaha.potLimit({
-      blinds: [50000, 100000],
-      minBet: 100000,
+      blinds: [50_000, 100_000],
+      minBet: 100_000,
       anteTrimming: true,
     });
-    table = drive(start(game, [125945025, 67847350], manualDealing));
+    table = drive(start(game, [125_945_025, 67_847_350], manualDealing));
   });
   steps(example, () => table, [
     [2, dealHole("Ah3sKsKh"), holeDealt("p1", "Ah3sKsKh")],
     [3, dealHole("6d9s7d8h"), holeDealt("p2", "6d9s7d8h")],
-    [4, { type: "betOrRaiseTo", amount: 300000 }, raised("p2", 300000)],
-    [5, { type: "betOrRaiseTo", amount: 900000 }, raised("p1", 900000)],
-    [6, { type: "betOrRaiseTo", amount: 2700000 }, raised("p2", 2700000)],
-    [7, { type: "betOrRaiseTo", amount: 8100000 }, raised("p1", 8100000)],
-    [8, checkOrCall, called("p2", 5400000)],
+    [4, { type: "betOrRaiseTo", amount: 300_000 }, raised("p2", 300_000)],
+    [5, { type: "betOrRaiseTo", amount: 900_000 }, raised("p1", 900_000)],
+    [6, { type: "betOrRaiseTo", amount: 2_700_000 }, raised("p2", 2_700_000)],
+    [7, { type: "betOrRaiseTo", amount: 8_100_000 }, raised("p1", 8_100_000)],
+    [8, checkOrCall, called("p2", 5_400_000)],
     ...burnsAndBoards(9, [["4s5c2h", 0]]),
-    [11, { type: "betOrRaiseTo", amount: 9100000 }, bet("p1", 9100000)],
-    [12, { type: "betOrRaiseTo", amount: 43500000 }, raised("p2", 43500000)],
-    [13, { type: "betOrRaiseTo", amount: 77900000 }, raised("p1", 77900000)],
-    [14, checkOrCall, allIn(called("p2", 16247350))],
+    [11, { type: "betOrRaiseTo", amount: 9_100_000 }, bet("p1", 9_100_000)],
+    [
+      12,
+      { type: "betOrRaiseTo", amount: 43_500_000 },
+      raised("p2", 43_500_000),
+    ],
+    [
+      13,
+      { type: "betOrRaiseTo", amount: 77_900_000 },
+      raised("p1", 77_900_000),
+    ],
+    [14, checkOrCall, allIn(called("p2", 16_247_350))],
     ...burnsAndBoards(15, [
       ["5h", 0],
       ["9c", 0],
     ]),
   ]);
-  example(19, () => expect(stacks(table.hand)).toEqual([193792375, 0]));
+  example(19, () => expect(stacks(table.hand)).toEqual([193_792_375, 0]));
 });
 
 doctest(
@@ -390,12 +404,12 @@ doctest(
     let table: Driver;
     example(1, () => {
       const game = draw.deuceToSevenTriple({
-        blinds: [75000, 150000],
-        smallBet: 150000,
-        bigBet: 300000,
+        blinds: [75_000, 150_000],
+        smallBet: 150_000,
+        bigBet: 300_000,
         anteTrimming: true,
       });
-      const startingStacks = [1180000, 4340000, 5910000, 10765000];
+      const startingStacks = [1_180_000, 4_340_000, 5_910_000, 10_765_000];
       table = drive(start(game, startingStacks, manualDealing));
     });
     steps(example, () => table, [
@@ -404,31 +418,31 @@ doctest(
       [4, dealHole("??????????"), holeDealt("p3", "??????????")],
       [5, dealHole("AsQs6s5c3c"), holeDealt("p4", "AsQs6s5c3c")],
       [6, fold, folded("p3")],
-      [7, "minimumRaise", raised("p4", 300000)],
-      [8, "minimumRaise", raised("p1", 450000)],
+      [7, "minimumRaise", raised("p4", 300_000)],
+      [8, "minimumRaise", raised("p1", 450_000)],
       [9, fold, folded("p2")],
-      [10, checkOrCall, called("p4", 150000)],
+      [10, checkOrCall, called("p4", 150_000)],
       [11, discard(""), drew("p1", "")],
       [12, discard("AsQs"), drew("p4", "AsQs")],
       [13, burn("??"), burned("??")],
       [14, dealHole("2hQh"), holeDealt("p4", "2hQh")],
-      [15, "minimumRaise", bet("p1", 150000)],
-      [16, checkOrCall, called("p4", 150000)],
+      [15, "minimumRaise", bet("p1", 150_000)],
+      [16, checkOrCall, called("p4", 150_000)],
       [17, discard(""), drew("p1", "")],
       [18, discard("Qh"), drew("p4", "Qh")],
       [19, burn("??"), burned("??")],
       [20, dealHole("4d"), holeDealt("p4", "4d")],
-      [21, "minimumRaise", bet("p1", 300000)],
-      [22, checkOrCall, called("p4", 300000)],
+      [21, "minimumRaise", bet("p1", 300_000)],
+      [22, checkOrCall, called("p4", 300_000)],
       [23, discard(""), drew("p1", "")],
       [24, discard("6s"), drew("p4", "6s")],
       [25, burn("??"), burned("??")],
       [26, dealHole("7c"), holeDealt("p4", "7c")],
-      [27, "minimumRaise", allIn(bet("p1", 280000))],
-      [28, checkOrCall, called("p4", 280000)],
+      [27, "minimumRaise", allIn(bet("p1", 280_000))],
+      [28, checkOrCall, called("p4", 280_000)],
     ]);
     example(29, () => {
-      expect(stacks(table.hand)).toEqual([0, 4190000, 5910000, 12095000]);
+      expect(stacks(table.hand)).toEqual([0, 4_190_000, 5_910_000, 12_095_000]);
     });
   }
 );

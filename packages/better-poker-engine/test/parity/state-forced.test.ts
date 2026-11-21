@@ -1,9 +1,12 @@
 import { expect } from "bun:test";
 
 import { doctest } from "../../../../parity/harness.ts";
-import { automation, type Hand, type PlayerId } from "../../src/hand.ts";
-import { holdem, type Antes } from "../../src/rules.ts";
-import { drive, pending, start, steps, type Driver } from "../driver.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand, PlayerId } from "../../src/hand.ts";
+import { holdem } from "../../src/rules.ts";
+import type { Antes } from "../../src/rules.ts";
+import { drive, pending, start, steps } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 function noLimit(antes: Antes, players: number): Hand {
   const game = holdem.noLimit({ antes, blinds: [1, 2], minBet: 2 });
@@ -18,7 +21,7 @@ const bigBlindAnte = { kind: "byPosition", amounts: [0, 2] } as const;
 
 doctest("pokerkit.state.State.ante_poster_indices", (example) => {
   let hand: Hand;
-  let anteHolders: PlayerId[];
+  let anteHolders: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     hand = noLimit(bigBlindAnte, 2);
@@ -79,7 +82,7 @@ doctest("pokerkit.state.State.can_collect_bets", (example) => {
 
 doctest("pokerkit.state.State.blind_or_straddle_poster_indices", (example) => {
   let table: Driver;
-  let blindHolders: PlayerId[];
+  let blindHolders: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     table = drive(noLimit(bigBlindAnte, 4));

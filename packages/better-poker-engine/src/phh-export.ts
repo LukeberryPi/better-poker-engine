@@ -1,11 +1,15 @@
 import type { Card } from "./cards.ts";
 import type { EventBody, HandEvent } from "./events.ts";
-import { eventsOf, type Hand, type PlayerId } from "./hand.ts";
-import { stateOf, type HandState } from "./hand/state.ts";
+import { eventsOf } from "./hand.ts";
+import type { Hand, PlayerId } from "./hand.ts";
+import { stateOf } from "./hand/state.ts";
+import type { HandState } from "./hand/state.ts";
 import type { PhhAction } from "./phh-actions.ts";
-import { fromChips, type AmountScale } from "./phh-amounts.ts";
+import { fromChips } from "./phh-amounts.ts";
+import type { AmountScale } from "./phh-amounts.ts";
 import type { Phh } from "./phh.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import type { Conventions } from "./rules.ts";
 
 /** PHH names pokerkit's games only, deals one board, runs it once and has no
@@ -25,9 +29,9 @@ export type ExportOptions = {
   readonly amountScale?: AmountScale;
 };
 
-type Cards = readonly [Card, ...Card[]];
+type Cards = readonly [Card, ...Array<Card>];
 
-function cardsOf(cards: readonly Card[]): Cards | null {
+function cardsOf(cards: ReadonlyArray<Card>): Cards | null {
   const [first, ...rest] = cards;
   return first === undefined ? null : [first, ...rest];
 }
@@ -43,7 +47,9 @@ function dealingAction(
     body.type === "holeDealt"
       ? cardsOf(body.cards.map(({ card }) => card))
       : cardsOf(body.cards);
-  if (cards === null) return { type: "noOp", commentary };
+  if (cards === null) {
+    return { type: "noOp", commentary };
+  }
   return body.type === "holeDealt"
     ? { type: "dealHole", player: seat(body.player), cards, commentary }
     : { type: "dealBoard", cards, commentary };
@@ -97,17 +103,19 @@ function playerAction(
  * commentary is written alone, so the commentary stays with its cards. */
 function actionsOf(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   scale: AmountScale
-): PhhAction[] {
+): Array<PhhAction> {
   const seat: Seat = (player) => state.players.indexOf(player) + 1;
-  const actions: PhhAction[] = [];
-  const hole = new Map<number, Card[]>();
-  const board: Card[] = [];
+  const actions: Array<PhhAction> = [];
+  const hole = new Map<number, Array<Card>>();
+  const board: Array<Card> = [];
   const flush = (): void => {
     for (const [player, held] of [...hole].sort(([a], [b]) => a - b)) {
       const cards = cardsOf(held);
-      if (cards === null) continue;
+      if (cards === null) {
+        continue;
+      }
       actions.push({ type: "dealHole", player, cards, commentary: null });
     }
     hole.clear();
@@ -121,7 +129,9 @@ function actionsOf(
     if (body.type !== "holeDealt" && body.type !== "boardDealt") {
       flush();
       const action = playerAction(body, seat, commentary, scale);
-      if (action !== null) actions.push(action);
+      if (action !== null) {
+        actions.push(action);
+      }
     } else if (commentary !== null) {
       flush();
       actions.push(dealingAction(body, seat, commentary));
@@ -154,12 +164,22 @@ export function historyFromHand(
 ): Result<Phh, HistoryExportError> {
   const state = stateOf(hand);
   const { game } = state;
-  if (game.variant === "custom") return err({ code: "custom_variant" });
-  if (game.boards !== 1) return err({ code: "boards", boards: game.boards });
+  if (game.variant === "custom") {
+    return err({ code: "custom_variant" });
+  }
+  if (game.boards !== 1) {
+    return err({ code: "boards", boards: game.boards });
+  }
   const runouts = state.runoutCount ?? 1;
-  if (runouts !== 1) return err({ code: "runouts", runouts });
-  if (game.rake.kind !== "none") return err({ code: "rake" });
-  if (!playsLikePokerkit(game.conventions)) return err({ code: "conventions" });
+  if (runouts !== 1) {
+    return err({ code: "runouts", runouts });
+  }
+  if (game.rake.kind !== "none") {
+    return err({ code: "rake" });
+  }
+  if (!playsLikePokerkit(game.conventions)) {
+    return err({ code: "conventions" });
+  }
   const scale = options.amountScale ?? 1;
   const amount = (chips: number) => fromChips(chips, scale);
   const [first, ...rest] = game.rules.streets;
@@ -233,7 +253,9 @@ export function historyFromHand(
     case "F7S/8":
     case "FR": {
       const { bringIn } = game.forcedBets;
-      if (bringIn === null) return err({ code: "no_bring_in" });
+      if (bringIn === null) {
+        return err({ code: "no_bring_in" });
+      }
       return ok({
         ...details,
         variant: game.variant,

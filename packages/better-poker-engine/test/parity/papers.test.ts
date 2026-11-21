@@ -4,26 +4,19 @@ import { unitTest } from "../../../../parity/harness.ts";
 import { decks } from "../../src/cards.ts";
 import type { Stack } from "../../src/chips.ts";
 import { compareHands, evaluate, handValue } from "../../src/evaluation.ts";
-import {
-  startHand,
-  summarizeHand,
-  type Automation,
-  type Hand,
-} from "../../src/hand.ts";
+import { startHand, summarizeHand } from "../../src/hand.ts";
+import type { Automation, Hand } from "../../src/hand.ts";
 import { formatPhhAction } from "../../src/phh-actions.ts";
-import {
-  formatPhh,
-  type AmountScale,
-  type HistoryReplay,
-} from "../../src/phh.ts";
+import { formatPhh } from "../../src/phh.ts";
+import type { AmountScale, HistoryReplay } from "../../src/phh.ts";
 import {
   conventions,
   draw,
   holdem,
   omaha,
   shortDeck,
-  type Game,
 } from "../../src/rules.ts";
+import type { Game } from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -34,8 +27,8 @@ import {
   repeat,
   stacks,
   start,
-  type Move,
 } from "../driver.ts";
+import type { Move } from "../driver.ts";
 import { parsed, replayed } from "../phh-support.ts";
 import { cards, known } from "../support.ts";
 
@@ -71,7 +64,7 @@ function withoutRunoutCounts(operations: ReturnType<typeof operationsOf>) {
  * replay counts in chips of 1 / `amountScale`. */
 function kim2024(
   text: string,
-  finalStacks: Stack[],
+  finalStacks: Array<Stack>,
   amountScale: AmountScale = 1
 ): void {
   const amounts = (hand: Hand) =>
@@ -165,33 +158,35 @@ unitTest("pokerkit.tests.test_papers.Kim2023TestCase.test_figure_2", () => {
     "boardDealing",
     "runoutCountSelection"
   );
-  const state = drive(start(game, [1125600, 2000000, 553500], automate));
+  const state = drive(start(game, [1_125_600, 2_000_000, 553_500], automate));
   play(state, [
     deal("Ac2d"),
     deal("5h7s"),
     deal("7h6h"),
     raiseTo(7000),
-    raiseTo(23000),
+    raiseTo(23_000),
     fold,
     call,
     board("Jc3d5c"),
-    raiseTo(35000),
+    raiseTo(35_000),
     call,
     board("4h"),
-    raiseTo(90000),
-    raiseTo(232600),
-    raiseTo(1067100),
+    raiseTo(90_000),
+    raiseTo(232_600),
+    raiseTo(1_067_100),
     call,
     board("Jh"),
   ]);
 
-  expect(stacks(state.hand)).toEqual([572100, 1997500, 1109500]);
+  expect(stacks(state.hand)).toEqual([572_100, 1_997_500, 1_109_500]);
 });
 
 unitTest("pokerkit.tests.test_papers.Kim2023TestCase.test_figure_3", () => {
   const h0 = evaluate("omahaHigh", cards("6c7c8c9c"), cards("8s9sTc"));
   const h1 = handValue("omahaHigh", known("6c7c8s9sTc"));
-  if (h0 === null || h1 === null) throw new Error("Both are Omaha hands");
+  if (h0 === null || h1 === null) {
+    throw new Error("Both are Omaha hands");
+  }
 
   expect(compareHands(h0, h1)).toBe(0);
 });
@@ -253,7 +248,7 @@ year = 2009
 players = ["Phil Ivey", "Patrik Antonius", "Tom Dwan"]
 currency = "USD"
 `,
-      [572100, 1997500, 1109500]
+      [572_100, 1_997_500, 1_109_500]
     );
   }
 );
@@ -326,7 +321,7 @@ players = [
 ]
 currency = "GBP"
 `,
-      [489000, 226000, 684000, 400000, 0, 198000]
+      [489_000, 226_000, 684_000, 400_000, 0, 198_000]
     );
   }
 );
@@ -385,7 +380,7 @@ year = 2009
 players = ["Patrik Antonius", "Victor Blom"]
 currency = "USD"
 `,
-      [1937923.75, 0.0],
+      [1_937_923.75, 0.0],
       100
     );
   }
@@ -520,7 +515,7 @@ players = [
 ]
 `,
     ]) {
-      kim2024(s, [0, 4190000, 5910000, 12095000]);
+      kim2024(s, [0, 4_190_000, 5_910_000, 12_095_000]);
     }
   }
 );
@@ -625,7 +620,7 @@ unitTest(
     const state = drive(
       start(
         game,
-        ["unbounded", 116400, 86900, "unbounded", 50000, "unbounded"],
+        ["unbounded", 116_400, 86_900, "unbounded", 50_000, "unbounded"],
         shownAutomatically
       )
     );
@@ -640,18 +635,18 @@ unitTest(
       raiseTo(2800),
       fold,
       call,
-      raiseTo(12600),
+      raiseTo(12_600),
       call,
       call,
       call,
       burn,
       board("9hTs9s"),
       call,
-      raiseTo(17000),
-      raiseTo(36000),
+      raiseTo(17_000),
+      raiseTo(36_000),
       fold,
       fold,
-      raiseTo(103800),
+      raiseTo(103_800),
       call,
       selectRunoutCount(4),
       selectRunoutCount(null),
@@ -675,10 +670,10 @@ unitTest(
 
     expect(stacks(state.hand)).toEqual([
       "unbounded",
-      79400,
-      149700,
+      79_400,
+      149_700,
       "unbounded",
-      37400,
+      37_400,
       "unbounded",
     ]);
   }
@@ -692,31 +687,31 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_dwan_ivey", () => {
     anteTrimming: true,
   });
   const state = drive(
-    start(game, [1125600, "unbounded", 553500], shownAutomatically)
+    start(game, [1_125_600, "unbounded", 553_500], shownAutomatically)
   );
   play(state, [
     deal("Ac2d"),
     deal("????"),
     deal("7h6h"),
     raiseTo(7000),
-    raiseTo(23000),
+    raiseTo(23_000),
     fold,
     call,
     burn,
     board("Jc3d5c"),
-    raiseTo(35000),
+    raiseTo(35_000),
     call,
     burn,
     board("4h"),
-    raiseTo(90000),
-    raiseTo(232600),
-    raiseTo(1067100),
+    raiseTo(90_000),
+    raiseTo(232_600),
+    raiseTo(1_067_100),
     call,
     burn,
     board("Jh"),
   ]);
 
-  expect(stacks(state.hand)).toEqual([572100, "unbounded", 1109500]);
+  expect(stacks(state.hand)).toEqual([572_100, "unbounded", 1_109_500]);
 });
 
 unitTest("pokerkit.tests.test_papers.READMETestCase.test_phua_xuan", () => {
@@ -729,7 +724,7 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_phua_xuan", () => {
   const state = drive(
     start(
       game,
-      [495000, 232000, 362000, 403000, 301000, 204000],
+      [495_000, 232_000, 362_000, 403_000, 301_000, 204_000],
       shownAutomatically
     )
   );
@@ -742,9 +737,9 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_phua_xuan", () => {
     deal("8c7h"),
     call,
     call,
-    raiseTo(35000),
+    raiseTo(35_000),
     fold,
-    raiseTo(298000),
+    raiseTo(298_000),
     fold,
     fold,
     fold,
@@ -758,7 +753,7 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_phua_xuan", () => {
   ]);
 
   expect(stacks(state.hand)).toEqual([
-    489000, 226000, 684000, 400000, 0, 198000,
+    489_000, 226_000, 684_000, 400_000, 0, 198_000,
   ]);
 });
 
@@ -770,21 +765,21 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_antonius_blom", () => {
     anteTrimming: true,
   });
   const state = drive(
-    start(game, [1259450.25 * cents, 678473.5 * cents], shownAutomatically)
+    start(game, [1_259_450.25 * cents, 678_473.5 * cents], shownAutomatically)
   );
   play(state, [
     deal("Ah3sKsKh"),
     deal("6d9s7d8h"),
     raiseTo(3000 * cents),
     raiseTo(9000 * cents),
-    raiseTo(27000 * cents),
-    raiseTo(81000 * cents),
+    raiseTo(27_000 * cents),
+    raiseTo(81_000 * cents),
     call,
     burn,
     board("4s5c2h"),
-    raiseTo(91000 * cents),
-    raiseTo(435000 * cents),
-    raiseTo(779000 * cents),
+    raiseTo(91_000 * cents),
+    raiseTo(435_000 * cents),
+    raiseTo(779_000 * cents),
     call,
     burn,
     board("5h"),
@@ -792,18 +787,22 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_antonius_blom", () => {
     board("9c"),
   ]);
 
-  expect(stacks(state.hand)).toEqual([1937923.75 * cents, 0.0]);
+  expect(stacks(state.hand)).toEqual([1_937_923.75 * cents, 0.0]);
 });
 
 unitTest("pokerkit.tests.test_papers.READMETestCase.test_yockey_arieh", () => {
   const game = draw.deuceToSevenTriple({
-    blinds: [75000, 150000],
-    smallBet: 150000,
-    bigBet: 300000,
+    blinds: [75_000, 150_000],
+    smallBet: 150_000,
+    bigBet: 300_000,
     anteTrimming: true,
   });
   const state = drive(
-    start(game, [1180000, 4340000, 5910000, 10765000], shownAutomatically)
+    start(
+      game,
+      [1_180_000, 4_340_000, 5_910_000, 10_765_000],
+      shownAutomatically
+    )
   );
   play(state, [
     deal("7h6c4c3d2c"),
@@ -835,7 +834,7 @@ unitTest("pokerkit.tests.test_papers.READMETestCase.test_yockey_arieh", () => {
     call,
   ]);
 
-  expect(stacks(state.hand)).toEqual([0, 4190000, 5910000, 12095000]);
+  expect(stacks(state.hand)).toEqual([0, 4_190_000, 5_910_000, 12_095_000]);
 });
 
 unitTest("pokerkit.tests.test_papers.READMETestCase.test_alice_carol", () => {

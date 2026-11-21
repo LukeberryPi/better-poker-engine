@@ -1,11 +1,14 @@
-import { isKnownCard, type Card } from "../cards.ts";
+import { isKnownCard } from "../cards.ts";
+import type { Card } from "../cards.ts";
 import type { EventBody } from "../events.ts";
 import type { HoleCard } from "../hand.ts";
-import { err, ok, type Result } from "../result.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Face } from "../rules.ts";
 import { returnToDeck, takeCards } from "./dealing.ts";
 import { contestPots, potsOf } from "./pots.ts";
-import { notEligible, pendingPlayer, type Refusal } from "./refusal.ts";
+import { notEligible, pendingPlayer } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
 import {
   activeCount,
   allFaceUp,
@@ -21,9 +24,8 @@ import {
   rotatedFrom,
   sum,
   upHandOf,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { HandState, Position } from "./state.ts";
 
 /** Whether some pot is still winnable with every known card the player holds. */
 export function canWinNow(state: HandState, position: Position): boolean {
@@ -31,13 +33,17 @@ export function canWinNow(state: HandState, position: Position): boolean {
   for (let board = 0; board < boardCount(state); board += 1) {
     for (const [handType] of state.game.rules.handTypes.entries()) {
       const hand = bestHandOf(state, position, board, handType);
-      if (hand === null) continue;
+      if (hand === null) {
+        continue;
+      }
       for (const pot of pots) {
         const best = maxOrNull(
           pot.eligible.map((index) => upHandOf(state, index, board, handType)),
           (value) => value.strength
         );
-        if (best === null || best.strength <= hand.strength) return true;
+        if (best === null || best.strength <= hand.strength) {
+          return true;
+        }
       }
     }
   }
@@ -101,10 +107,14 @@ export function selectRunoutCount(
   count: number | null,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "showdown") return err({ code: "not_now" });
+  if (state.phase.kind !== "showdown") {
+    return err({ code: "not_now" });
+  }
   const { selectors } = state.phase;
   const position = pendingPlayer(state, selectors, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   const maximum = maxRunouts(state);
   if (
     count !== null &&
@@ -129,20 +139,20 @@ export function selectRunoutCount(
 }
 
 export type ShowdownChoice =
-  | { readonly kind: "show"; readonly cards: readonly Card[] | undefined }
+  | { readonly kind: "show"; readonly cards: ReadonlyArray<Card> | undefined }
   | { readonly kind: "muck" }
   | { readonly kind: "default" };
 
 type Reveal = {
-  readonly cards: readonly Card[];
-  readonly hole: readonly HoleCard[];
+  readonly cards: ReadonlyArray<Card>;
+  readonly hole: ReadonlyArray<HoleCard>;
 };
 
 /** pokerkit pads a partial show with "??" and keeps the rest down mid-hand. */
 function reveal(
   state: HandState,
   position: Position,
-  shown: readonly Card[]
+  shown: ReadonlyArray<Card>
 ): Result<Reveal, Refusal> {
   const held = at(state.hole, position).map((hole) => hole.card);
   if (shown.length > held.length) {
@@ -156,14 +166,18 @@ function reveal(
     ...shown,
     ...Array.from({ length: held.length - shown.length }, (): Card => "??"),
   ];
-  const up: Card[] = cards.filter(isKnownCard);
-  const faces: Face[] = up.map(() => "up");
+  const up: Array<Card> = cards.filter(isKnownCard);
+  const faces: Array<Face> = up.map(() => "up");
   const kept = isLastStreet(state)
     ? []
     : held.filter((card) => isKnownCard(card) && !up.includes(card));
   const hole = [...up, ...kept].slice(0, held.length);
-  while (hole.length < held.length) hole.push("??");
-  while (faces.length < held.length) faces.push("down");
+  while (hole.length < held.length) {
+    hole.push("??");
+  }
+  while (faces.length < held.length) {
+    faces.push("down");
+  }
   return ok({
     cards,
     hole: hole.map((card, i) => ({ card, face: at(faces, i) })),
@@ -179,7 +193,9 @@ function shownHole(
     case "muck":
       return ok(null);
     case "default":
-      if (!state.allIn && !canWinNow(state, position)) return ok(null);
+      if (!state.allIn && !canWinNow(state, position)) {
+        return ok(null);
+      }
       break;
     case "show":
       if (choice.cards !== undefined) {
@@ -226,12 +242,18 @@ export function showOrMuck(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const turn = showdownTurn(state, player);
-  if (!turn.ok) return turn;
+  if (!turn.ok) {
+    return turn;
+  }
   const position = turn.value;
   // pokerkit takes this no-op before the deal; a PHH history can't place it, as forced bets replay first.
-  if (at(state.hole, position).length === 0) return err({ code: "not_now" });
+  if (at(state.hole, position).length === 0) {
+    return err({ code: "not_now" });
+  }
   const shown = shownHole(state, position, choice);
-  if (!shown.ok) return shown;
+  if (!shown.ok) {
+    return shown;
+  }
   if (shown.value === null && strandsPot(state, position)) {
     return err({ code: "must_show" });
   }
@@ -298,10 +320,14 @@ export function killHand(
   state: HandState,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "handKilling") return err({ code: "not_now" });
+  if (state.phase.kind !== "handKilling") {
+    return err({ code: "not_now" });
+  }
   const { pending } = state.phase;
   const position = pendingPlayer(state, pending, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   pending[position.value] = false;
   muck(state, position.value);
   return ok({ type: "handKilled", player: playerAt(state, position.value) });

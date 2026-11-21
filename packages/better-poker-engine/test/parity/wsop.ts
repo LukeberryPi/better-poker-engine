@@ -2,14 +2,16 @@ import { expect } from "bun:test";
 
 import type { Card } from "../../src/cards.ts";
 import type { EventBody, HandEvent } from "../../src/events.ts";
-import { eventsOf, type Hand } from "../../src/hand.ts";
+import { eventsOf } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
 import { formatPhh } from "../../src/phh.ts";
-import { accept, type Move } from "../driver.ts";
+import { accept } from "../driver.ts";
+import type { Move } from "../driver.ts";
 import { exported, parsed, replayed } from "../phh-support.ts";
 import { cards } from "../support.ts";
 
 /** pokerkit's `Card.parse(*rows)`, set as the deck the hand deals from. */
-export function deck(...rows: readonly string[]): Card[] {
+export function deck(...rows: ReadonlyArray<string>): Array<Card> {
   return cards(rows.join(" "));
 }
 
@@ -32,9 +34,9 @@ export const dealer = {
  * operations, as pokerkit compares them, except the `ignored` kinds. */
 export function replaysWithout(
   hand: Hand,
-  ignored: readonly EventBody["type"][]
+  ignored: ReadonlyArray<EventBody["type"]>
 ): void {
-  const operations = (events: readonly HandEvent[]) =>
+  const operations = (events: ReadonlyArray<HandEvent>) =>
     events.flatMap(({ body, commentary }) =>
       ignored.includes(body.type) ? [] : [{ body, commentary }]
     );

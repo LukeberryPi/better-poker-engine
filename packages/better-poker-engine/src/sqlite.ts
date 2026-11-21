@@ -1,15 +1,16 @@
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 import type { HandRecord } from "./events.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import { handRecordSchema, tableEventSchema } from "./schemas.ts";
 import { parseTable, serializeTable } from "./storage.ts";
-import {
-  tableStateOf,
-  type Table,
-  type TableEvent,
-  type TableRejection,
-  type TableTransition,
+import { tableStateOf } from "./table.ts";
+import type {
+  Table,
+  TableEvent,
+  TableRejection,
+  TableTransition,
 } from "./table.ts";
 
 export type SqlValue = string | number | null;
@@ -18,19 +19,19 @@ export type SqlRow = Readonly<Record<string, SqlValue>>;
 
 export type SqlStatement = {
   readonly sql: string;
-  readonly params: readonly SqlValue[];
+  readonly params: ReadonlyArray<SqlValue>;
 };
 
 /** Wraps any SQLite driver: bun:sqlite, better-sqlite3, Cloudflare D1, libSQL. */
 export type SqliteDriver = {
   /** Runs the statements in one transaction; resolves to the rows each one changed. */
   readonly batch: (
-    statements: readonly SqlStatement[]
-  ) => Promise<readonly number[]>;
+    statements: ReadonlyArray<SqlStatement>
+  ) => Promise<ReadonlyArray<number>>;
   readonly all: (
     sql: string,
-    params: readonly SqlValue[]
-  ) => Promise<readonly SqlRow[]>;
+    params: ReadonlyArray<SqlValue>
+  ) => Promise<ReadonlyArray<SqlRow>>;
 };
 
 export type StoreConflict =
@@ -56,8 +57,11 @@ export type TableStore = {
     table: Table,
     rejection: TableRejection
   ) => Promise<void>;
-  readonly events: (id: string, afterSeq?: number) => Promise<TableEvent[]>;
-  readonly handRecords: (id: string) => Promise<HandRecord[]>;
+  readonly events: (
+    id: string,
+    afterSeq?: number
+  ) => Promise<Array<TableEvent>>;
+  readonly handRecords: (id: string) => Promise<Array<HandRecord>>;
 };
 
 const migrations = [
@@ -77,7 +81,7 @@ const migrations = [
 const written =
   "EXISTS (SELECT 1 FROM poker_tables WHERE id = ? AND version = ? AND state = ?)";
 
-function column(rows: readonly SqlRow[], name: string): string[] {
+function column(rows: ReadonlyArray<SqlRow>, name: string): Array<string> {
   return rows.map((row) => {
     const value = row[name];
     const parsed = z.string().safeParse(value);
@@ -119,7 +123,9 @@ export function sqliteStore(driver: SqliteDriver): TableStore {
         [id]
       );
       const [state] = column(rows, "state");
-      if (state === undefined) return null;
+      if (state === undefined) {
+        return null;
+      }
       const parsed = parseTable(state);
       if (!parsed.ok) {
         throw new Error(`Stored table ${id} does not load`, {

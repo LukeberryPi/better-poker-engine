@@ -3,15 +3,13 @@ import type { HandEvent } from "./events.ts";
 import type { Hand, PlayerId } from "./hand.ts";
 import { decisionOf } from "./hand/flow.ts";
 import { stateOf } from "./hand/state.ts";
-import { fromChips, type AmountScale } from "./phh-amounts.ts";
-import {
-  replayHistory,
-  stacksAt,
-  type HistoryReplay,
-  type HistoryReplayError,
-} from "./phh-replay.ts";
+import { fromChips } from "./phh-amounts.ts";
+import type { AmountScale } from "./phh-amounts.ts";
+import { replayHistory, stacksAt } from "./phh-replay.ts";
+import type { HistoryReplay, HistoryReplayError } from "./phh-replay.ts";
 import type { Phh } from "./phh.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import type { VariantCode } from "./variants.ts";
 
 export type ProtocolOptions = {
@@ -45,7 +43,9 @@ function handNumberOf(
   options: ProtocolOptions
 ): Result<number, ProtocolError> {
   const { hand } = history;
-  if (options.handNumber !== undefined) return ok(options.handNumber);
+  if (options.handNumber !== undefined) {
+    return ok(options.handNumber);
+  }
   return hand?.kind === "integer"
     ? ok(hand.value)
     : err({ code: "hand_number_required" });
@@ -53,8 +53,8 @@ function handNumberOf(
 
 /** What the logs show of the cards: two slots per seat, "" until known. */
 type Table = {
-  readonly holes: readonly string[][];
-  readonly dealt: number[];
+  readonly holes: ReadonlyArray<Array<string>>;
+  readonly dealt: Array<number>;
   board: string;
   boardStreet: number | null;
 };
@@ -84,7 +84,9 @@ function see(
       const first = table.dealt[position] ?? 0;
       table.dealt[position] = first + body.cards.length;
       const slots = table.holes[position];
-      if (slots === undefined || !shownTo(position)) return false;
+      if (slots === undefined || !shownTo(position)) {
+        return false;
+      }
       for (const [index, { card }] of body.cards.entries()) {
         if (isKnownCard(card) && first + index < slots.length) {
           slots[first + index] = card;
@@ -94,9 +96,13 @@ function see(
     }
     case "shown": {
       const slots = table.holes[seat(body.player)];
-      if (slots === undefined) return false;
+      if (slots === undefined) {
+        return false;
+      }
       for (const [index, card] of body.cards.entries()) {
-        if (isKnownCard(card) && index < slots.length) slots[index] = card;
+        if (isKnownCard(card) && index < slots.length) {
+          slots[index] = card;
+        }
       }
       return false;
     }
@@ -133,7 +139,9 @@ function betOf(
     case "called":
       return { player: body.player, letter: "c" };
     case "betOrRaised": {
-      if (!noLimit) return { player: body.player, letter: "r" };
+      if (!noLimit) {
+        return { player: body.player, letter: "r" };
+      }
       const state = stateOf(hand);
       const paid = -(state.payoffs[state.players.indexOf(body.player)] ?? 0);
       return { player: body.player, letter: `r${fromChips(paid, scale)}` };
@@ -154,28 +162,35 @@ export function toAcpc(
   history: Phh,
   position: number,
   options: ProtocolOptions = {}
-): Result<readonly AcpcMessage[], AcpcError> {
+): Result<ReadonlyArray<AcpcMessage>, AcpcError> {
   if (history.variant !== "FT" && history.variant !== "NT") {
     return err({ code: "unsupported_variant", variant: history.variant });
   }
   const hand = handNumberOf(history, options);
-  if (!hand.ok) return hand;
+  if (!hand.ok) {
+    return hand;
+  }
   const table = tableFor(history.startingStacks.length);
   const own = table.holes[position];
-  if (own === undefined) return err({ code: "unknown_position", position });
+  if (own === undefined) {
+    return err({ code: "unknown_position", position });
+  }
   const scale = options.amountScale ?? 1;
   const replay = replayHistory(history, { amountScale: scale });
-  if (!replay.ok) return replay;
+  if (!replay.ok) {
+    return replay;
+  }
   const seat = seatsOf(replay.value);
-  const messages: AcpcMessage[] = [];
+  const messages: Array<AcpcMessage> = [];
   let actions = "";
   let matchState = "";
   for (const step of replay.value.steps) {
     for (const event of step.events) {
       const bet = betOf(event, step.hand, history.variant === "NT", scale);
       if (bet !== null) {
-        if (own.includes(""))
+        if (own.includes("")) {
           return err({ code: "hole_cards_unknown", position });
+        }
         messages.push(["S->", `${matchState}\r\n`]);
         actions += bet.letter;
         if (seat(bet.player) === position) {
@@ -190,7 +205,9 @@ export function toAcpc(
   }
   const last = decisionOf(stateOf(replay.value.final)).kind;
   if (last === "complete" || last === "betting") {
-    if (own.includes("")) return err({ code: "hole_cards_unknown", position });
+    if (own.includes("")) {
+      return err({ code: "hole_cards_unknown", position });
+    }
     messages.push(["S->", `${matchState}\r\n`]);
   }
   return ok(messages);
@@ -206,25 +223,33 @@ export function toPluribus(
     return err({ code: "unsupported_variant", variant: history.variant });
   }
   const hand = handNumberOf(history, options);
-  if (!hand.ok) return hand;
+  if (!hand.ok) {
+    return hand;
+  }
   const scale = options.amountScale ?? 1;
   const replay = replayHistory(history, { amountScale: scale });
-  if (!replay.ok) return replay;
+  if (!replay.ok) {
+    return replay;
+  }
   const seat = seatsOf(replay.value);
   const table = tableFor(history.startingStacks.length);
   let actions = "";
   for (const step of replay.value.steps) {
     for (const event of step.events) {
       actions += betOf(event, step.hand, true, scale)?.letter ?? "";
-      if (see(table, event, seat, () => true)) actions += "/";
+      if (see(table, event, seat, () => true)) {
+        actions += "/";
+      }
     }
   }
   const finishing =
     history.finishingStacks === null
       ? ok(stateOf(replay.value.final).stacks)
       : stacksAt("finishing_stacks", history.finishingStacks, scale);
-  if (!finishing.ok) return finishing;
-  const payoffs: string[] = [];
+  if (!finishing.ok) {
+    return finishing;
+  }
+  const payoffs: Array<string> = [];
   for (const [position, start] of replay.value.setup.stacks.entries()) {
     const end = finishing.value[position];
     if (start === "unbounded" || end === "unbounded" || end === undefined) {

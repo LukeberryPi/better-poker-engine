@@ -2,13 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 
 import { formatPhhAction } from "../src/phh-actions.ts";
-import {
-  formatPhh,
-  formatPhhs,
-  parsePhh,
-  parsePhhs,
-  type Phh,
-} from "../src/phh.ts";
+import { formatPhh, formatPhhs, parsePhh, parsePhhs } from "../src/phh.ts";
+import type { Phh } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
 import { variantCodes } from "../src/variants.ts";
 
@@ -38,7 +33,7 @@ function history(text: string): Phh {
 }
 
 function withoutTrailingZeros(text: string): string {
-  return text.replace(
+  return text.replaceAll(
     /(\d+)\.(\d*?)0+(?=\D|$)/gu,
     (_match, whole: string, fraction: string) =>
       fraction === "" ? whole : `${whole}.${fraction}`
@@ -197,11 +192,13 @@ describe("parsePhhs", () => {
 
   test("reads every history in order and writes them back", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     expect(parsed.value).toHaveLength(30);
     expect(parsed.value.map((item) => item.hand).slice(0, 2)).toEqual([
-      { kind: "integer", value: 59937794410 },
-      { kind: "integer", value: 59937793662 },
+      { kind: "integer", value: 59_937_794_410 },
+      { kind: "integer", value: 59_937_793_662 },
     ]);
     const written = formatPhhs(parsed.value);
     expect(parsePhhs(written)).toEqual(parsed);
@@ -211,7 +208,9 @@ describe("parsePhhs", () => {
 
   test("keeps pokerkit's layout, losing only the trailing zeros of floats", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     const sections = text
       .trimEnd()
       .split("\n\n")
@@ -223,7 +222,9 @@ describe("parsePhhs", () => {
 
   test("reads the metadata online histories carry", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     const [first] = parsed.value;
     expect(first).toMatchObject({
       blinds: ["0.1", "0.25", "0", "0"],
@@ -241,7 +242,9 @@ describe("parsePhhs", () => {
 
   test("keeps pokerkit's negative post bets in the blinds", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     expect(parsed.value[8]?.blinds).toEqual(["0.1", "0.25", "-0.25", "0", "0"]);
   });
 
@@ -276,7 +279,7 @@ describe("user-defined fields", () => {
     "_local = 1979-05-27T07:32:00",
     "_clock = 07:32:00",
     "_flags = [true, false]",
-    '"my key" = "line\\nbreak"',
+    String.raw`"my key" = "line\nbreak"`,
     "_meta = { source = 'x', nested = { depth = 2 } }",
   ];
   const parsed = history([noLimit, ...userFields].join("\n"));
@@ -343,7 +346,7 @@ describe("user-defined fields", () => {
         "_local = 1979-05-27T07:32:00.000",
         "_clock = 07:32:00.000",
         "_flags = [true, false]",
-        "'my key' = \"line\\nbreak\"",
+        String.raw`'my key' = "line\nbreak"`,
         "_meta = {source = 'x', nested = {depth = 2}}",
       ].join("\n")
     );
@@ -624,7 +627,7 @@ describe("formatPhh", () => {
         "starting_stacks = [200, 200]",
         "actions = ['d dh p1 AcAd', 'd dh p2 KcKd', 'p1 cbr 6', 'p2 cc']",
         "author = '''O'Neil'''",
-        'event = "Line one\\nline two"',
+        String.raw`event = "Line one\nline two"`,
         "time = 09:05:00.007",
         "time_zone = 'America/Toronto'",
         "hand = 'A-1'",
@@ -645,8 +648,9 @@ describe("formatPhh", () => {
   });
 
   test("writes hand-built amounts and actions in canonical form", () => {
-    if (base.minBet === null)
+    if (base.minBet === null) {
       throw new Error("The base history has no min_bet");
+    }
     const written = formatPhh({
       ...base,
       antes: ["1e1", "0.50"],

@@ -2,13 +2,8 @@ import { expect, test } from "bun:test";
 
 import type { Deviations } from "./deviations.ts";
 import { doctests, unitTests } from "./manifest.ts";
-import {
-  outcomesFromJunit,
-  parityReport,
-  type FileProgress,
-  type Outcome,
-  type ParityReport,
-} from "./report.ts";
+import { outcomesFromJunit, parityReport } from "./report.ts";
+import type { FileProgress, Outcome, ParityReport } from "./report.ts";
 
 const rulesFile = "pokerkit/tests/test_rules.py";
 const rulesIds = Object.entries(unitTests)
@@ -19,7 +14,7 @@ const utilitiesIds = Object.entries(doctests)
   .filter(([, entry]) => entry.file === utilitiesFile)
   .map(([id]) => id);
 
-function passing(ids: readonly string[]): Map<string, Outcome[]> {
+function passing(ids: ReadonlyArray<string>): Map<string, Array<Outcome>> {
   return new Map(ids.map((id) => [id, ["passed"]]));
 }
 
@@ -95,7 +90,9 @@ test("files that are not required yet only report progress", () => {
 
 test("an id ported twice is an error even when both copies pass", () => {
   const [id] = rulesIds;
-  if (id === undefined) throw new Error("test_rules.py has no tests");
+  if (id === undefined) {
+    throw new Error("test_rules.py has no tests");
+  }
   const report = parityReport(
     new Map([[id, ["passed", "passed"]]]),
     new Set(),

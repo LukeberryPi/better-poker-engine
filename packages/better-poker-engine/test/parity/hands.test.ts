@@ -1,20 +1,22 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { Card } from "../../src/cards.ts";
 import {
   compareHands,
   describeHand,
   evaluate,
   handValue,
-  type HandType,
-  type HandValue,
 } from "../../src/evaluation.ts";
+import type { HandType, HandValue } from "../../src/evaluation.ts";
 import { cards, known } from "../support.ts";
 
 function hand<T extends HandType>(type: T, text: string): HandValue<T> {
   const value = handValue(type, known(text));
-  if (value === null) throw new Error(`${text} is no ${type} hand`);
+  if (value === null) {
+    throw new Error(`${text} is no ${type} hand`);
+  }
   return value;
 }
 
@@ -24,12 +26,14 @@ function best<T extends HandType>(
   board = ""
 ): HandValue<T> {
   const value = evaluate(type, cards(hole), cards(board));
-  if (value === null) throw new Error(`${hole} ${board} make no ${type} hand`);
+  if (value === null) {
+    throw new Error(`${hole} ${board} make no ${type} hand`);
+  }
   return value;
 }
 
 function expectAscending<T extends HandType>(
-  values: readonly HandValue<T>[]
+  values: ReadonlyArray<HandValue<T>>
 ): void {
   values.reduce((weaker, stronger) => {
     expect(compareHands(weaker, stronger)).toBe(-1);
@@ -42,9 +46,9 @@ function ascendingHands<T extends HandType>(
   example: Example,
   first: number,
   type: T,
-  texts: readonly string[]
-): readonly HandValue<T>[] {
-  const values: HandValue<T>[] = [];
+  texts: ReadonlyArray<string>
+): ReadonlyArray<HandValue<T>> {
+  const values: Array<HandValue<T>> = [];
   texts.forEach((text, offset) => {
     example(first + offset, () => {
       values.push(hand(type, text));
@@ -58,7 +62,7 @@ function invalidHands(
   example: Example,
   first: number,
   type: HandType,
-  texts: readonly string[]
+  texts: ReadonlyArray<string>
 ): void {
   texts.forEach((text, offset) => {
     example(first + offset, () => {
@@ -133,8 +137,8 @@ doctest("pokerkit.hands.Hand", (example) => {
 });
 
 doctest("pokerkit.hands.Hand.cards", (example) => {
-  let hole: Card[];
-  let board: Card[];
+  let hole: Array<Card>;
+  let board: Array<Card>;
   let value: HandValue<"standardHigh"> | null;
   example(1, () => {
     hole = cards("AsAc");
@@ -149,8 +153,8 @@ doctest("pokerkit.hands.Hand.cards", (example) => {
 });
 
 doctest("pokerkit.hands.Hand.entry", (example) => {
-  let hole: Card[];
-  let board: Card[];
+  let hole: Array<Card>;
+  let board: Array<Card>;
   let value: HandValue<"standardHigh"> | null;
   example(1, () => {
     hole = cards("AsAc");

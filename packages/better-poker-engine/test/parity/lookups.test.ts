@@ -2,29 +2,24 @@ import { expect } from "bun:test";
 
 import { doctest, unitTest } from "../../../../parity/harness.ts";
 import type { DoctestId } from "../../../../parity/manifest.ts";
-import {
-  arePaired,
-  areRainbow,
-  areSuited,
-  decks,
-  type KnownCard,
-} from "../../src/cards.ts";
-import {
-  categoryLabels,
-  entryOf,
-  lookup,
-  type Entry,
-  type HandCategory,
-  type Lookup,
-  type LookupName,
+import { arePaired, areRainbow, areSuited, decks } from "../../src/cards.ts";
+import type { KnownCard } from "../../src/cards.ts";
+import { categoryLabels, entryOf, lookup } from "../../src/lookups.ts";
+import type {
+  Entry,
+  HandCategory,
+  Lookup,
+  LookupName,
 } from "../../src/lookups.ts";
 import { cards, digestSortedByEntry, forEachCombination } from "../support.ts";
 
-type Hand = readonly KnownCard[];
+type Hand = ReadonlyArray<KnownCard>;
 
 function entryIn(table: Lookup, text: string): Entry {
   const entry = entryOf(table, cards(text));
-  if (entry === null) throw new Error(`${text} has no entry`);
+  if (entry === null) {
+    throw new Error(`${text} has no entry`);
+  }
   return entry;
 }
 
@@ -41,14 +36,16 @@ function digestOfCombinations(
 /** pokerkit's Badugi test: rainbow unpaired hands sort; paired or suited ones have no entry. */
 function badugiDigest(name: LookupName, deck: Hand): string {
   const table = lookup(name);
-  const badugis: Hand[] = [];
-  const accepted: string[] = [];
+  const badugis: Array<Hand> = [];
+  const accepted: Array<string> = [];
   for (const size of [1, 2, 3, 4]) {
     forEachCombination(deck, size, (hand) => {
       if (!arePaired(hand) && areRainbow(hand)) {
         badugis.push(hand);
       } else if (arePaired(hand) || areSuited(hand)) {
-        if (entryOf(table, hand) !== null) accepted.push(hand.join(""));
+        if (entryOf(table, hand) !== null) {
+          accepted.push(hand.join(""));
+        }
       }
     });
   }
@@ -276,7 +273,9 @@ unitTest(
     const table = lookup("eightOrBetter");
     const digest = digestSortedByEntry(table, (visit) =>
       forEachCombination(decks.regular, 5, (hand) => {
-        if (entryOf(table, hand) !== null) visit(hand);
+        if (entryOf(table, hand) !== null) {
+          visit(hand);
+        }
       })
     );
     expect(digest).toBe("ecf2b6b16031562a6761932b1ce1de91");

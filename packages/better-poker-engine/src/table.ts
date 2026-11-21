@@ -1,38 +1,32 @@
 import type { Brandable, Opaque } from "./brand.ts";
-import { decks, type Deck } from "./cards.ts";
-import { isChips, type Chips } from "./chips.ts";
+import { decks } from "./cards.ts";
+import type { Deck } from "./cards.ts";
+import { isChips } from "./chips.ts";
+import type { Chips } from "./chips.ts";
 import type { HandEvent, HandRecord } from "./events.ts";
-import {
-  act,
-  automation,
-  startHand,
-  summarizeHand,
-  type Hand,
-  type PlayerAction,
-  type PlayerId,
-  type SetupError,
-  type Violation,
+import { act, automation, startHand, summarizeHand } from "./hand.ts";
+import type {
+  Hand,
+  PlayerAction,
+  PlayerId,
+  SetupError,
+  Violation,
 } from "./hand.ts";
 import { copyGame } from "./hand/setup.ts";
 import { at, deepFreeze, sealed } from "./hand/state.ts";
-import { err, ok, type Result } from "./result.ts";
-import { validateGame, type Game, type GameError } from "./rules.ts";
-import {
-  planHand,
-  type ButtonRule,
-  type Owed,
-  type Rotation,
-  type SeatState,
-} from "./seating.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
+import { validateGame } from "./rules.ts";
+import type { Game, GameError } from "./rules.ts";
+import { planHand } from "./seating.ts";
+import type { ButtonRule, Owed, Rotation, SeatState } from "./seating.ts";
 import { engineVersion } from "./version.ts";
-import {
-  eventsFor,
-  viewHand,
-  viewRecord,
-  type Audience,
-  type HandEventView,
-  type HandRecordView,
-  type HandView,
+import { eventsFor, viewHand, viewRecord } from "./views.ts";
+import type {
+  Audience,
+  HandEventView,
+  HandRecordView,
+  HandView,
 } from "./views.ts";
 
 /** Seated players, the running hand and the session so far. Read it through `viewTable`. */
@@ -51,7 +45,7 @@ export type TableSetupError =
   | { readonly code: "seat_count"; readonly seats: number }
   | {
       readonly code: "blinds_for_dead_button";
-      readonly blinds: readonly number[];
+      readonly blinds: ReadonlyArray<number>;
     };
 
 export type TableCommand =
@@ -152,7 +146,7 @@ export type TableEventBody =
       /** An empty seat when the button is dead. */
       readonly button: number;
       /** The seat at each position. */
-      readonly seats: readonly number[];
+      readonly seats: ReadonlyArray<number>;
       /** Null when the small blind is dead. */
       readonly smallBlind: number | null;
       readonly bigBlind: number;
@@ -179,7 +173,7 @@ export type TableEvent = {
 export type TableTransition = {
   readonly table: Table;
   /** Auditor data: pass them through `tableEventsFor` before sending them. */
-  readonly events: readonly TableEvent[];
+  readonly events: ReadonlyArray<TableEvent>;
 };
 
 type SeatedPlayer = SeatState;
@@ -188,10 +182,10 @@ type RunningHand = {
   readonly number: number;
   readonly hand: Hand;
   /** The seat at each position. */
-  readonly seats: readonly number[];
+  readonly seats: ReadonlyArray<number>;
   /** The table before this hand started, and every command since: what storage replays. */
   readonly from: TableCheckpoint;
-  readonly commands: readonly TableCommand[];
+  readonly commands: ReadonlyArray<TableCommand>;
 };
 
 type SessionEntry = {
@@ -205,12 +199,12 @@ type SessionEntry = {
 export type TableCheckpoint = {
   readonly version: number;
   readonly eventCount: number;
-  readonly seats: readonly (SeatedPlayer | null)[];
+  readonly seats: ReadonlyArray<SeatedPlayer | null>;
   /** Null until the first hand. */
   readonly rotation: Rotation | null;
   readonly hands: number;
   readonly lastHand: HandRecord | null;
-  readonly session: readonly SessionEntry[];
+  readonly session: ReadonlyArray<SessionEntry>;
 };
 
 export type TableState = Brandable<"Table"> &
@@ -221,17 +215,21 @@ export type TableState = Brandable<"Table"> &
 
 export function tableStateOf(table: Table): TableState {
   // SAFETY: only `tableFrom` creates a Table, from a TableState.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- an Opaque brand can only be granted, never inferred.
   return table as TableState;
 }
 
 function tableFrom(state: TableState): Table {
   // SAFETY: TableState carries the optional Table brand; this grants it.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- an Opaque brand can only be granted, never inferred.
   return deepFreeze(sealed(state, "Table")) as Table;
 }
 
 export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
   const gameError = validateGame(setup.game);
-  if (gameError !== null) return err(gameError);
+  if (gameError !== null) {
+    return err(gameError);
+  }
   if (!Number.isSafeInteger(setup.seats) || setup.seats < 2) {
     return err({ code: "seat_count", seats: setup.seats });
   }
@@ -271,7 +269,7 @@ export function resumeTable(empty: Table, checkpoint: TableCheckpoint): Table {
 
 type Change = {
   readonly state: TableState;
-  readonly bodies: readonly TableEventBody[];
+  readonly bodies: ReadonlyArray<TableEventBody>;
   readonly command: TableCommand;
 };
 
@@ -282,7 +280,9 @@ export function actAtTable(
 ): Result<TableTransition, TableRejection> {
   const state = tableStateOf(table);
   const change = applyCommand(state, command);
-  if (!change.ok) return err({ attempt: command, violation: change.error });
+  if (!change.ok) {
+    return err({ attempt: command, violation: change.error });
+  }
   const version = state.version + 1;
   const events = change.value.bodies.map((body, index): TableEvent => ({
     seq: state.eventCount + index + 1,
@@ -358,15 +358,17 @@ function seatOf(state: TableState, player: PlayerId): number | null {
 
 function occupant(state: TableState, seat: number): SeatedPlayer {
   const seated = at(state.seats, seat);
-  if (seated === null) throw new Error(`Seat ${seat} is empty`);
+  if (seated === null) {
+    throw new Error(`Seat ${seat} is empty`);
+  }
   return seated;
 }
 
 function updateSession(
-  session: readonly SessionEntry[],
+  session: ReadonlyArray<SessionEntry>,
   player: PlayerId,
   update: (entry: SessionEntry) => SessionEntry
-): SessionEntry[] {
+): Array<SessionEntry> {
   const found = session.some((entry) => entry.player === player);
   const entries = found
     ? session
@@ -425,8 +427,12 @@ function leave(
 ): Result<Change, TableViolation> {
   const { player } = command;
   const seat = seatOf(state, player);
-  if (seat === null) return err({ code: "not_seated", player });
-  if (state.hand?.seats.includes(seat)) return err({ code: "in_hand", player });
+  if (seat === null) {
+    return err({ code: "not_seated", player });
+  }
+  if (state.hand?.seats.includes(seat)) {
+    return err({ code: "in_hand", player });
+  }
   const { stack } = occupant(state, seat);
   return ok({
     state: {
@@ -448,7 +454,9 @@ function sit(
 ): Result<Change, TableViolation> {
   const { player } = command;
   const seat = seatOf(state, player);
-  if (seat === null) return err({ code: "not_seated", player });
+  if (seat === null) {
+    return err({ code: "not_seated", player });
+  }
   const seated = occupant(state, seat);
   const sittingOut = command.type === "sitOut";
   if (seated.sittingOut === sittingOut) {
@@ -473,9 +481,13 @@ function postBlinds(
 ): Result<Change, TableViolation> {
   const { player } = command;
   const seat = seatOf(state, player);
-  if (seat === null) return err({ code: "not_seated", player });
+  if (seat === null) {
+    return err({ code: "not_seated", player });
+  }
   const seated = occupant(state, seat);
-  if (seated.owes === "nothing") return err({ code: "nothing_owed", player });
+  if (seated.owes === "nothing") {
+    return err({ code: "nothing_owed", player });
+  }
   return ok({
     state: {
       ...state,
@@ -499,7 +511,9 @@ function deal(
   state: TableState,
   command: Extract<TableCommand, { type: "startHand" }>
 ): Result<Change, TableViolation> {
-  if (state.hand !== null) return err({ code: "hand_running" });
+  if (state.hand !== null) {
+    return err({ code: "hand_running" });
+  }
   const { game } = state.setup;
   if (!isWholeDeck(command.deck, decks[game.rules.deck])) {
     return err({ code: "not_a_full_deck" });
@@ -511,7 +525,9 @@ function deal(
     rotation: state.rotation,
     firstButton: command.button ?? 0,
   });
-  if (!planned.ok) return err(planned.error);
+  if (!planned.ok) {
+    return err(planned.error);
+  }
   const { positions: seats, rotation, smallBlind, bigBlind } = planned.value;
   const players = seats.map((seat) => occupant(state, seat));
   const started = startHand({
@@ -521,7 +537,9 @@ function deal(
     deck: command.deck,
     automate: automation.all,
   });
-  if (!started.ok) return err({ code: "setup", error: started.error });
+  if (!started.ok) {
+    return err({ code: "setup", error: started.error });
+  }
   const number = state.hands + 1;
   const { hand, events } = started.value;
   return ok(
@@ -566,10 +584,14 @@ function play(
     return err({ code: "not_at_tables", attempted: type });
   }
   const running = state.hand;
-  if (running === null) return err({ code: "no_hand" });
+  if (running === null) {
+    return err({ code: "no_hand" });
+  }
   const action: PlayerAction = { ...command.action, player };
   const next = act(running.hand, action);
-  if (!next.ok) return next;
+  if (!next.ok) {
+    return next;
+  }
   const { hand, events } = next.value;
   return ok(
     settle(
@@ -582,20 +604,22 @@ function play(
 
 function handEvents(
   hand: number,
-  events: readonly HandEvent[]
-): TableEventBody[] {
+  events: ReadonlyArray<HandEvent>
+): Array<TableEventBody> {
   return events.map((event) => ({ type: "handEvent", hand, event }));
 }
 
 /** Ends the running hand once it is complete: stacks carry over and the record is kept. */
 function settle(
   state: TableState,
-  bodies: readonly TableEventBody[],
+  bodies: ReadonlyArray<TableEventBody>,
   command: TableCommand
 ): Change {
   const running = state.hand;
   const record = running === null ? null : summarizeHand(running.hand);
-  if (running === null || record === null) return { state, bodies, command };
+  if (running === null || record === null) {
+    return { state, bodies, command };
+  }
   let { seats, session } = state;
   for (const { position, net } of record.players) {
     const seat = at(running.seats, position);
@@ -630,7 +654,7 @@ export type TableView = {
   readonly version: number;
   readonly game: Game;
   /** One per seat; null when empty. */
-  readonly seats: readonly (SeatView | null)[];
+  readonly seats: ReadonlyArray<SeatView | null>;
   readonly button: number | null;
   readonly hands: number;
   readonly hand: HandView | null;
@@ -681,7 +705,9 @@ function redactTableEvent(
   switch (body.type) {
     case "handEvent": {
       const [event] = eventsFor([body.event], audience);
-      if (event === undefined) throw new Error("eventsFor dropped an event");
+      if (event === undefined) {
+        throw new Error("eventsFor dropped an event");
+      }
       return { seq, version, body: { ...body, event } };
     }
     case "handEnded":
@@ -697,9 +723,9 @@ function redactTableEvent(
 
 /** Replaces cards the audience may not see with "??", in hand events and records alike. */
 export function tableEventsFor(
-  events: readonly TableEvent[],
+  events: ReadonlyArray<TableEvent>,
   audience: Audience
-): readonly TableEventView[] {
+): ReadonlyArray<TableEventView> {
   return events.map((event) => redactTableEvent(event, audience));
 }
 
@@ -718,7 +744,7 @@ export type SessionPlayer = {
 export type SessionRecord = {
   readonly engineVersion: string;
   readonly hands: number;
-  readonly players: readonly SessionPlayer[];
+  readonly players: ReadonlyArray<SessionPlayer>;
 };
 
 export function summarizeSession(table: Table): SessionRecord {

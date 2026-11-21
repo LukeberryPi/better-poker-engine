@@ -36,6 +36,8 @@ for (const { id, deviation } of report.deviations) {
 }
 
 if (report.errors.length > 0) {
-  for (const error of report.errors) console.error(error);
+  for (const error of report.errors) {
+    console.error(error);
+  }
   process.exit(1);
 }

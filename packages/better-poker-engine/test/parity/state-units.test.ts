@@ -1,18 +1,12 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { decks, type Card } from "../../src/cards.ts";
+import { decks } from "../../src/cards.ts";
+import type { Card } from "../../src/cards.ts";
 import type { Stack } from "../../src/chips.ts";
 import type { HandEvent } from "../../src/events.ts";
-import {
-  automation,
-  startHand,
-  summarizeHand,
-  type Automation,
-  type Decision,
-  type Hand,
-  type PlayerId,
-} from "../../src/hand.ts";
+import { automation, startHand, summarizeHand } from "../../src/hand.ts";
+import type { Automation, Decision, Hand, PlayerId } from "../../src/hand.ts";
 import { lookup } from "../../src/lookups.ts";
 import {
   conventions,
@@ -24,9 +18,8 @@ import {
   rhodeIsland,
   shortDeck,
   stud,
-  type Game,
-  type Street,
 } from "../../src/rules.ts";
+import type { Game, Street } from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -44,9 +37,8 @@ import {
   repeat,
   stacks,
   start,
-  type Driver,
-  type Move,
 } from "../driver.ts";
+import type { Driver, Move } from "../driver.ts";
 import { cards, digestSortedByEntry, forEachCombination } from "../support.ts";
 
 const {
@@ -122,7 +114,7 @@ function kuhn(street: Street, forcedBets: Partial<Game["forcedBets"]>): Game {
   };
 }
 
-function setupError(game: Game, stacks: readonly number[] = [2, 2]) {
+function setupError(game: Game, stacks: ReadonlyArray<number> = [2, 2]) {
   const started = startHand({ game, stacks, deck: decks.kuhn, automate: [] });
   return started.ok ? null : started.error;
 }
@@ -201,18 +193,22 @@ const automatedShowdown = allBut(
 );
 
 /** Plays the moves and returns the stacks once the hand is over. */
-function finalStacks(game: Game, start: readonly number[], script: Move[]) {
+function finalStacks(
+  game: Game,
+  start: ReadonlyArray<number>,
+  script: Array<Move>
+) {
   const table = drive(startWith(game, start));
   play(table, script);
   expect(inProgress(table.hand)).toBe(false);
   return stacks(table.hand);
 }
 
-function startWith(game: Game, startingStacks: readonly number[]) {
+function startWith(game: Game, startingStacks: ReadonlyArray<number>) {
   return start(game, startingStacks, automatedShowdown);
 }
 
-const runout = (flop: string, turn: string, river: string): Move[] => [
+const runout = (flop: string, turn: string, river: string): Array<Move> => [
   burn,
   board(flop),
   burn,
@@ -489,7 +485,7 @@ const dealing = [
 ] as const;
 
 /** pokerkit's can_burn_card, can_deal_hole and can_deal_board. */
-function dealable(table: Driver): boolean[] {
+function dealable(table: Driver): Array<boolean> {
   return dealing.map((action) => table.can(action));
 }
 
@@ -498,14 +494,16 @@ function actor(hand: Hand): PlayerId | null {
   return decision.kind === "betting" ? decision.player : null;
 }
 
-function startedEvents(game: Game, automate: Automation): HandEvent[] {
+function startedEvents(game: Game, automate: Automation): Array<HandEvent> {
   const started = startHand({
     game,
     stacks: sixStacks,
     deck: decks.standard,
     automate,
   });
-  if (!started.ok) throw new Error(started.error.code);
+  if (!started.ok) {
+    throw new Error(started.error.code);
+  }
   return [...started.value.events];
 }
 
@@ -572,7 +570,9 @@ unitTest(
     const flop = drive(start(oneStreet(3), sixStacks, manualDealing));
     expect(dealable(flop)).toEqual([false, true, false]);
     expect(actor(flop.hand)).toBeNull();
-    while (flop.can({ type: "dealHole" })) flop.act({ type: "dealHole" });
+    while (flop.can({ type: "dealHole" })) {
+      flop.act({ type: "dealHole" });
+    }
     expect(dealable(flop)).toEqual([true, false, false]);
     expect(actor(flop.hand)).toBeNull();
     flop.act({ type: "burnCard" });
@@ -588,7 +588,9 @@ unitTest(
     noBoard.act({ type: "burnCard" });
     expect(dealable(noBoard)).toEqual([false, true, false]);
     expect(actor(noBoard.hand)).toBeNull();
-    while (noBoard.can({ type: "dealHole" })) noBoard.act({ type: "dealHole" });
+    while (noBoard.can({ type: "dealHole" })) {
+      noBoard.act({ type: "dealHole" });
+    }
     expect(dealable(noBoard)).toEqual([false, false, false]);
     expect(actor(noBoard.hand)).toBe("p1");
 
@@ -598,7 +600,9 @@ unitTest(
       anteTrimming: true,
     });
     const table = drive(start(game, sixStacks, manualDealing));
-    while (table.can({ type: "dealHole" })) table.act({ type: "dealHole" });
+    while (table.can({ type: "dealHole" })) {
+      table.act({ type: "dealHole" });
+    }
     play(table, [fold, fold, fold, fold, call, call]);
     expect(dealable(table)).toEqual([true, false, false]);
     expect(actor(table.hand)).toBeNull();
@@ -630,6 +634,13 @@ function turns(hand: Hand) {
   };
 }
 
+const acting = (player: PlayerId) => ({
+  turn: player,
+  drawer: null,
+  actor: player,
+  showdown: null,
+});
+
 unitTest("pokerkit.tests.test_state.StateTestCase.test_turn_index", () => {
   const game = draw.deuceToSevenSingle({
     blinds: [1, 2],
@@ -643,12 +654,6 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_turn_index", () => {
       allBut("holeCardsShowingOrMucking", "runoutCountSelection")
     )
   );
-  const acting = (player: PlayerId) => ({
-    turn: player,
-    drawer: null,
-    actor: player,
-    showdown: null,
-  });
   for (const [player, move] of [
     ["p3", fold],
     ["p4", fold],
@@ -704,6 +709,9 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_reshuffling", () => {
   expect(inProgress(table.hand)).toBe(false);
 });
 
+const dealHoles = (count: number) =>
+  repeat(accept({ type: "dealHole" }), count);
+
 unitTest(
   "pokerkit.tests.test_state.StateTestCase.test_hole_to_board_dealing",
   () => {
@@ -720,8 +728,6 @@ unitTest(
         allBut("holeDealing", "boardDealing", "runoutCountSelection")
       )
     );
-    const dealHoles = (count: number) =>
-      repeat(accept({ type: "dealHole" }), count);
     play(table, [
       ...dealHoles(27),
       raise,
@@ -747,7 +753,7 @@ unitTest(
 );
 
 unitTest("pokerkit.tests.test_state.StateTestCase.test_preflop_opener", () => {
-  const opener = (blinds: number[], players: number) => {
+  const opener = (blinds: Array<number>, players: number) => {
     const game = holdem.noLimit({ blinds, minBet: 2 });
     return actor(start(game, repeat(200, players), automation.all));
   };
@@ -795,8 +801,8 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
   const royalBoard = runout("TsJsQs", "Ks", "As");
   const pushed = (
     game: Game,
-    startingStacks: readonly number[],
-    script: Move[]
+    startingStacks: ReadonlyArray<number>,
+    script: Array<Move>
   ) => {
     const table = drive(start(game, startingStacks, manualPushing));
     play(table, script);
@@ -830,13 +836,13 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
   expect(
     pushed(
       raked,
-      [100, 10, 10000, 1000],
+      [100, 10, 10_000, 1000],
       [
         deal("2c3c"),
         deal("2d3d"),
         deal("2h3h"),
         deal("2s3s"),
-        raiseTo(10000),
+        raiseTo(10_000),
         call,
         call,
         call,
@@ -850,14 +856,14 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
   expect(
     pushed(
       raked,
-      [100, 10, 100000, 10000, 1000],
+      [100, 10, 100_000, 10_000, 1000],
       [
         deal("2c3c"),
         deal("2d3d"),
         deal("2h3h"),
         deal("2s3s"),
         deal("4c5c"),
-        raiseTo(100000),
+        raiseTo(100_000),
         call,
         call,
         call,
@@ -869,7 +875,7 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
         push,
       ]
     )
-  ).toEqual([90, 9, 99000, 9000, 900]);
+  ).toEqual([90, 9, 99_000, 9000, 900]);
   const reraised = [
     deal("????"),
     deal("????"),
@@ -950,10 +956,11 @@ unitTest(
   }
 );
 
+const game = (blinds: Array<number>) =>
+  holdem.noLimit({ blinds, minBet: 2, anteTrimming: true });
+
 unitTest("pokerkit.tests.test_state.StateTestCase.test_post_bets", () => {
-  const game = (blinds: number[]) =>
-    holdem.noLimit({ blinds, minBet: 2, anteTrimming: true });
-  const opener = (blinds: number[]) =>
+  const opener = (blinds: Array<number>) =>
     actor(start(game(blinds), sixStacks, automation.all));
   expect(opener([1, 2])).toBe("p3");
   expect(opener([1, 2, -2])).toBe("p3");
@@ -975,6 +982,12 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_post_bets", () => {
   expect(table.act(checkOrCall)).toEqual(checked("p2"));
   expect(table.act(checkOrCall)).toEqual(checked("p1"));
 });
+
+const total = (values: ReadonlyArray<Stack>) =>
+  values.reduce<number>(
+    (sum, value) => sum + (value === "unbounded" ? 0 : value),
+    0
+  );
 
 unitTest(
   "pokerkit.tests.test_state.StateTestCase.test_nonstandard_folds",
@@ -1038,24 +1051,20 @@ unitTest(
       burn,
       board("5d"),
     ]);
-    const total = (values: readonly Stack[]) =>
-      values.reduce<number>(
-        (sum, value) => sum + (value === "unbounded" ? 0 : value),
-        0
-      );
     expect(total(startingStacks) - total(stacks(table.hand))).toBe(2210);
   }
 );
 
+const folded = (script: Array<Move>) => {
+  const table = drive(
+    start(rhodeIsland.fixedLimit(), [155, 155], automation.all)
+  );
+  play(table, script);
+  const record = summarizeHand(table.hand);
+  return record === null ? null : !record.wentToShowdown;
+};
+
 unitTest("pokerkit.tests.test_state.StateTestCase.test_folded_status", () => {
-  const folded = (script: Move[]) => {
-    const table = drive(
-      start(rhodeIsland.fixedLimit(), [155, 155], automation.all)
-    );
-    play(table, script);
-    const record = summarizeHand(table.hand);
-    return record === null ? null : !record.wentToShowdown;
-  };
   expect(folded([call, call, call, call, raise, raise, call])).toBe(false);
   expect(folded([raise, raise, fold])).toBe(true);
   expect(folded([call, call, call, call, raise, raise, fold])).toBe(true);
@@ -1145,7 +1154,10 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_can_win_now", () => {
 });
 
 /** pokerkit's `state.deck`: every card comes from this deck. */
-function dealtFrom(game: Game, startingStacks: readonly number[]): Card[] {
+function dealtFrom(
+  game: Game,
+  startingStacks: ReadonlyArray<number>
+): Array<Card> {
   const view = auditor(start(game, startingStacks, automation.all));
   const dealt = view.players.flatMap((player) =>
     player.holeCards.map((hole) => hole.card)
@@ -1170,7 +1182,9 @@ unitTest(
 
 function callAmount(hand: Hand): number | null {
   const decision = auditor(hand).decision;
-  if (decision.kind !== "betting" || decision.checkOrCall === null) return null;
+  if (decision.kind !== "betting" || decision.checkOrCall === null) {
+    return null;
+  }
   return decision.checkOrCall.kind === "call" ? decision.checkOrCall.amount : 0;
 }
 

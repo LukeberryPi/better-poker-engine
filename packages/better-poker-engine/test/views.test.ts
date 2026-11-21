@@ -1,22 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import type { HandEvent, HandRecord } from "../src/events.ts";
-import {
-  automation,
-  summarizeHand,
-  type HoleCard,
-  type PlayerId,
-  type Transition,
-} from "../src/hand.ts";
+import { automation, summarizeHand } from "../src/hand.ts";
+import type { HoleCard, PlayerId, Transition } from "../src/hand.ts";
 import { draw, holdem, stud } from "../src/rules.ts";
-import {
-  eventsFor,
-  viewHand,
-  viewRecord,
-  type Audience,
-  type HandEventView,
-  type HandRecordView,
-  type HandView,
+import { eventsFor, viewHand, viewRecord } from "../src/views.ts";
+import type {
+  Audience,
+  HandEventView,
+  HandRecordView,
+  HandView,
 } from "../src/views.ts";
 import {
   allBut,
@@ -28,12 +21,13 @@ import {
   spectator,
   start,
 } from "./driver.ts";
-import { randomWalk, type Walk } from "./random-hands.ts";
+import { randomWalk } from "./random-hands.ts";
+import type { Walk } from "./random-hands.ts";
 import { cards } from "./support.ts";
 
 const { call } = moves;
 
-function holeCardsOf(view: HandView): string[][] {
+function holeCardsOf(view: HandView): Array<Array<string>> {
   return view.players.map((player) =>
     player.holeCards.map((hole) => hole.card)
   );
@@ -123,7 +117,7 @@ describe("eventsFor", () => {
 
   function drawnHand() {
     const table = drive(start(game, [100, 100], automate));
-    const events: HandEvent[] = [];
+    const events: Array<HandEvent> = [];
     const record = (action: Parameters<typeof table.act>[0]) => {
       table.act(action);
       events.push(...table.events());
@@ -168,38 +162,39 @@ describe("eventsFor", () => {
 
   test("changes nothing an auditor may see", () => {
     const events = drawnHand();
-    expect<readonly HandEvent[]>(
+    expect<ReadonlyArray<HandEvent>>(
       eventsFor(events, { kind: "auditor" })
     ).toEqual(events);
   });
 });
 
+const recordedHoleCards = (view: HandRecord): Array<Array<string>> =>
+  view.players.map((player) => player.holeCards.map((hole) => hole.card));
+
 describe("viewRecord", () => {
   const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
-  const holeCardsOf = (view: HandRecord): string[][] =>
-    view.players.map((player) => player.holeCards.map((hole) => hole.card));
 
   function foldedRecord(): HandRecord {
     const table = drive(start(game, [100, 100, 100], automation.all));
     play(table, [moves.fold, moves.fold]);
     const record = summarizeHand(table.hand);
-    if (record === null) throw new Error("The hand is not complete");
+    if (record === null) {
+      throw new Error("The hand is not complete");
+    }
     return record;
   }
 
   test("shows each player their own folded cards and nobody else's", () => {
     const record = foldedRecord();
-    const p2 = holeCardsOf(record)[1] ?? [];
+    const p2 = recordedHoleCards(record)[1] ?? [];
     expect(
-      holeCardsOf(viewRecord(record, { kind: "player", player: "p2" }))
+      recordedHoleCards(viewRecord(record, { kind: "player", player: "p2" }))
     ).toEqual([hidden, p2, hidden]);
-    expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
-      hidden,
-      hidden,
-      hidden,
-    ]);
+    expect(
+      recordedHoleCards(viewRecord(record, { kind: "spectator" }))
+    ).toEqual([hidden, hidden, hidden]);
     expect<HandRecord>(viewRecord(record, { kind: "auditor" })).toEqual(record);
-    expect(holeCardsOf(record).flat()).not.toContain("??");
+    expect(recordedHoleCards(record).flat()).not.toContain("??");
   });
 
   test("shows hands shown at showdown to everyone, mucked ones to nobody", () => {
@@ -209,11 +204,12 @@ describe("viewRecord", () => {
     table.act({ type: "show" });
     table.act({ type: "muck" });
     const record = summarizeHand(table.hand);
-    if (record === null) throw new Error("The hand is not complete");
-    expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
-      ["As", "Qh"],
-      hidden,
-    ]);
+    if (record === null) {
+      throw new Error("The hand is not complete");
+    }
+    expect(
+      recordedHoleCards(viewRecord(record, { kind: "spectator" }))
+    ).toEqual([["As", "Qh"], hidden]);
   });
 });
 
@@ -221,7 +217,7 @@ const knownCard = /"([2-9TJQKA][cdhs?])"/g;
 
 function cardsIn(
   value: HandView | HandEventView | HandRecordView | undefined
-): string[] {
+): Array<string> {
   return [...JSON.stringify(value).matchAll(knownCard)].map(
     ([, card]) => card ?? ""
   );
@@ -237,19 +233,23 @@ function learn(known: Set<string>, audience: Audience, event: HandEvent) {
   switch (body.type) {
     case "holeDealt":
       for (const { card, face } of body.cards) {
-        if (face === "up" || seesAll(audience, body.player)) known.add(card);
+        if (face === "up" || seesAll(audience, body.player)) {
+          known.add(card);
+        }
       }
       return;
     case "boardDealt":
     case "shown":
-      for (const card of body.cards) known.add(card);
+      for (const card of body.cards) {
+        known.add(card);
+      }
       return;
     default:
       return;
   }
 }
 
-function transitions(walk: Walk): Transition[] {
+function transitions(walk: Walk): Array<Transition> {
   return [
     walk.start,
     ...walk.steps.flatMap((step) =>
@@ -265,7 +265,7 @@ describe("random hands", () => {
 
   test("show each audience only cards it may know, in views and events", () => {
     const leaks = walks.flatMap((walk) => {
-      const audiences: Audience[] = [
+      const audiences: Array<Audience> = [
         { kind: "spectator" },
         ...walk.spectated.players.map(({ player }) => ({
           kind: "player" as const,
@@ -300,9 +300,11 @@ describe("random hands", () => {
   test("show each audience only cards it may know in the hand's record", () => {
     const leaks = walks.flatMap((walk) => {
       const record = summarizeHand(walk.hand);
-      if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
+      if (record === null) {
+        throw new Error(`Seed ${walk.seed} is not complete`);
+      }
       const events = transitions(walk).flatMap((step) => step.events);
-      const audiences: Audience[] = [
+      const audiences: Array<Audience> = [
         { kind: "spectator" },
         ...walk.spectated.players.map(({ player }) => ({
           kind: "player" as const,
@@ -311,7 +313,9 @@ describe("random hands", () => {
       ];
       return audiences.flatMap((audience) => {
         const known = new Set<string>();
-        for (const event of events) learn(known, audience, event);
+        for (const event of events) {
+          learn(known, audience, event);
+        }
         return cardsIn(viewRecord(record, audience))
           .filter((card) => !known.has(card))
           .map((card) => ({ seed: walk.seed, audience, card }));

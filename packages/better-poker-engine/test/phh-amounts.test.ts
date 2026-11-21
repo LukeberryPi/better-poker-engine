@@ -51,7 +51,7 @@ describe("toChips", () => {
     expect(toChips("0.29", 100)).toEqual(ok(29));
     expect(toChips("0.07", 100)).toEqual(ok(7));
     expect(toChips("1.15", 100)).toEqual(ok(115));
-    expect(toChips("1259450.25", 100)).toEqual(ok(125945025));
+    expect(toChips("1259450.25", 100)).toEqual(ok(125_945_025));
   });
 
   test("keeps whole amounts whole at scale 1", () => {
@@ -103,7 +103,7 @@ describe("toChips", () => {
 describe("fromChips", () => {
   test("writes chips back as the decimal toChips read", () => {
     expect(fromChips(29, 100)).toBe("0.29");
-    expect(fromChips(125945025, 100)).toBe("1259450.25");
+    expect(fromChips(125_945_025, 100)).toBe("1259450.25");
     expect(fromChips(2500, 100)).toBe("25");
     expect(fromChips(7000, 1)).toBe("7000");
     expect(fromChips(0, 100)).toBe("0");
@@ -121,7 +121,7 @@ describe("fromChips", () => {
 describe("toBlindChips", () => {
   test("converts a post bet's size exactly and keeps its sign", () => {
     expect(toBlindChips("-0.25", 100)).toEqual(ok(-25));
-    expect(toBlindChips("-1259450.25", 100)).toEqual(ok(-125945025));
+    expect(toBlindChips("-1259450.25", 100)).toEqual(ok(-125_945_025));
     expect(toBlindChips("0.25", 100)).toEqual(ok(25));
     expect(toBlindChips("0", 1)).toEqual(ok(0));
   });

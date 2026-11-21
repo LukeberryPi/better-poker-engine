@@ -1,15 +1,10 @@
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
-import {
-  act,
-  eventsOf,
-  startHand,
-  type Hand,
-  type SetupError,
-  type Violation,
-} from "./hand.ts";
+import { act, eventsOf, startHand } from "./hand.ts";
+import type { Hand, SetupError, Violation } from "./hand.ts";
 import { stateOf } from "./hand/state.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import {
   handEventSchema,
   handRecordSchema,
@@ -24,10 +19,8 @@ import {
   createTable,
   resumeTable,
   tableStateOf,
-  type Table,
-  type TableSetupError,
-  type TableViolation,
 } from "./table.ts";
+import type { Table, TableSetupError, TableViolation } from "./table.ts";
 
 const storedHandSchema = z.object({
   format: z.literal(1),
@@ -80,14 +73,16 @@ function parseJson<Stored>(
   schema: z.ZodMiniType<Stored>,
   text: string
 ): Result<Stored, FormatError> {
-  let json: z.core.util.JSONType;
+  let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
     return err({ code: "invalid_json" });
   }
   const parsed = schema.safeParse(json);
-  if (parsed.success) return ok(parsed.data);
+  if (parsed.success) {
+    return ok(parsed.data);
+  }
   const [issue] = parsed.error.issues;
   return err({
     code: "invalid_format",
@@ -99,24 +94,32 @@ function parseJson<Stored>(
 /** Rebuilds the hand by replaying its actions, so it holds only what the engine produced. */
 export function parseHand(text: string): Result<Hand, HandParseError> {
   const stored = parseJson(storedHandSchema, text);
-  if (!stored.ok) return stored;
+  if (!stored.ok) {
+    return stored;
+  }
   try {
     return replay(stored.value);
-  } catch (cause) {
-    return err({ code: "unplayable", cause });
+  } catch (error) {
+    return err({ code: "unplayable", cause: error });
   }
 }
 
 function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
   const started = startHand(setup);
-  if (!started.ok) return err({ code: "setup", error: started.error });
+  if (!started.ok) {
+    return err({ code: "setup", error: started.error });
+  }
   let { hand } = started.value;
   const replayed = [...started.value.events];
   for (const { cause, commentary, seq } of events) {
-    if (cause.kind !== "action") continue;
+    if (cause.kind !== "action") {
+      continue;
+    }
     const options = commentary === null ? {} : { commentary };
     const next = act(hand, cause.action, options);
-    if (!next.ok) return err({ code: "rejected", seq, violation: next.error });
+    if (!next.ok) {
+      return err({ code: "rejected", seq, violation: next.error });
+    }
     hand = next.value.hand;
     replayed.push(...next.value.events);
   }
@@ -128,7 +131,9 @@ function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
       event.success &&
       expected !== undefined &&
       JSON.stringify(event.data) === JSON.stringify(expected);
-    if (!same) return err({ code: "mismatch", seq: index + 1 });
+    if (!same) {
+      return err({ code: "mismatch", seq: index + 1 });
+    }
   }
   return ok(hand);
 }
@@ -218,17 +223,21 @@ export type TableParseError =
  * Reads format 2 from 0.2.0 too, as a table with a moving button. */
 export function parseTable(text: string): Result<Table, TableParseError> {
   const stored = parseStoredTable(text);
-  if (!stored.ok) return stored;
+  if (!stored.ok) {
+    return stored;
+  }
   try {
     return replayTable(stored.value);
-  } catch (cause) {
-    return err({ code: "unplayable", cause });
+  } catch (error) {
+    return err({ code: "unplayable", cause: error });
   }
 }
 
 function parseStoredTable(text: string): Result<StoredTable, FormatError> {
   const current = parseJson(storedTableSchema, text);
-  if (current.ok) return current;
+  if (current.ok) {
+    return current;
+  }
   const legacy = parseJson(storedTableSchemaV2, text);
   return legacy.ok ? ok(fromV2(legacy.value)) : current;
 }
@@ -239,7 +248,9 @@ function replayTable({
   commands,
 }: StoredTable): Result<Table, TableParseError> {
   const created = createTable(setup);
-  if (!created.ok) return err({ code: "setup", error: created.error });
+  if (!created.ok) {
+    return err({ code: "setup", error: created.error });
+  }
   let table = resumeTable(created.value, checkpoint);
   for (const [index, command] of commands.entries()) {
     const next = actAtTable(table, command);

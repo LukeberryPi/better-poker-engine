@@ -4,13 +4,13 @@ import { decks } from "../src/cards.ts";
 import { automation, startHand } from "../src/hand.ts";
 import { insecureSeededRandom, randomBelow } from "../src/random.ts";
 import { holdem } from "../src/rules.ts";
-import {
-  planHand,
-  type ButtonRule,
-  type Owed,
-  type Rotation,
-  type SeatState,
-  type SeatingPlan,
+import { planHand } from "../src/seating.ts";
+import type {
+  ButtonRule,
+  Owed,
+  Rotation,
+  SeatState,
+  SeatingPlan,
 } from "../src/seating.ts";
 import { okValue } from "./support.ts";
 
@@ -20,7 +20,9 @@ function seated(player: string, owes: Owed = "nothing"): SeatState {
   return { player, stack: 1000, sittingOut: false, owes, posting: false };
 }
 
-function table(...players: readonly (string | null)[]): (SeatState | null)[] {
+function table(
+  ...players: ReadonlyArray<string | null>
+): Array<SeatState | null> {
   return players.map((player) => (player === null ? null : seated(player)));
 }
 
@@ -28,9 +30,12 @@ function table(...players: readonly (string | null)[]): (SeatState | null)[] {
 function advance(
   start: SeatingPlan,
   hands: number,
-  change: (seats: (SeatState | null)[], hand: number) => (SeatState | null)[]
-): SeatingPlan[] {
-  const plans: SeatingPlan[] = [];
+  change: (
+    seats: Array<SeatState | null>,
+    hand: number
+  ) => Array<SeatState | null>
+): Array<SeatingPlan> {
+  const plans: Array<SeatingPlan> = [];
   let last = start;
   for (let hand = 0; hand < hands; hand += 1) {
     const seats = change([...last.seats], hand);
@@ -41,7 +46,7 @@ function advance(
 }
 
 function plan(
-  seats: readonly (SeatState | null)[],
+  seats: ReadonlyArray<SeatState | null>,
   rotation: Rotation | null,
   button: ButtonRule = "dead",
   firstButton = 0
@@ -50,7 +55,7 @@ function plan(
 }
 
 /** What the engine posts for this plan: [seat, blind] per poster, and dead money. */
-function posts(seats: readonly (SeatState | null)[], planned: SeatingPlan) {
+function posts(seats: ReadonlyArray<SeatState | null>, planned: SeatingPlan) {
   const started = okValue(
     startHand({
       game: planned.game,
@@ -181,10 +186,15 @@ describe("planHand, dead button", () => {
   test("charges a small blind missed right after the big blind, posted dead", () => {
     const plans = advance(first, 3, (seats, hand) => {
       const c = seats[2];
-      if (c === null || c === undefined) return seats;
-      if (hand === 0) return seats.with(2, { ...c, sittingOut: true });
-      if (hand === 1)
+      if (c === null || c === undefined) {
+        return seats;
+      }
+      if (hand === 0) {
+        return seats.with(2, { ...c, sittingOut: true });
+      }
+      if (hand === 1) {
         return seats.with(2, { ...c, sittingOut: false, posting: true });
+      }
       return seats;
     });
     expect(plans[0]?.seats[2]?.owes).toBe("smallBlind");
@@ -243,7 +253,7 @@ describe("planHand, heads-up", () => {
     const first = plan(two, null, "dead", 0);
     let rotation = first.rotation;
     let seats = two.with(1, seated("c", "bigBlind"));
-    const bigBlinds: number[] = [first.bigBlind];
+    const bigBlinds: Array<number> = [first.bigBlind];
     for (let hand = 0; hand < 3; hand += 1) {
       const next = plan(seats, rotation);
       bigBlinds.push(next.bigBlind);
@@ -260,10 +270,11 @@ describe("planHand, heads-up", () => {
 describe("planHand over random sessions", () => {
   test("deals the big blind in, never twice running, and starts every planned hand", () => {
     const random = insecureSeededRandom(19);
-    const problems: string[] = [];
+    const problems: Array<string> = [];
     for (let session = 0; session < 300; session += 1) {
-      let seats: (SeatState | null)[] = Array.from({ length: 6 }, (_, seat) =>
-        randomBelow(3, random) === 0 ? null : seated(`p${seat}`)
+      let seats: Array<SeatState | null> = Array.from(
+        { length: 6 },
+        (_, seat) => (randomBelow(3, random) === 0 ? null : seated(`p${seat}`))
       );
       let rotation: Rotation | null = null;
       let lastBigBlind: string | null = null;
@@ -292,11 +303,14 @@ describe("planHand over random sessions", () => {
           rotation,
           firstButton: 0,
         });
-        if (!planned.ok) continue;
+        if (!planned.ok) {
+          continue;
+        }
         const { positions, bigBlind } = planned.value;
         const bigBlindPlayer = seats[bigBlind]?.player ?? null;
-        if (!positions.includes(bigBlind))
+        if (!positions.includes(bigBlind)) {
           problems.push(`${session}/${hand}: big blind out`);
+        }
         if (bigBlindPlayer === lastBigBlind) {
           problems.push(`${session}/${hand}: big blind twice`);
         }

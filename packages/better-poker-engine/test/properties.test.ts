@@ -3,38 +3,37 @@ import { describe, expect, test } from "bun:test";
 import packageJson from "../package.json" with { type: "json" };
 import type { Stack } from "../src/chips.ts";
 import type { HandEvent } from "../src/events.ts";
-import {
-  act,
-  replayHand,
-  summarizeHand,
-  type Action,
-  type Transition,
-} from "../src/hand.ts";
+import { act, replayHand, summarizeHand } from "../src/hand.ts";
+import type { Action, Transition } from "../src/hand.ts";
 import {
   formatPhh,
   historyFromHand,
   parsePhh,
   replayHistory,
-  type HistoryExportError,
 } from "../src/phh.ts";
+import type { HistoryExportError } from "../src/phh.ts";
 import { err } from "../src/result.ts";
-import { conventions, holdem, type Conventions } from "../src/rules.ts";
+import { conventions, holdem } from "../src/rules.ts";
+import type { Conventions } from "../src/rules.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
-import { randomWalk, type Walk } from "./random-hands.ts";
+import { randomWalk } from "./random-hands.ts";
+import type { Walk } from "./random-hands.ts";
 import { rawJson, sameTransition } from "./support.ts";
 
 const walks = Array.from({ length: 150 }, (_, seed) => randomWalk(seed));
 
 function chips(stack: Stack): number {
-  if (stack === "unbounded") throw new Error("Random hands use bounded stacks");
+  if (stack === "unbounded") {
+    throw new Error("Random hands use bounded stacks");
+  }
   return stack;
 }
 
-function total(values: readonly Stack[]): number {
+function total(values: ReadonlyArray<Stack>): number {
   return values.reduce<number>((sum, value) => sum + chips(value), 0);
 }
 
-function transitions(walk: Walk): Transition[] {
+function transitions(walk: Walk): Array<Transition> {
   return [
     walk.start,
     ...walk.steps.flatMap((step) =>
@@ -43,8 +42,10 @@ function transitions(walk: Walk): Transition[] {
   ];
 }
 
-function deeplyFrozen<T extends {}>(value: T): boolean {
-  if (Object(value) !== value) return true;
+function deeplyFrozen<T extends NonNullable<unknown>>(value: T): boolean {
+  if (Object(value) !== value) {
+    return true;
+  }
   return (
     Object.isFrozen(value) &&
     Object.values(value).every(
@@ -53,13 +54,13 @@ function deeplyFrozen<T extends {}>(value: T): boolean {
   );
 }
 
-function acceptedActions(walk: Walk): Action[] {
+function acceptedActions(walk: Walk): Array<Action> {
   return walk.steps.flatMap((step) => (step.result.ok ? [step.action] : []));
 }
 
 /** A history burns "??", leaves runout counts to the replay and deals each
  * player's cards at once, so hole cards are compared through the records. */
-function keptByHistory(events: readonly HandEvent[]) {
+function keptByHistory(events: ReadonlyArray<HandEvent>) {
   return events.flatMap(({ body, commentary, street }) => {
     if (body.type === "runoutCountSelected" || body.type === "holeDealt") {
       return [];
@@ -71,11 +72,19 @@ function keptByHistory(events: readonly HandEvent[]) {
 
 function refusalOf(walk: Walk): HistoryExportError | null {
   const { game } = walk.setup;
-  if (game.variant === "custom") return { code: "custom_variant" };
-  if (game.boards !== 1) return { code: "boards", boards: game.boards };
+  if (game.variant === "custom") {
+    return { code: "custom_variant" };
+  }
+  if (game.boards !== 1) {
+    return { code: "boards", boards: game.boards };
+  }
   const runouts = summarizeHand(walk.hand)?.runouts ?? 1;
-  if (runouts !== 1) return { code: "runouts", runouts };
-  if (game.rake.kind !== "none") return { code: "rake" };
+  if (runouts !== 1) {
+    return { code: "runouts", runouts };
+  }
+  if (game.rake.kind !== "none") {
+    return { code: "rake" };
+  }
   const { bigBlindIsFullBet, nominalBigBlind, antePrecedence, oddChips } =
     game.conventions;
   const pokerkitRules =
@@ -136,9 +145,13 @@ describe("random hands", () => {
   test("act the same on a hand stored and loaded again", () => {
     const differing = walks.flatMap((walk) =>
       walk.steps.flatMap((step, index) => {
-        if (index % 5 !== 0) return [];
+        if (index % 5 !== 0) {
+          return [];
+        }
         const loaded = parseHand(serializeHand(step.before));
-        if (!loaded.ok) return [{ seed: walk.seed, index }];
+        if (!loaded.ok) {
+          return [{ seed: walk.seed, index }];
+        }
         const result = act(loaded.value, step.action);
         return sameTransition(result, step.result)
           ? []
@@ -162,7 +175,9 @@ describe("random hands", () => {
   test("record one event per transition, the action's first", () => {
     for (const walk of walks) {
       for (const [index, step] of walk.steps.entries()) {
-        if (!step.result.ok) continue;
+        if (!step.result.ok) {
+          continue;
+        }
         const { events } = step.result.value;
         const [first, ...automated] = events;
         expect(first?.cause).toEqual({ kind: "action", action: step.action });
@@ -196,7 +211,9 @@ describe("random hands", () => {
         walk.steps.map(() => null)
       );
       const record = summarizeHand(walk.hand);
-      if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
+      if (record === null) {
+        throw new Error(`Seed ${walk.seed} is not complete`);
+      }
       if (walk.setup.game.conventions.strandedPots === "refused") {
         expect(record.unclaimed).toBe(0);
       }
@@ -212,7 +229,7 @@ describe("random hands", () => {
 
   test("play the same hand again from the PHH history they write", () => {
     const refused = new Set<string>();
-    const played: number[] = [];
+    const played: Array<number> = [];
     const differing = walks.flatMap((walk) => {
       const history = historyFromHand(walk.hand);
       const refusal = refusalOf(walk);
@@ -224,7 +241,9 @@ describe("random hands", () => {
       }
       const parsed = history.ok ? parsePhh(formatPhh(history.value)) : history;
       const replay = parsed.ok ? replayHistory(parsed.value) : parsed;
-      if (!replay.ok) return [walk.seed];
+      if (!replay.ok) {
+        return [walk.seed];
+      }
       played.push(walk.seed);
       const events = transitions(walk).flatMap((step) => step.events);
       const again = replay.value.steps.flatMap((step) => step.events);
@@ -248,24 +267,26 @@ describe("random hands", () => {
 
   test("carry the package version in their records", () => {
     const [walk] = walks;
-    if (walk === undefined) throw new Error("No random hands");
+    if (walk === undefined) {
+      throw new Error("No random hands");
+    }
     expect(summarizeHand(walk.hand)?.engineVersion).toBe(packageJson.version);
   });
 });
 
-describe("no-limit cash games", () => {
-  const unclaimed = (strandedPots: Conventions["strandedPots"]) =>
-    Array.from({ length: 300 }, (_, seed) => {
-      const walk = randomWalk(seed, () =>
-        holdem.noLimit({
-          blinds: [1, 2],
-          minBet: 2,
-          conventions: { ...conventions.cashGame, strandedPots },
-        })
-      );
-      return summarizeHand(walk.hand)?.unclaimed ?? 0;
-    }).filter((chips) => chips > 0);
+const unclaimed = (strandedPots: Conventions["strandedPots"]) =>
+  Array.from({ length: 300 }, (_, seed) => {
+    const walk = randomWalk(seed, () =>
+      holdem.noLimit({
+        blinds: [1, 2],
+        minBet: 2,
+        conventions: { ...conventions.cashGame, strandedPots },
+      })
+    );
+    return summarizeHand(walk.hand)?.unclaimed ?? 0;
+  }).filter((chips) => chips > 0);
 
+describe("no-limit cash games", () => {
   test("strand side pots with needless folds and mucks unless refused", () => {
     expect(unclaimed("unclaimed").length).toBeGreaterThan(0);
     expect(unclaimed("refused")).toEqual([]);

@@ -1,7 +1,9 @@
-import { decks, isKnownCard, type KnownCard } from "../cards.ts";
+import { decks, isKnownCard } from "../cards.ts";
+import type { KnownCard } from "../cards.ts";
 import type { HandSetup, SetupError } from "../hand.ts";
 import { seedFrom } from "../random.ts";
-import { validateGame, type Antes, type Game, type Street } from "../rules.ts";
+import { validateGame } from "../rules.ts";
+import type { Antes, Game, Street } from "../rules.ts";
 import { beginAntePosting } from "./forced.ts";
 import type { HandState, Position } from "./state.ts";
 
@@ -9,17 +11,19 @@ import type { HandState, Position } from "./state.ts";
 export function perPosition(
   amounts: Iterable<readonly [Position, number]>,
   count: number
-): number[] {
+): Array<number> {
   const values = Array.from({ length: count }, () => 0);
   for (const [position, amount] of amounts) {
     const index = position < 0 ? count + position : position;
     const current = values[index];
-    if (current !== undefined) values[index] = current + amount;
+    if (current !== undefined) {
+      values[index] = current + amount;
+    }
   }
   return values;
 }
 
-export function anteVector(antes: Antes, count: number): number[] {
+export function anteVector(antes: Antes, count: number): Array<number> {
   switch (antes.kind) {
     case "none":
       return perPosition([], count);
@@ -40,7 +44,7 @@ export function anteVector(antes: Antes, count: number): number[] {
   }
 }
 
-function defaultPlayers(count: number): string[] {
+function defaultPlayers(count: number): Array<string> {
   return Array.from({ length: count }, (_, position) => `p${position + 1}`);
 }
 
@@ -53,30 +57,41 @@ function dealsEveryStreet(game: Game, players: number): boolean {
   for (const street of game.rules.streets) {
     const holes = players * street.hole.length;
     const fits = holes <= left;
-    if (holes > 0 && !fits && !dealtHoles) return false;
+    if (holes > 0 && !fits && !dealtHoles) {
+      return false;
+    }
     dealtHoles ||= holes > 0;
-    if (street.burn && left === 0) return false;
+    if (street.burn && left === 0) {
+      return false;
+    }
     left -= fits
       ? holes + street.board * game.boards
       : (street.board + street.hole.length) * game.boards;
-    if (left < 0) return false;
+    if (left < 0) {
+      return false;
+    }
   }
   return true;
 }
 
 export function validateSetup(setup: HandSetup): SetupError | null {
   const gameError = validateGame(setup.game);
-  if (gameError !== null) return gameError;
+  if (gameError !== null) {
+    return gameError;
+  }
   const { stacks } = setup;
-  if (stacks.length < 2 || !dealsEveryStreet(setup.game, stacks.length))
+  if (stacks.length < 2 || !dealsEveryStreet(setup.game, stacks.length)) {
     return { code: "player_count", players: stacks.length };
+  }
   const players = setup.players ?? defaultPlayers(stacks.length);
   if (players.length !== stacks.length) {
     return { code: "player_ids", ids: players.length, stacks: stacks.length };
   }
   const seen = new Set<string>();
   for (const player of players) {
-    if (seen.has(player)) return { code: "duplicate_player", player };
+    if (seen.has(player)) {
+      return { code: "duplicate_player", player };
+    }
     seen.add(player);
   }
   for (const [position, stack] of stacks.entries()) {
@@ -90,7 +105,9 @@ export function validateSetup(setup: HandSetup): SetupError | null {
   }
   const cards = new Set<KnownCard>();
   for (const card of setup.deck.filter(isKnownCard)) {
-    if (cards.has(card)) return { code: "duplicate_card", card };
+    if (cards.has(card)) {
+      return { code: "duplicate_card", card };
+    }
     cards.add(card);
   }
   return null;
@@ -129,7 +146,8 @@ export function initialState(setup: HandSetup): HandState {
   const count = setup.stacks.length;
   const game = copyGame(setup.game);
   const zeros = () => Array.from({ length: count }, () => 0);
-  const empty = <T>(): T[][] => Array.from({ length: count }, (): T[] => []);
+  const empty = <T>(): Array<Array<T>> =>
+    Array.from({ length: count }, (): Array<T> => []);
   const state: HandState = {
     game,
     players: [...(setup.players ?? defaultPlayers(count))],

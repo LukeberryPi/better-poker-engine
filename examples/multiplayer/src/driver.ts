@@ -14,6 +14,6 @@ export function bunDriver(db: Database): SqliteDriver {
         )
       )(),
     all: async (sql, params) =>
-      db.query<SqlRow, SqlValue[]>(sql).all(...params),
+      db.query<SqlRow, Array<SqlValue>>(sql).all(...params),
   };
 }

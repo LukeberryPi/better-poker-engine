@@ -1,8 +1,10 @@
-import { randomBelow, type RandomSource } from "./random.ts";
-import { err, ok, type Result } from "./result.ts";
+import { randomBelow } from "./random.ts";
+import type { RandomSource } from "./random.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import { isWhitespace } from "./words.ts";
 
-const ranks = [
+export const ranks = [
   "A",
   "2",
   "3",
@@ -36,7 +38,7 @@ export type UnknownCard = "??";
 export type Card = KnownCard | PartlyKnownCard | UnknownCard;
 
 /** Dealing order: the first card is dealt first. */
-export type Deck = readonly Card[];
+export type Deck = ReadonlyArray<Card>;
 
 export function cardOf(rank: Rank, suit: Suit): KnownCard {
   return `${rank}${suit}`;
@@ -46,15 +48,17 @@ export const allCards = [
   ...ranks.flatMap((rank) => suits.map((suit) => cardOf(rank, suit))),
   ...ranks.map((rank): PartlyKnownCard => `${rank}?`),
   "??",
-] satisfies Card[];
+] satisfies Array<Card>;
 
 export function rankOf(card: Card): RankSymbol {
   // SAFETY: every card is a rank symbol followed by a suit symbol.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TypeScript cannot split a Card template literal.
   return card.charAt(0) as RankSymbol;
 }
 
 export function suitOf(card: Card): SuitSymbol {
   // SAFETY: every card is a rank symbol followed by a suit symbol.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TypeScript cannot split a Card template literal.
   return card.charAt(1) as SuitSymbol;
 }
 
@@ -62,18 +66,18 @@ export function isKnownCard(card: Card): card is KnownCard {
   return !card.endsWith("?");
 }
 
-export function arePaired(cards: readonly Card[]): boolean {
+export function arePaired(cards: ReadonlyArray<Card>): boolean {
   return new Set(cards.map(rankOf)).size !== cards.length;
 }
 
-export function areSuited(cards: readonly Card[]): boolean {
+export function areSuited(cards: ReadonlyArray<Card>): boolean {
   const [first] = cards;
   return (
     first === undefined || cards.every((card) => suitOf(card) === suitOf(first))
   );
 }
 
-export function areRainbow(cards: readonly Card[]): boolean {
+export function areRainbow(cards: ReadonlyArray<Card>): boolean {
   return new Set(cards.map(suitOf)).size === cards.length;
 }
 
@@ -88,8 +92,12 @@ export function parseSuit(symbol: string): SuitSymbol | null {
 function cardFrom(rankText: string, suitText: string): Card | null {
   const rank = parseRank(rankText);
   const suit = parseSuit(suitText);
-  if (rank === null || suit === null) return null;
-  if (rank === "?") return suit === "?" ? "??" : null;
+  if (rank === null || suit === null) {
+    return null;
+  }
+  if (rank === "?") {
+    return suit === "?" ? "??" : null;
+  }
   return suit === "?" ? `${rank}?` : cardOf(rank, suit);
 }
 
@@ -103,20 +111,26 @@ export type CardParseError = {
 /** Reads cards as pokerkit does: `10` means `T`, commas are ignored, whitespace separates. */
 export function parseCards(
   text: string
-): Result<readonly Card[], CardParseError> {
-  const cards: Card[] = [];
+): Result<ReadonlyArray<Card>, CardParseError> {
+  const cards: Array<Card> = [];
   let rank: { readonly text: string; readonly at: number } | null = null;
   for (const token of text.matchAll(/10|./gsu)) {
     const symbol = token[0] === "10" ? "T" : token[0];
-    if (symbol === ",") continue;
+    if (symbol === ",") {
+      continue;
+    }
     if (isWhitespace(symbol)) {
-      if (rank !== null) return invalidCard(text, rank.at, token.index);
+      if (rank !== null) {
+        return invalidCard(text, rank.at, token.index);
+      }
     } else if (rank === null) {
       rank = { text: symbol, at: token.index };
     } else {
       const card = cardFrom(rank.text, symbol);
       const end = token.index + token[0].length;
-      if (card === null) return invalidCard(text, rank.at, end);
+      if (card === null) {
+        return invalidCard(text, rank.at, end);
+      }
       cards.push(card);
       rank = null;
     }
@@ -171,7 +185,7 @@ export const rankOrders = {
   kuhn: ["J", "Q", "K"],
   numeral211: ["2", "3", "4", "5", "6", "7", "8", "9", "T", "A"],
   royal: ["T", "J", "Q", "K", "A"],
-} as const satisfies Record<string, readonly Rank[]>;
+} as const satisfies Record<string, ReadonlyArray<Rank>>;
 
 export type RankOrder = keyof typeof rankOrders;
 
@@ -185,9 +199,9 @@ export type DeckName =
   | "royal";
 
 function deckOf(
-  rankOrder: readonly Rank[],
-  deckSuits: readonly Suit[]
-): readonly KnownCard[] {
+  rankOrder: ReadonlyArray<Rank>,
+  deckSuits: ReadonlyArray<Suit>
+): ReadonlyArray<KnownCard> {
   return Object.freeze(
     rankOrder.flatMap((rank) => deckSuits.map((suit) => cardOf(rank, suit)))
   );
@@ -202,15 +216,15 @@ export const decks = Object.freeze({
   leduc: deckOf(rankOrders.kuhn, ["h", "s"]),
   numeral211: deckOf(rankOrders.numeral211, suits),
   royal: deckOf(rankOrders.royal, suits),
-} satisfies Record<DeckName, readonly KnownCard[]>);
+} satisfies Record<DeckName, ReadonlyArray<KnownCard>>);
 
 /** A uniformly random permutation, drawn by Fisher-Yates. */
 export function shuffle(
-  cards: readonly KnownCard[],
+  cards: ReadonlyArray<KnownCard>,
   random: RandomSource
-): readonly KnownCard[] {
+): ReadonlyArray<KnownCard> {
   const remaining = [...cards];
-  const shuffled: KnownCard[] = [];
+  const shuffled: Array<KnownCard> = [];
   while (remaining.length > 0) {
     shuffled.push(
       ...remaining.splice(randomBelow(remaining.length, random), 1)

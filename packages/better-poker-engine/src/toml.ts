@@ -1,13 +1,9 @@
-import {
-  parse,
-  TomlDate,
-  TomlError,
-  type TomlTable,
-  type TomlValue,
-} from "smol-toml";
-import * as z from "zod/mini";
+import { parse, TomlDate, TomlError } from "smol-toml";
+import type { TomlTable, TomlValue } from "smol-toml";
+import { z } from "zod/mini";
 
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 
 /** A user-defined value and its TOML type. A float holds JavaScript's shortest
  * digits (`"3"` is 3.0); a datetime holds TOML text such as `1979-05-27`. */
@@ -20,7 +16,7 @@ export type PhhValue =
     }
   | { readonly type: "boolean"; readonly value: boolean }
   | { readonly type: "datetime"; readonly value: string }
-  | { readonly type: "array"; readonly value: readonly PhhValue[] }
+  | { readonly type: "array"; readonly value: ReadonlyArray<PhhValue> }
   | {
       readonly type: "table";
       readonly value: Readonly<Record<string, PhhValue>>;
@@ -38,7 +34,9 @@ export function readToml(text: string): Result<TomlTable, TomlSyntaxError> {
   try {
     return ok(parse(text, { integersAsBigInt: true }));
   } catch (error) {
-    if (!(error instanceof TomlError)) throw error;
+    if (!(error instanceof TomlError)) {
+      throw error;
+    }
     const [summary = ""] = error.message.split("\n", 1);
     return err({
       code: "toml",
@@ -54,14 +52,21 @@ export function isTable(value: TomlValue): value is TomlTable {
   return (
     Object(value) === value &&
     !Array.isArray(value) &&
+    // oxlint-disable-next-line @nkzw/no-instanceof -- a TomlDate's class is its only tag.
     !(value instanceof TomlDate)
   );
 }
 
 function floatText(value: number): `${number}` | "inf" | "-inf" | "nan" {
-  if (Number.isNaN(value)) return "nan";
-  if (value === Infinity) return "inf";
-  if (value === -Infinity) return "-inf";
+  if (Number.isNaN(value)) {
+    return "nan";
+  }
+  if (value === Infinity) {
+    return "inf";
+  }
+  if (value === -Infinity) {
+    return "-inf";
+  }
   return Object.is(value, -0) ? "-0" : `${value}`;
 }
 
@@ -98,7 +103,9 @@ export function userValueOf(value: TomlValue): PhhValue {
   if (Array.isArray(value)) {
     return { type: "array", value: value.map(userValueOf) };
   }
-  if (!isTable(value)) return scalarValue.parse(value);
+  if (!isTable(value)) {
+    return scalarValue.parse(value);
+  }
   const entries = Object.entries(value).map(
     ([key, item]) => [key, userValueOf(item)] as const
   );
@@ -118,13 +125,13 @@ function fitsLiteral(text: string): boolean {
 }
 
 const escapes = new Map([
-  ["\b", "\\b"],
-  ["\t", "\\t"],
-  ["\n", "\\n"],
-  ["\f", "\\f"],
-  ["\r", "\\r"],
-  ['"', '\\"'],
-  ["\\", "\\\\"],
+  ["\b", String.raw`\b`],
+  ["\t", String.raw`\t`],
+  ["\n", String.raw`\n`],
+  ["\f", String.raw`\f`],
+  ["\r", String.raw`\r`],
+  ['"', String.raw`\"`],
+  ["\\", String.raw`\\`],
 ]);
 
 function basicString(text: string): string {
@@ -142,16 +149,20 @@ function basicString(text: string): string {
 /** pokerkit's quoting: `'...'`, or `'''...'''` around a `'`. Text those cannot
  * hold, such as a newline, gets an escaped `"..."` string instead. */
 export function tomlString(text: string): string {
-  if (!fitsLiteral(text) || text.includes("'''")) return basicString(text);
+  if (!fitsLiteral(text) || text.includes("'''")) {
+    return basicString(text);
+  }
   return text.includes("'") ? `'''${text}'''` : `'${text}'`;
 }
 
 export function tomlKey(key: string): string {
-  if (/^[\w-]+$/u.test(key)) return key;
+  if (/^[\w-]+$/u.test(key)) {
+    return key;
+  }
   return fitsLiteral(key) && !key.includes("'") ? `'${key}'` : basicString(key);
 }
 
-export function tomlArray(items: readonly string[]): string {
+export function tomlArray(items: ReadonlyArray<string>): string {
   return `[${items.join(", ")}]`;
 }
 

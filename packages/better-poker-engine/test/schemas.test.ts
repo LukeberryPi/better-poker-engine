@@ -4,7 +4,7 @@ import type { Action, DealerAction, PlayerAction } from "../src/hand.ts";
 import { actionSchema, playerActionSchema } from "../src/schemas.ts";
 import { randomWalk } from "./random-hands.ts";
 
-const playerActions: readonly PlayerAction[] = [
+const playerActions: ReadonlyArray<PlayerAction> = [
   { type: "fold" },
   { type: "fold", player: "p1" },
   { type: "checkOrCall" },
@@ -20,7 +20,7 @@ const playerActions: readonly PlayerAction[] = [
   { type: "timeout", player: "p2" },
 ];
 
-const dealerActions: readonly DealerAction[] = [
+const dealerActions: ReadonlyArray<DealerAction> = [
   { type: "postAnte" },
   { type: "collectBets" },
   { type: "postBlind", player: "p1" },
@@ -68,7 +68,7 @@ describe("playerActionSchema", () => {
 
 describe("actionSchema", () => {
   test("parses every action into the same action", () => {
-    const actions: readonly Action[] = [...playerActions, ...dealerActions];
+    const actions: ReadonlyArray<Action> = [...playerActions, ...dealerActions];
     for (const action of actions) {
       expect(actionSchema.safeParse(action)).toEqual({
         success: true,

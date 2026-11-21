@@ -1,7 +1,8 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { automation, type Hand } from "../../src/hand.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
 import { holdem, stud } from "../../src/rules.ts";
 import {
   drive,
@@ -36,16 +37,16 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_1_00_02_05",
   () => {
     const game = stud.fixedLimitHiLo({
-      antes: { kind: "everyone", amount: 20000 },
-      bringIn: 20000,
-      smallBet: 80000,
-      bigBet: 160000,
+      antes: { kind: "everyone", amount: 20_000 },
+      bringIn: 20_000,
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [1930000, 3695000, 990000, 1445000, 515000, 2160000, 265000],
+        [1_930_000, 3_695_000, 990_000, 1_445_000, 515_000, 2_160_000, 265_000],
         automation.none,
         deck(
           "   8s Qs Qh 6d Tc Ah Ks",
@@ -55,7 +56,7 @@ unitTest(
       )
     );
     play(state, [...repeat(postAnte, 7), collectBets]);
-    expect(totalPot(state.hand)).toBe(140000);
+    expect(totalPot(state.hand)).toBe(140_000);
     play(state, [
       ...repeat(dealHole, 7 * 3),
       bringIn,
@@ -68,11 +69,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(240000);
+    expect(totalPot(state.hand)).toBe(240_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      1910000, 3675000, 970000, 1585000, 495000, 2120000, 245000,
+      1_910_000, 3_675_000, 970_000, 1_585_000, 495_000, 2_120_000, 245_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -82,16 +83,16 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_2_00_03_32",
   () => {
     const game = stud.fixedLimitHiLo({
-      antes: { kind: "everyone", amount: 20000 },
-      bringIn: 20000,
-      smallBet: 80000,
-      bigBet: 160000,
+      antes: { kind: "everyone", amount: 20_000 },
+      bringIn: 20_000,
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [1910000, 3675000, 970000, 1585000, 495000, 2120000, 245000],
+        [1_910_000, 3_675_000, 970_000, 1_585_000, 495_000, 2_120_000, 245_000],
         automation.none,
         deck(
           "   6s Js Kc Th 8c 9h 5h",
@@ -105,7 +106,7 @@ unitTest(
       )
     );
     play(state, [...repeat(postAnte, 7), collectBets]);
-    expect(totalPot(state.hand)).toBe(140000);
+    expect(totalPot(state.hand)).toBe(140_000);
     play(state, [
       ...repeat(dealHole, 7 * 3),
       bringIn,
@@ -121,7 +122,7 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(835000);
+    expect(totalPot(state.hand)).toBe(835_000);
     play(state, [
       burnCard,
       ...repeat(dealHole, 3),
@@ -130,7 +131,7 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(995000);
+    expect(totalPot(state.hand)).toBe(995_000);
     play(state, [
       burnCard,
       ...repeat(dealHole, 3),
@@ -139,11 +140,11 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(1635000);
+    expect(totalPot(state.hand)).toBe(1_635_000);
     play(state, [burnCard, ...repeat(dealHole, 3), raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(1955000);
+    expect(totalPot(state.hand)).toBe(1_955_000);
     play(state, [burnCard, ...repeat(dealHole, 3), raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(2275000);
+    expect(totalPot(state.hand)).toBe(2_275_000);
     play(state, [
       showOrMuck,
       showOrMuck,
@@ -155,7 +156,7 @@ unitTest(
     ]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3220000, 2710000, 930000, 1565000, 475000, 2100000, 0,
+      3_220_000, 2_710_000, 930_000, 1_565_000, 475_000, 2_100_000, 0,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -165,16 +166,16 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_3_00_10_24",
   () => {
     const game = stud.fixedLimitHiLo({
-      antes: { kind: "everyone", amount: 20000 },
-      bringIn: 20000,
-      smallBet: 80000,
-      bigBet: 160000,
+      antes: { kind: "everyone", amount: 20_000 },
+      bringIn: 20_000,
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3220000, 2710000, 930000, 1565000, 475000, 2100000],
+        [3_220_000, 2_710_000, 930_000, 1_565_000, 475_000, 2_100_000],
         automation.none,
         deck(
           "   Kc Ah Qs ?? ?? ??",
@@ -186,7 +187,7 @@ unitTest(
       )
     );
     play(state, [...repeat(postAnte, 6), collectBets]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 6 * 3),
       bringIn,
@@ -197,7 +198,7 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(160000);
+    expect(totalPot(state.hand)).toBe(160_000);
     play(state, [
       burnCard,
       ...repeat(dealHole, 2),
@@ -206,7 +207,7 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(320000);
+    expect(totalPot(state.hand)).toBe(320_000);
     play(state, [
       burnCard,
       ...repeat(dealHole, 2),
@@ -215,11 +216,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(480000);
+    expect(totalPot(state.hand)).toBe(480_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3200000, 2910000, 810000, 1545000, 455000, 2080000,
+      3_200_000, 2_910_000, 810_000, 1_545_000, 455_000, 2_080_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -229,16 +230,16 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_4_00_12_25",
   () => {
     const game = stud.fixedLimitHiLo({
-      antes: { kind: "everyone", amount: 20000 },
-      bringIn: 20000,
-      smallBet: 80000,
-      bigBet: 160000,
+      antes: { kind: "everyone", amount: 20_000 },
+      bringIn: 20_000,
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3200000, 2910000, 810000, 1545000, 455000, 2080000],
+        [3_200_000, 2_910_000, 810_000, 1_545_000, 455_000, 2_080_000],
         automation.none,
         deck(
           "   9c 6d Ts ?? Ac 6c",
@@ -248,7 +249,7 @@ unitTest(
       )
     );
     play(state, [...repeat(postAnte, 6), collectBets]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 6 * 3),
       bringIn,
@@ -261,11 +262,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(380000);
+    expect(totalPot(state.hand)).toBe(380_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3100000, 3110000, 770000, 1525000, 435000, 2060000,
+      3_100_000, 3_110_000, 770_000, 1_525_000, 435_000, 2_060_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -275,16 +276,16 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_5_00_13_47",
   () => {
     const game = stud.fixedLimitHiLo({
-      antes: { kind: "everyone", amount: 20000 },
-      bringIn: 20000,
-      smallBet: 80000,
-      bigBet: 160000,
+      antes: { kind: "everyone", amount: 20_000 },
+      bringIn: 20_000,
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3100000, 3110000, 770000, 1525000, 435000, 2060000],
+        [3_100_000, 3_110_000, 770_000, 1_525_000, 435_000, 2_060_000],
         automation.none,
         deck(
           "   8h Qd Tc Jc Ac 3d",
@@ -295,7 +296,7 @@ unitTest(
       )
     );
     play(state, [...repeat(postAnte, 6), collectBets]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 6 * 3),
       bringIn,
@@ -307,7 +308,7 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(300000);
+    expect(totalPot(state.hand)).toBe(300_000);
     play(state, [
       burnCard,
       ...repeat(dealHole, 2),
@@ -316,11 +317,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(380000);
+    expect(totalPot(state.hand)).toBe(380_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3000000, 3310000, 750000, 1485000, 415000, 2040000,
+      3_000_000, 3_310_000, 750_000, 1_485_000, 415_000, 2_040_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -330,16 +331,16 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_6_00_15_43",
   () => {
     const game = stud.fixedLimitHiLo({
-      antes: { kind: "everyone", amount: 20000 },
-      bringIn: 20000,
-      smallBet: 80000,
-      bigBet: 160000,
+      antes: { kind: "everyone", amount: 20_000 },
+      bringIn: 20_000,
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3000000, 3310000, 750000, 1485000, 415000, 2040000],
+        [3_000_000, 3_310_000, 750_000, 1_485_000, 415_000, 2_040_000],
         automation.none,
         deck(
           "   9h 8s Ah Kd As 6s",
@@ -353,7 +354,7 @@ unitTest(
       )
     );
     play(state, [...repeat(postAnte, 6), collectBets]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 6 * 3),
       bringIn,
@@ -365,9 +366,9 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(300000);
+    expect(totalPot(state.hand)).toBe(300_000);
     play(state, [burnCard, ...repeat(dealHole, 2), call, call]);
-    expect(totalPot(state.hand)).toBe(300000);
+    expect(totalPot(state.hand)).toBe(300_000);
     play(state, [
       burnCard,
       ...repeat(dealHole, 2),
@@ -376,15 +377,15 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(620000);
+    expect(totalPot(state.hand)).toBe(620_000);
     play(state, [burnCard, ...repeat(dealHole, 2), raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(930000);
+    expect(totalPot(state.hand)).toBe(930_000);
     play(state, [showOrMuck, showOrMuck, burnCard, ...repeat(dealHole, 2)]);
-    expect(totalPot(state.hand)).toBe(930000);
+    expect(totalPot(state.hand)).toBe(930_000);
     play(state, [showOrMuck, showOrMuck, killHand, pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      2980000, 3290000, 710000, 2000000, 0, 2020000,
+      2_980_000, 3_290_000, 710_000, 2_000_000, 0, 2_020_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -394,21 +395,21 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_7_00_20_03",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [2020000, 2980000, 3290000, 710000, 2000000],
+        [2_020_000, 2_980_000, 3_290_000, 710_000, 2_000_000],
         automation.none,
         deck("   ?? Js ?? 8d ??", "   ?? 3h ?? 7d ??")
       )
     );
     play(state, [postBlind]);
-    expect(totalPot(state.hand)).toBe(80000);
+    expect(totalPot(state.hand)).toBe(80_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -418,11 +419,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(240000);
+    expect(totalPot(state.hand)).toBe(240_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      1940000, 2980000, 3290000, 790000, 2000000,
+      1_940_000, 2_980_000, 3_290_000, 790_000, 2_000_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -432,15 +433,15 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_8_00_20_31",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [1940000, 2980000, 3290000, 790000, 2000000],
+        [1_940_000, 2_980_000, 3_290_000, 790_000, 2_000_000],
         automation.none,
         deck(
           "   Qs 9h Qc Jd Tc",
@@ -452,7 +453,7 @@ unitTest(
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -462,17 +463,17 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(320000);
+    expect(totalPot(state.hand)).toBe(320_000);
     play(state, [burnCard, dealBoard, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(480000);
+    expect(totalPot(state.hand)).toBe(480_000);
     play(state, [burnCard, dealBoard, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(800000);
+    expect(totalPot(state.hand)).toBe(800_000);
     play(state, [burnCard, dealBoard, call, raise, fold, collectBets]);
-    expect(totalPot(state.hand)).toBe(960000);
+    expect(totalPot(state.hand)).toBe(960_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      1540000, 3380000, 3290000, 790000, 2000000,
+      1_540_000, 3_380_000, 3_290_000, 790_000, 2_000_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -482,15 +483,15 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_9_00_23_52",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3380000, 3290000, 790000, 2000000, 1540000],
+        [3_380_000, 3_290_000, 790_000, 2_000_000, 1_540_000],
         automation.none,
         deck(
           "   ?? Ah ?? ?? Js",
@@ -502,7 +503,7 @@ unitTest(
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -512,17 +513,17 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(360000);
+    expect(totalPot(state.hand)).toBe(360_000);
     play(state, [burnCard, dealBoard, call, raise, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(680000);
+    expect(totalPot(state.hand)).toBe(680_000);
     play(state, [burnCard, dealBoard, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(1000000);
+    expect(totalPot(state.hand)).toBe(1_000_000);
     play(state, [burnCard, dealBoard, raise, fold, collectBets]);
-    expect(totalPot(state.hand)).toBe(1160000);
+    expect(totalPot(state.hand)).toBe(1_160_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3340000, 3810000, 790000, 2000000, 1060000,
+      3_340_000, 3_810_000, 790_000, 2_000_000, 1_060_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -532,21 +533,21 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_10_00_26_43",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3810000, 790000, 2000000, 1060000, 3340000],
+        [3_810_000, 790_000, 2_000_000, 1_060_000, 3_340_000],
         automation.none,
         deck("   Td 9s Kc Qs Tc", "   7c 3h 4c Qd 9d")
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -556,11 +557,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(280000);
+    expect(totalPot(state.hand)).toBe(280_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3770000, 710000, 2000000, 1180000, 3340000,
+      3_770_000, 710_000, 2_000_000, 1_180_000, 3_340_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -570,21 +571,21 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_11_00_27_27",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [710000, 2000000, 1180000, 3340000, 3770000],
+        [710_000, 2_000_000, 1_180_000, 3_340_000, 3_770_000],
         automation.none,
         deck("   7s Jh Qc Kc Ac", "   5h 3c 8h 5s 9s")
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -594,11 +595,11 @@ unitTest(
       fold,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(280000);
+    expect(totalPot(state.hand)).toBe(280_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      670000, 1920000, 1180000, 3340000, 3890000,
+      670_000, 1_920_000, 1_180_000, 3_340_000, 3_890_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -608,21 +609,21 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_12_00_28_26",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [1920000, 1180000, 3340000, 3890000, 670000],
+        [1_920_000, 1_180_000, 3_340_000, 3_890_000, 670_000],
         automation.none,
         deck("   Ah 9d ?? 2s 6h", "   Js 9c ?? 2h 4h", "?? 8d3d6d")
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -634,13 +635,13 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(960000);
+    expect(totalPot(state.hand)).toBe(960_000);
     play(state, [burnCard, dealBoard, call, raise, fold, fold, collectBets]);
-    expect(totalPot(state.hand)).toBe(1040000);
+    expect(totalPot(state.hand)).toBe(1_040_000);
     play(state, [pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      1600000, 1820000, 3340000, 3570000, 670000,
+      1_600_000, 1_820_000, 3_340_000, 3_570_000, 670_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -650,15 +651,15 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_13_00_31_44",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [1820000, 3340000, 3570000, 670000, 1600000],
+        [1_820_000, 3_340_000, 3_570_000, 670_000, 1_600_000],
         automation.none,
         deck(
           "   Jh ?? ?? ?? Qd",
@@ -670,7 +671,7 @@ unitTest(
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       fold,
@@ -681,17 +682,17 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(560000);
+    expect(totalPot(state.hand)).toBe(560_000);
     play(state, [burnCard, dealBoard, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(720000);
+    expect(totalPot(state.hand)).toBe(720_000);
     play(state, [burnCard, dealBoard, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(1040000);
+    expect(totalPot(state.hand)).toBe(1_040_000);
     play(state, [burnCard, dealBoard, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(1360000);
+    expect(totalPot(state.hand)).toBe(1_360_000);
     play(state, [showOrMuck, showOrMuck, pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      2540000, 3260000, 3570000, 670000, 960000,
+      2_540_000, 3_260_000, 3_570_000, 670_000, 960_000,
     ]);
     replaysTheSameHand(state.hand);
   }
@@ -701,15 +702,15 @@ unitTest(
   "pokerkit.tests.test_wsop.test_2023_54_4.StateTestCase.test_14_00_34_31",
   () => {
     const game = holdem.fixedLimit({
-      blinds: [40000, 80000],
-      smallBet: 80000,
-      bigBet: 160000,
+      blinds: [40_000, 80_000],
+      smallBet: 80_000,
+      bigBet: 160_000,
       anteTrimming: true,
     });
     const state = drive(
       start(
         game,
-        [3260000, 3570000, 670000, 960000, 2540000],
+        [3_260_000, 3_570_000, 670_000, 960_000, 2_540_000],
         automation.none,
         deck(
           "   5d Ah As Qh Qc",
@@ -721,7 +722,7 @@ unitTest(
       )
     );
     play(state, [postBlind, postBlind]);
-    expect(totalPot(state.hand)).toBe(120000);
+    expect(totalPot(state.hand)).toBe(120_000);
     play(state, [
       ...repeat(dealHole, 5 * 2),
       raise,
@@ -731,17 +732,17 @@ unitTest(
       call,
       collectBets,
     ]);
-    expect(totalPot(state.hand)).toBe(360000);
+    expect(totalPot(state.hand)).toBe(360_000);
     play(state, [burnCard, dealBoard, call, call]);
-    expect(totalPot(state.hand)).toBe(360000);
+    expect(totalPot(state.hand)).toBe(360_000);
     play(state, [burnCard, dealBoard, call, raise, raise, call, collectBets]);
-    expect(totalPot(state.hand)).toBe(1000000);
+    expect(totalPot(state.hand)).toBe(1_000_000);
     play(state, [burnCard, dealBoard, call, call]);
-    expect(totalPot(state.hand)).toBe(1000000);
+    expect(totalPot(state.hand)).toBe(1_000_000);
     play(state, [showOrMuck, showOrMuck, pushChips, pullChips]);
     expect(totalPot(state.hand)).toBe(0);
     expect(stacks(state.hand)).toEqual([
-      3220000, 4090000, 190000, 960000, 2540000,
+      3_220_000, 4_090_000, 190_000, 960_000, 2_540_000,
     ]);
     replaysTheSameHand(state.hand);
   }

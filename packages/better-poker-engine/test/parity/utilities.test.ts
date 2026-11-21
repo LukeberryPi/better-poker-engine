@@ -19,11 +19,13 @@ import {
   suitNames,
   suitOf,
   suitSymbols,
-  type Card,
-  type CardParseError,
-  type KnownCard,
-  type RankSymbol,
-  type SuitSymbol,
+} from "../../src/cards.ts";
+import type {
+  Card,
+  CardParseError,
+  KnownCard,
+  RankSymbol,
+  SuitSymbol,
 } from "../../src/cards.ts";
 import { rakePot, splitChips } from "../../src/hand/pots.ts";
 import { anteVector, perPosition } from "../../src/hand/setup.ts";
@@ -31,10 +33,11 @@ import { maxOrNull, minOrNull } from "../../src/hand/state.ts";
 import { parseAmount } from "../../src/phh-actions.ts";
 import { parsePhh } from "../../src/phh.ts";
 import { insecureSeededRandom } from "../../src/random.ts";
-import { err, ok, type Result } from "../../src/result.ts";
+import { err, ok } from "../../src/result.ts";
+import type { Result } from "../../src/result.ts";
 import { cards, known } from "../support.ts";
 
-function expectSameCards(deck: readonly KnownCard[], text: string): void {
+function expectSameCards(deck: ReadonlyArray<KnownCard>, text: string): void {
   expect(deck.toSorted()).toEqual(known(text).toSorted());
 }
 
@@ -87,7 +90,7 @@ doctest("pokerkit.utilities.Card", (example) => {
 });
 
 doctest("pokerkit.utilities.Card.get_ranks", (example) => {
-  let ranks: RankSymbol[];
+  let ranks: Array<RankSymbol>;
   example(1, () => {
     ranks = cards("2sKh").map(rankOf);
   });
@@ -95,7 +98,7 @@ doctest("pokerkit.utilities.Card.get_ranks", (example) => {
 });
 
 doctest("pokerkit.utilities.Card.get_suits", (example) => {
-  let suits: SuitSymbol[];
+  let suits: Array<SuitSymbol>;
   example(1, () => {
     suits = cards("2sKh").map(suitOf);
   });
@@ -124,7 +127,7 @@ doctest("pokerkit.utilities.Card.are_rainbow", (example) => {
 });
 
 doctest("pokerkit.utilities.Card.clean", (example) => {
-  let parsed: Result<readonly Card[], CardParseError>;
+  let parsed: Result<ReadonlyArray<Card>, CardParseError>;
   example(1, () => {
     parsed = parseCards("AsKs");
     expect(parsed).toEqual(ok(["As", "Ks"]));
@@ -170,7 +173,7 @@ doctest("pokerkit.utilities.Card.parse", (example) => {
 });
 
 doctest("pokerkit.utilities.Deck", (example) => {
-  let deck: KnownCard[];
+  let deck: Array<KnownCard>;
   example(1, () => expect(decks.standard).toHaveLength(52));
   example(2, () => {
     expect(decks.standard.slice(0, 6)).toEqual(known("2c2d2h2s3c3d"));
@@ -203,7 +206,7 @@ doctest("pokerkit.utilities.Deck", (example) => {
 });
 
 doctest("pokerkit.utilities.shuffled", (example) => {
-  let shuffled: readonly KnownCard[];
+  let shuffled: ReadonlyArray<KnownCard>;
   example(1, () => {
     shuffled = shuffle(known("AcAdAhAs"), insecureSeededRandom(0));
   });

@@ -1,21 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  actAs,
-  automation,
-  startHand,
-  summarizeHand,
-  type Action,
-  type Automation,
-} from "../src/hand.ts";
-import {
-  conventions,
-  holdem,
-  type Conventions,
-  type Game,
-  type RakeCap,
-} from "../src/rules.ts";
-import { auditor, drive, start, type Driver } from "./driver.ts";
+import { actAs, automation, startHand, summarizeHand } from "../src/hand.ts";
+import type { Action, Automation } from "../src/hand.ts";
+import { conventions, holdem } from "../src/rules.ts";
+import type { Conventions, Game, RakeCap } from "../src/rules.ts";
+import { auditor, drive, start } from "./driver.ts";
+import type { Driver } from "./driver.ts";
 import { cards } from "./support.ts";
 
 const call: Action = { type: "checkOrCall" };
@@ -31,12 +21,14 @@ function noLimit(rules: Conventions): Game {
 
 function played(
   game: Game,
-  stacks: readonly number[],
-  actions: readonly Action[],
+  stacks: ReadonlyArray<number>,
+  actions: ReadonlyArray<Action>,
   automate: Automation = automation.all
 ): Driver {
   const table = drive(start(game, stacks, automate));
-  for (const action of actions) table.act(action);
+  for (const action of actions) {
+    table.act(action);
+  }
   return table;
 }
 
@@ -115,7 +107,7 @@ describe("bigBlindIsFullBet, player by player", () => {
   test("on, judges each player by what they faced when they last acted", () => {
     const table = played(
       noLimit(conventions.tda2024),
-      [10000, 250, 10000, 300],
+      [10_000, 250, 10_000, 300],
       [...limpedThrough, raiseTo(100), raiseTo(150), call, raiseTo(200)]
     );
     expect(auditor(table.hand).decision).toMatchObject({
@@ -133,7 +125,7 @@ describe("bigBlindIsFullBet, player by player", () => {
   test("on, reopens for a player whom three short all-ins have raised a full raise", () => {
     const table = played(
       noLimit(conventions.tda2024),
-      [10000, 10000, 10000, 150, 200, 240],
+      [10_000, 10_000, 10_000, 150, 200, 240],
       [call, raiseTo(150), raiseTo(200), raiseTo(240), call, fold]
     );
     expect(auditor(table.hand).decision).toMatchObject({
@@ -189,21 +181,21 @@ describe("nominalBigBlind", () => {
   });
 });
 
-describe("antePrecedence", () => {
-  const bigBlindAnte = (rules: Conventions) =>
-    auditor(
-      start(
-        holdem.noLimit({
-          blinds: [50, 100],
-          minBet: 100,
-          antes: { kind: "bigBlind", amount: 100 },
-          conventions: rules,
-        }),
-        [1000, 150, 1000],
-        automation.all
-      )
-    );
+const bigBlindAnte = (rules: Conventions) =>
+  auditor(
+    start(
+      holdem.noLimit({
+        blinds: [50, 100],
+        minBet: 100,
+        antes: { kind: "bigBlind", amount: 100 },
+        conventions: rules,
+      }),
+      [1000, 150, 1000],
+      automation.all
+    )
+  );
 
+describe("antePrecedence", () => {
   test("ante first, as in pokerkit: a big blind of 150 posts ante 100, blind 50", () => {
     const view = bigBlindAnte(conventions.tournament);
     expect(view.players[1]?.bet).toBe(50);
@@ -228,8 +220,12 @@ describe("oddChips", () => {
         royalBoard
       )
     );
-    for (const action of [raiseTo(11), call, call, fold]) table.act(action);
-    for (let check = 0; check < 9; check += 1) table.act(call);
+    for (const action of [raiseTo(11), call, call, fold]) {
+      table.act(action);
+    }
+    for (let check = 0; check < 9; check += 1) {
+      table.act(call);
+    }
     return summarizeHand(table.hand)?.pots.flatMap((pot) =>
       pot.winners.map((winner) => [winner.player, winner.amount])
     );
@@ -252,17 +248,17 @@ describe("oddChips", () => {
   });
 });
 
-describe("rake cap", () => {
-  const raked = (cap: RakeCap) => {
-    const game = holdem.noLimit({
-      blinds: [50, 100],
-      minBet: 100,
-      rake: { kind: "percentage", basisPoints: 500, cap, noFlopNoDrop: false },
-    });
-    const table = played(game, [2000, 500, 2000], [raiseTo(2000), call, call]);
-    return summarizeHand(table.hand)?.rake;
-  };
+const raked = (cap: RakeCap) => {
+  const game = holdem.noLimit({
+    blinds: [50, 100],
+    minBet: 100,
+    rake: { kind: "percentage", basisPoints: 500, cap, noFlopNoDrop: false },
+  });
+  const table = played(game, [2000, 500, 2000], [raiseTo(2000), call, call]);
+  return summarizeHand(table.hand)?.rake;
+};
 
+describe("rake cap", () => {
   test("per pot, as in pokerkit: a main and a side pot each pay up to the cap", () => {
     expect(raked({ amount: 50, per: "pot" })).toBe(100);
   });
@@ -350,19 +346,21 @@ describe("strandedPots", () => {
   });
 });
 
-describe("actAs", () => {
-  const opened = () => {
-    const started = startHand({
-      game: noLimit(conventions.tda2024),
-      players: ["ann", "bo", "cy"],
-      stacks: [1000, 1000, 1000],
-      deck: cards("AsKsQsJsTs9s8s7s6s5s4s3s2s"),
-      automate: automation.all,
-    });
-    if (!started.ok) throw new Error(JSON.stringify(started.error));
-    return started.value.hand;
-  };
+const opened = () => {
+  const started = startHand({
+    game: noLimit(conventions.tda2024),
+    players: ["ann", "bo", "cy"],
+    stacks: [1000, 1000, 1000],
+    deck: cards("AsKsQsJsTs9s8s7s6s5s4s3s2s"),
+    automate: automation.all,
+  });
+  if (!started.ok) {
+    throw new Error(JSON.stringify(started.error));
+  }
+  return started.value.hand;
+};
 
+describe("actAs", () => {
   test("acts for the authenticated player, whoever the action names", () => {
     const hand = opened();
     const acted = actAs(

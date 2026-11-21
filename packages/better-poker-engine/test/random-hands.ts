@@ -1,21 +1,17 @@
-import { decks, shuffle, type Card } from "../src/cards.ts";
-import {
-  act,
-  automation,
-  startHand,
-  type Action,
-  type Automation,
-  type DealerDecision,
-  type Hand,
-  type HandSetup,
-  type Transition,
-  type Violation,
+import { decks, shuffle } from "../src/cards.ts";
+import type { Card } from "../src/cards.ts";
+import { act, automation, startHand } from "../src/hand.ts";
+import type {
+  Action,
+  Automation,
+  DealerDecision,
+  Hand,
+  HandSetup,
+  Transition,
+  Violation,
 } from "../src/hand.ts";
-import {
-  randomBelow,
-  insecureSeededRandom,
-  type RandomSource,
-} from "../src/random.ts";
+import { randomBelow, insecureSeededRandom } from "../src/random.ts";
+import type { RandomSource } from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import {
   conventions,
@@ -29,17 +25,17 @@ import {
   royal,
   shortDeck,
   stud,
-  type Antes,
-  type Game,
-  type Rake,
-  type RakeCap,
 } from "../src/rules.ts";
-import { viewHand, type HandView } from "../src/views.ts";
+import type { Antes, Game, Rake, RakeCap } from "../src/rules.ts";
+import { viewHand } from "../src/views.ts";
+import type { HandView } from "../src/views.ts";
 import { rawJson } from "./support.ts";
 
-function pick<T>(items: readonly T[], random: RandomSource): T {
+function pick<T>(items: ReadonlyArray<T>, random: RandomSource): T {
   const item = items[randomBelow(items.length, random)];
-  if (item === undefined) throw new Error("Picked from an empty list");
+  if (item === undefined) {
+    throw new Error("Picked from an empty list");
+  }
   return item;
 }
 
@@ -94,7 +90,7 @@ const blinds = [1, 2];
 const limits = { smallBet: 2, bigBet: 4 };
 
 /** Every builder, with random antes, rake, mode, ante trimming and boards. */
-const games: readonly ((random: RandomSource) => Game)[] = [
+const games: ReadonlyArray<(random: RandomSource) => Game> = [
   (random) =>
     holdem.noLimit({
       ...randomOptions(random),
@@ -216,8 +212,10 @@ function plausibleAction(
     case "complete":
       return null;
     case "betting": {
-      const options: Action[] = [];
-      if (decision.fold !== null) options.push({ type: "fold" });
+      const options: Array<Action> = [];
+      if (decision.fold !== null) {
+        options.push({ type: "fold" });
+      }
       if (decision.checkOrCall !== null) {
         options.push({ type: "checkOrCall" }, { type: "checkOrCall" });
       }
@@ -229,7 +227,9 @@ function plausibleAction(
           amount: between(min, top, random),
         });
       }
-      if (decision.bringIn !== null) options.push({ type: "postBringIn" });
+      if (decision.bringIn !== null) {
+        options.push({ type: "postBringIn" });
+      }
       return pick(options, random);
     }
     case "drawing": {
@@ -317,7 +317,7 @@ export type Walk = {
   readonly seed: number;
   readonly setup: HandSetup;
   readonly start: Transition;
-  readonly steps: readonly Step[];
+  readonly steps: ReadonlyArray<Step>;
   /** The hand after the last accepted action. */
   readonly hand: Hand;
   readonly spectated: HandView;
@@ -336,7 +336,7 @@ export function randomWalk(
   if (!started.ok) {
     throw new Error(`Seed ${seed}: ${JSON.stringify(started.error)}`);
   }
-  const steps: Step[] = [];
+  const steps: Array<Step> = [];
   let hand = started.value.hand;
   while (steps.length < maxSteps) {
     const spectated = viewHand(hand, { kind: "spectator" });
@@ -357,7 +357,9 @@ export function randomWalk(
       hand = result.value.hand;
       continue;
     }
-    if (stray) continue;
+    if (stray) {
+      continue;
+    }
     const timeout = act(hand, { type: "timeout" });
     if (!timeout.ok) {
       throw new Error(

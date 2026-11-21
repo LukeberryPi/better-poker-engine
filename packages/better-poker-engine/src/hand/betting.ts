@@ -4,9 +4,8 @@ import {
   rankOrders,
   suitOf,
   suitSymbols,
-  type Card,
-  type KnownCard,
 } from "../cards.ts";
+import type { Card, KnownCard } from "../cards.ts";
 import {
   addToStack,
   capAt,
@@ -14,16 +13,18 @@ import {
   exceeds,
   minStack,
   takeFromStack,
-  type Chips,
-  type Stack,
 } from "../chips.ts";
+import type { Chips, Stack } from "../chips.ts";
 import type { EventBody } from "../events.ts";
 import type { RaiseRange } from "../hand.ts";
-import { entryOf, lookup, type Entry } from "../lookups.ts";
-import { err, ok, type Result } from "../result.ts";
+import { entryOf, lookup } from "../lookups.ts";
+import type { Entry } from "../lookups.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Opening } from "../rules.ts";
 import { placeBet } from "./forced.ts";
-import { notEligible, type Refusal } from "./refusal.ts";
+import { notEligible } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
 import {
   activeCount,
   at,
@@ -39,21 +40,23 @@ import {
   rotatedFrom,
   sum,
   upCards,
-  type Betting,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { Betting, HandState, Position } from "./state.ts";
 import { totalPot } from "./pots.ts";
 
 /** What the player can lose: capped by the second-largest active stack. */
 export function effectiveStack(state: HandState, position: Position): Stack {
-  if (state.street === null || !at(state.active, position)) return 0;
+  if (state.street === null || !at(state.active, position)) {
+    return 0;
+  }
   const totals = positionsOf(state)
     .filter((index) => at(state.active, index))
     .map((index) => addToStack(at(state.stacks, index), at(state.bets, index)))
     .toSorted(compareStacks);
   const second = totals.at(-2);
-  if (second === undefined) return 0;
+  if (second === undefined) {
+    return 0;
+  }
   const covered = takeFromStack(second, at(state.bets, position));
   return minStack(
     at(state.stacks, position),
@@ -62,13 +65,13 @@ export function effectiveStack(state: HandState, position: Position): Stack {
 }
 
 /** pokerkit's `card_key`: rank in `order`, then suit, clubs lowest. */
-function cardKey(order: readonly string[]): (card: KnownCard) => number {
+function cardKey(order: ReadonlyArray<string>): (card: KnownCard) => number {
   return (card) =>
     order.indexOf(rankOf(card)) * suitSymbols.length +
     suitSymbols.indexOf(suitOf(card));
 }
 
-function knownUpCards(state: HandState, position: Position): KnownCard[] {
+function knownUpCards(state: HandState, position: Position): Array<KnownCard> {
   return upCards(state, position).filter(isKnownCard);
 }
 
@@ -78,9 +81,11 @@ function openingEntry(
   low: boolean
 ): Entry | null {
   const table = lookup(low ? "lowHandOpening" : "highHandOpening");
-  const cards: readonly Card[] = upCards(state, position);
+  const cards: ReadonlyArray<Card> = upCards(state, position);
   return entryOf(table, cards);
 }
+
+const entryIndex = (entry: Entry) => entry.index;
 
 /** pokerkit's `_begin_betting` opener, ties going to the earlier position. */
 function openerOf(state: HandState, opening: Opening): Position {
@@ -120,8 +125,9 @@ function openerOf(state: HandState, opening: Opening): Position {
       const entries = positions.map((position) =>
         openingEntry(state, position, low)
       );
-      const index = (entry: Entry) => entry.index;
-      const best = low ? minOrNull(entries, index) : maxOrNull(entries, index);
+      const best = low
+        ? minOrNull(entries, entryIndex)
+        : maxOrNull(entries, entryIndex);
       return entries.findIndex((entry) => entry?.index === best?.index);
     }
   }
@@ -144,7 +150,9 @@ export function priceOf(state: HandState): Chips {
 /** pokerkit counts any first wager as full. TDA Rule 47 opens each street with a full bet:
  * the largest blind preflop, the minimum bet after, so shorter all-ins reopen nothing. */
 function openingFullBet(state: HandState): Chips {
-  if (!state.game.conventions.bigBlindIsFullBet) return 0;
+  if (!state.game.conventions.bigBlindIsFullBet) {
+    return 0;
+  }
   return state.street === 0
     ? nominalBlind(state)
     : currentStreet(state).minCompletionBetOrRaise;
@@ -185,7 +193,9 @@ export function bettingOver(state: HandState): boolean {
 
 /** Whether the hand is all-in, which turns the rest into a runout. */
 export function endBetting(state: HandState): void {
-  if (state.phase.kind === "betting") state.phase.actors = [];
+  if (state.phase.kind === "betting") {
+    state.phase.actors = [];
+  }
   if (
     activeCount(state) > 1 &&
     !laterStreets(state).some((street) => street.draw)
@@ -194,9 +204,13 @@ export function endBetting(state: HandState): void {
       (position) =>
         at(state.active, position) && at(state.stacks, position) !== 0
     );
-    if (withChips.length <= 1) state.allIn = true;
+    if (withChips.length <= 1) {
+      state.allIn = true;
+    }
   }
-  if (state.stacks.includes(0) && isLastStreet(state)) state.allIn = true;
+  if (state.stacks.includes(0) && isLastStreet(state)) {
+    state.allIn = true;
+  }
 }
 
 type Turn = { readonly phase: Betting; readonly actor: Position };
@@ -206,9 +220,13 @@ function turnOf(
   player: Position | undefined
 ): Result<Turn, Refusal> {
   const { phase } = state;
-  if (phase.kind !== "betting") return err({ code: "not_now" });
+  if (phase.kind !== "betting") {
+    return err({ code: "not_now" });
+  }
   const actor = phase.actors[0];
-  if (actor === undefined) return err({ code: "not_now" });
+  if (actor === undefined) {
+    return err({ code: "not_now" });
+  }
   if (player !== undefined && player !== actor) {
     return err(notEligible(state, player, [actor]));
   }
@@ -218,7 +236,9 @@ function turnOf(
 function popActor(phase: Betting): Position {
   const actor = at(phase.actors, 0);
   phase.actors.shift();
-  if (!phase.acted.includes(actor)) phase.acted.push(actor);
+  if (!phase.acted.includes(actor)) {
+    phase.acted.push(actor);
+  }
   return actor;
 }
 
@@ -229,7 +249,9 @@ export function needlessFoldAllowed(
   actor: Position
 ): boolean {
   const { needlessFolds, strandedPots } = state.game.conventions;
-  if (needlessFolds === "refused") return false;
+  if (needlessFolds === "refused") {
+    return false;
+  }
   return (
     strandedPots === "unclaimed" ||
     positionsOf(state).some(
@@ -246,9 +268,13 @@ export function fold(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const turn = turnOf(state, player);
-  if (!turn.ok) return turn;
+  if (!turn.ok) {
+    return turn;
+  }
   const { phase, actor } = turn.value;
-  if (phase.bringIn) return err({ code: "bring_in_pending" });
+  if (phase.bringIn) {
+    return err({ code: "bring_in_pending" });
+  }
   const needless = at(state.bets, actor) >= priceOf(state);
   if (needless && !needlessFoldAllowed(state, actor)) {
     return err({ code: "needless_fold" });
@@ -267,14 +293,20 @@ export function checkOrCall(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const turn = turnOf(state, player);
-  if (!turn.ok) return turn;
+  if (!turn.ok) {
+    return turn;
+  }
   const { phase, actor } = turn.value;
-  if (phase.bringIn) return err({ code: "bring_in_pending" });
+  if (phase.bringIn) {
+    return err({ code: "bring_in_pending" });
+  }
   const amount = callAmount(state, actor);
   popActor(phase);
   placeBet(state, actor, amount);
   const id = playerAt(state, actor);
-  if (amount === 0) return ok({ type: "checked", player: id });
+  if (amount === 0) {
+    return ok({ type: "checked", player: id });
+  }
   return ok({
     type: "called",
     player: id,
@@ -292,9 +324,13 @@ export function postBringIn(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const turn = turnOf(state, player);
-  if (!turn.ok) return turn;
+  if (!turn.ok) {
+    return turn;
+  }
   const { phase, actor } = turn.value;
-  if (!phase.bringIn) return err({ code: "not_now" });
+  if (!phase.bringIn) {
+    return err({ code: "not_now" });
+  }
   const amount = bringInAmount(state, actor);
   popActor(phase);
   placeBet(state, actor, amount);
@@ -313,7 +349,9 @@ function shortOfReopening(state: HandState, amount: Chips, phase: Betting) {
 }
 
 function raiseKind(phase: Betting, largest: Chips): RaiseRange["kind"] {
-  if (phase.completion) return "complete";
+  if (phase.completion) {
+    return "complete";
+  }
   return largest === 0 ? "bet" : "raise";
 }
 
@@ -323,14 +361,18 @@ export function raiseRange(
   player: Position | undefined
 ): Result<RaiseRange, Refusal> {
   const turn = turnOf(state, player);
-  if (!turn.ok) return turn;
+  if (!turn.ok) {
+    return turn;
+  }
   const { phase, actor } = turn.value;
   const street = currentStreet(state);
   const stack = at(state.stacks, actor);
   const bet = at(state.bets, actor);
   const largest = priceOf(state);
   // pokerkit checks this last and reports a stack that only covers a call as a short all-in.
-  if (!exceeds(stack, largest - bet)) return err({ code: "call_is_all_in" });
+  if (!exceeds(stack, largest - bet)) {
+    return err({ code: "call_is_all_in" });
+  }
   // pokerkit refuses a raise to anyone facing less than a full raise. With the blind as a
   // full bet that would take the blinds' option too, so it binds only those who have acted.
   if (
@@ -362,7 +404,9 @@ export function raiseRange(
         largest
       )
   );
-  if (!contested) return err({ code: "everyone_else_all_in" });
+  if (!contested) {
+    return err({ code: "everyone_else_all_in" });
+  }
   const all = addToStack(stack, bet);
   const min = capAt(
     Math.max(phase.lastRaise, street.minCompletionBetOrRaise) +
@@ -387,7 +431,9 @@ export function betOrRaiseTo(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const range = raiseRange(state, player);
-  if (!range.ok) return range;
+  if (!range.ok) {
+    return range;
+  }
   const { kind, min, max } = range.value;
   if (amount < min) {
     return err({ code: "below_minimum", attempted: amount, minimum: min });
@@ -398,7 +444,9 @@ export function betOrRaiseTo(
   if (!Number.isSafeInteger(amount)) {
     return err({ code: "invalid_amount", attempted: amount });
   }
-  if (state.phase.kind !== "betting") return err({ code: "not_now" });
+  if (state.phase.kind !== "betting") {
+    return err({ code: "not_now" });
+  }
   const phase = state.phase;
   const actor = popActor(phase);
   const raise = amount - priceOf(state);
@@ -412,12 +460,16 @@ export function betOrRaiseTo(
         at(state.active, position) && at(state.stacks, position) !== 0
     );
   state.opener = actor;
-  if (raise >= phase.lastRaise) phase.acted = [actor];
+  if (raise >= phase.lastRaise) {
+    phase.acted = [actor];
+  }
   phase.lastRaise = Math.max(phase.lastRaise, raise);
   phase.raises += 1;
   const allIn = at(state.stacks, actor) === 0;
   phase.shortAllIns = allIn ? [...phase.shortAllIns, raise] : [];
-  if (sum(phase.shortAllIns) >= phase.lastRaise) phase.shortAllIns = [];
+  if (sum(phase.shortAllIns) >= phase.lastRaise) {
+    phase.shortAllIns = [];
+  }
   return ok({
     type: "betOrRaised",
     player: playerAt(state, actor),

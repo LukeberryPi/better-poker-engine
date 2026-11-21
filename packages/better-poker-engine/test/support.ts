@@ -1,15 +1,13 @@
 import { createHash } from "node:crypto";
 
-import { parseRange, type Range } from "../src/analysis.ts";
-import {
-  isKnownCard,
-  parseCards,
-  type Card,
-  type KnownCard,
-} from "../src/cards.ts";
+import { parseRange } from "../src/analysis.ts";
+import type { Range } from "../src/analysis.ts";
+import { isKnownCard, parseCards } from "../src/cards.ts";
+import type { Card, KnownCard } from "../src/cards.ts";
 import type { Hand, Transition, Violation } from "../src/hand.ts";
 import { stateOf } from "../src/hand/state.ts";
-import { entryOf, type Lookup } from "../src/lookups.ts";
+import { entryOf } from "../src/lookups.ts";
+import type { Lookup } from "../src/lookups.ts";
 import type { RandomSource } from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import { serializeHand } from "../src/storage.ts";
@@ -33,17 +31,21 @@ export function sameTransition(
 }
 
 export function okValue<T, E>(result: Result<T, E>): T {
-  if (!result.ok) throw new Error(`Not ok: ${JSON.stringify(result.error)}`);
+  if (!result.ok) {
+    throw new Error(`Not ok: ${JSON.stringify(result.error)}`);
+  }
   return result.value;
 }
 
-export function cards(text: string): Card[] {
+export function cards(text: string): Array<Card> {
   const parsed = parseCards(text);
-  if (!parsed.ok) throw new Error(`Test cards do not parse: ${text}`);
+  if (!parsed.ok) {
+    throw new Error(`Test cards do not parse: ${text}`);
+  }
   return [...parsed.value];
 }
 
-export function known(text: string): KnownCard[] {
+export function known(text: string): Array<KnownCard> {
   const parsed = cards(text);
   if (!parsed.every(isKnownCard)) {
     throw new Error(`Test cards are not all known: ${text}`);
@@ -52,31 +54,35 @@ export function known(text: string): KnownCard[] {
 }
 
 /** pokerkit's `parse_range(*texts)`, which joins its arguments with a space. */
-export function range(...texts: readonly string[]): Range {
+export function range(...texts: ReadonlyArray<string>): Range {
   const parsed = parseRange(texts.join(" "));
-  if (!parsed.ok) throw new Error(`Test range does not parse: ${texts}`);
+  if (!parsed.ok) {
+    throw new Error(`Test range does not parse: ${texts.join(",")}`);
+  }
   return parsed.value;
 }
 
 /** Sorted cards of sorted combinations: equal for the same set, unequal on repeats. */
 export function sortedCombos(
-  combos: readonly (readonly KnownCard[])[]
-): string[] {
+  combos: ReadonlyArray<ReadonlyArray<KnownCard>>
+): Array<string> {
   return combos.map((combo) => combo.toSorted().join("")).toSorted();
 }
 
-export function scripted(values: readonly number[]): RandomSource {
+export function scripted(values: ReadonlyArray<number>): RandomSource {
   const remaining = [...values];
   return {
     nextUint32: () => {
       const value = remaining.shift();
-      if (value === undefined) throw new Error("Scripted values ran out");
+      if (value === undefined) {
+        throw new Error("Scripted values ran out");
+      }
       return value;
     },
   };
 }
 
-type Cards = readonly KnownCard[];
+type Cards = ReadonlyArray<KnownCard>;
 
 /** Each `size`-card combination of `deck`, in `itertools.combinations` order. */
 export function forEachCombination(
@@ -90,7 +96,9 @@ export function forEachCombination(
     return;
   }
   deck.forEach((card, index) => {
-    if (deck.length - index < size) return;
+    if (deck.length - index < size) {
+      return;
+    }
     forEachCombination(deck.slice(index + 1), size - 1, visit, [
       ...chosen,
       card,
@@ -103,10 +111,12 @@ export function digestSortedByEntry(
   table: Lookup,
   combinations: (visit: (cards: Cards) => void) => void
 ): string {
-  const lines = Array.from({ length: table.size }, (): string[] => []);
+  const lines = Array.from({ length: table.size }, (): Array<string> => []);
   combinations((hand) => {
     const entry = entryOf(table, hand);
-    if (entry === null) throw new Error(`${hand.join("")} has no entry`);
+    if (entry === null) {
+      throw new Error(`${hand.join("")} has no entry`);
+    }
     lines[entry.index]?.push(hand.join(""));
   });
   const md5 = createHash("md5");

@@ -1,23 +1,18 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
+import type { z } from "zod/mini";
 
 import { decks, shuffle } from "../src/cards.ts";
 import { insecureSeededRandom } from "../src/random.ts";
 import { holdem } from "../src/rules.ts";
-import {
-  sqliteStore,
-  type SqlRow,
-  type SqliteDriver,
-  type SqlValue,
-} from "../src/sqlite.ts";
-import {
-  actAtTable,
-  createTable,
-  viewTable,
-  type Table,
-  type TableCommand,
-  type TableEvent,
-  type TableTransition,
+import { sqliteStore } from "../src/sqlite.ts";
+import type { SqlRow, SqliteDriver, SqlValue } from "../src/sqlite.ts";
+import { actAtTable, createTable, viewTable } from "../src/table.ts";
+import type {
+  Table,
+  TableCommand,
+  TableEvent,
+  TableTransition,
 } from "../src/table.ts";
 import { okValue } from "./support.ts";
 
@@ -30,7 +25,7 @@ function bunDriver(db: Database): SqliteDriver {
         )
       )(),
     all: async (sql, params) =>
-      db.query<SqlRow, SqlValue[]>(sql).all(...params),
+      db.query<SqlRow, Array<SqlValue>>(sql).all(...params),
   };
 }
 
@@ -46,7 +41,9 @@ async function openStore() {
 
 function step(table: Table, command: TableCommand): TableTransition {
   const next = actAtTable(table, command);
-  if (!next.ok) throw new Error(JSON.stringify(next.error));
+  if (!next.ok) {
+    throw new Error(JSON.stringify(next.error));
+  }
   return next.value;
 }
 
@@ -67,13 +64,17 @@ const deal = {
 async function playStored(
   store: Awaited<ReturnType<typeof openStore>>["store"],
   id: string
-): Promise<TableEvent[]> {
-  const events: TableEvent[] = [];
+): Promise<Array<TableEvent>> {
+  const events: Array<TableEvent> = [];
   for (let moves = 0; moves < 200; moves += 1) {
     const table = await store.loadTable(id);
-    if (table === null) throw new Error("No table");
+    if (table === null) {
+      throw new Error("No table");
+    }
     const view = viewTable(table, auditor);
-    if (view.hand === null && view.hands === 2) return events;
+    if (view.hand === null && view.hands === 2) {
+      return events;
+    }
     const decision = view.hand?.decision;
     if (decision !== undefined && decision.kind !== "betting") {
       throw new Error(`A table asked for ${decision.kind}`);
@@ -108,7 +109,9 @@ describe("sqliteStore", () => {
     });
     const events = await playStored(store, "t1");
     const loaded = await store.loadTable("t1");
-    if (loaded === null) throw new Error("No table");
+    if (loaded === null) {
+      throw new Error("No table");
+    }
     expect(viewTable(loaded, auditor).hands).toBe(2);
     expect(await store.events("t1")).toEqual(events);
     const records = events.flatMap(({ body }) =>
@@ -162,7 +165,9 @@ describe("sqliteStore", () => {
     const table = seated();
     const attempt = { type: "leave", player: "z" } as const;
     const rejected = actAtTable(table, attempt);
-    if (rejected.ok) throw new Error("Accepted");
+    if (rejected.ok) {
+      throw new Error("Accepted");
+    }
     await store.saveRejection("t1", table, rejected.error);
     const rows = db
       .query<{ version: number; rejection: string }, []>(
@@ -170,7 +175,10 @@ describe("sqliteStore", () => {
       )
       .all();
     expect(
-      rows.map(({ version, rejection }) => [version, JSON.parse(rejection)])
+      rows.map(({ version, rejection }) => {
+        const stored: z.core.util.JSONType = JSON.parse(rejection);
+        return [version, stored];
+      })
     ).toEqual([
       [2, { attempt, violation: { code: "not_seated", player: "z" } }],
     ]);
@@ -180,6 +188,7 @@ describe("sqliteStore", () => {
     const { db, store } = await openStore();
     expect(await store.loadTable("t1")).toBeNull();
     db.query("INSERT INTO poker_tables VALUES ('t1', 0, '{}')").run();
+    // oxlint-disable-next-line typescript/await-thenable -- bun types `rejects` as void; it is a promise.
     await expect(store.loadTable("t1")).rejects.toThrow("Stored table t1");
   });
 });

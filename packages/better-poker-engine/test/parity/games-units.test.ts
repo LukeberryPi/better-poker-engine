@@ -2,15 +2,16 @@ import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
 import { decks } from "../../src/cards.ts";
-import { automation, type Hand } from "../../src/hand.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
 import {
   conventions,
   kuhn,
   omaha,
   rhodeIsland,
   royal,
-  type Game,
 } from "../../src/rules.ts";
+import type { Game } from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -23,8 +24,8 @@ import {
   repeat,
   stacks,
   start,
-  type Driver,
 } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 import { cards } from "../support.ts";
 
 const { board, burn, call, deal, raise, raiseTo } = moves;
@@ -32,6 +33,8 @@ const { board, burn, call, deal, raise, raiseTo } = moves;
 function selectRunoutCount(count: number | null) {
   return accept({ type: "selectRunoutCount", count });
 }
+
+const boardCards = (table: Driver) => auditor(table.hand).boards;
 
 unitTest(
   "pokerkit.tests.test_games.PotLimitOmahaHoldemTestCase.test_double_board",
@@ -57,15 +60,23 @@ unitTest(
         )
       );
     const holes = ["AcKc3c2c", "AdKd3d2d", "AhKh3h2h", "AsKs3s2s"].map(deal);
-    const boardCards = (table: Driver) => auditor(table.hand).boards;
 
     let table = newHand();
     play(table, [
       ...holes,
       ...repeat(call, 4),
-      ...[burn, board("QcJcTc"), board("QdJdTd"), ...repeat(call, 4)],
-      ...[burn, board("9c"), board("9d"), ...repeat(call, 4)],
-      ...[burn, board("8c"), board("8d"), ...repeat(call, 4)],
+      burn,
+      board("QcJcTc"),
+      board("QdJdTd"),
+      ...repeat(call, 4),
+      burn,
+      board("9c"),
+      board("9d"),
+      ...repeat(call, 4),
+      burn,
+      board("8c"),
+      board("8d"),
+      ...repeat(call, 4),
     ]);
     expect(inProgress(table.hand)).toBe(false);
     expect(stacks(table.hand)).toEqual([202, 202, 198, 198]);
@@ -76,12 +87,21 @@ unitTest(
     table = newHand();
     play(table, [
       ...holes,
-      ...[raiseTo(7), raiseTo(24), raiseTo(81), raiseTo(200)],
+      raiseTo(7),
+      raiseTo(24),
+      raiseTo(81),
+      raiseTo(200),
       ...repeat(call, 3),
       ...repeat(selectRunoutCount(1), 4),
-      ...[burn, board("QcJcTc"), board("QdJdTd")],
-      ...[burn, board("9c"), board("9d")],
-      ...[burn, board("8c"), board("8d")],
+      burn,
+      board("QcJcTc"),
+      board("QdJdTd"),
+      burn,
+      board("9c"),
+      board("9d"),
+      burn,
+      board("8c"),
+      board("8d"),
     ]);
     expect(inProgress(table.hand)).toBe(false);
     expect(stacks(table.hand)).toEqual([400, 400, 0, 0]);
@@ -93,15 +113,28 @@ unitTest(
     play(table, [
       ...holes,
       ...repeat(call, 4),
-      ...[burn, board("QcJcTc"), board("QdJhTs")],
-      ...[raiseTo(8), raiseTo(32), raiseTo(112), raiseTo(198)],
+      burn,
+      board("QcJcTc"),
+      board("QdJhTs"),
+      raiseTo(8),
+      raiseTo(32),
+      raiseTo(112),
+      raiseTo(198),
       ...repeat(call, 3),
       ...repeat(selectRunoutCount(null), 3),
       selectRunoutCount(2),
-      ...[burn, board("7c"), board("7d")],
-      ...[burn, board("6c"), board("6d")],
-      ...[burn, board("5c"), board("7s")],
-      ...[burn, board("4c"), board("6s")],
+      burn,
+      board("7c"),
+      board("7d"),
+      burn,
+      board("6c"),
+      board("6d"),
+      burn,
+      board("5c"),
+      board("7s"),
+      burn,
+      board("4c"),
+      board("6s"),
     ]);
     expect(inProgress(table.hand)).toBe(false);
     expect(stacks(table.hand)).toEqual([450, 50, 50, 250]);
@@ -179,16 +212,18 @@ unitTest(
   }
 );
 
+const startingStacks = (hand: Hand) =>
+  auditor(hand).players.map((player) => player.startingStack);
+
 unitTest(
   "pokerkit.tests.test_games.RhodeIslandHoldemTestCase.test_create_state",
   () => {
-    const startingStacks = (hand: Hand) =>
-      auditor(hand).players.map((player) => player.startingStack);
     const postAnte = accept({ type: "postAnte" });
     const collectBets = accept({ type: "collectBets" });
     const showOrMuck = accept({ type: "timeout" });
     const ending = [
-      ...[showOrMuck, showOrMuck],
+      showOrMuck,
+      showOrMuck,
       accept({ type: "killHand" }),
       accept({ type: "pushChips" }),
       accept({ type: "pullChips" }),
@@ -199,10 +234,25 @@ unitTest(
     );
     expect(startingStacks(table.hand)).toEqual([155, 155]);
     play(table, [
-      ...[postAnte, postAnte, collectBets],
-      ...[deal("As"), deal("Kc"), call, raise, call, collectBets],
-      ...[burn, board("Ac"), raise, call, collectBets],
-      ...[burn, board("Qc"), raise, call, collectBets],
+      postAnte,
+      postAnte,
+      collectBets,
+      deal("As"),
+      deal("Kc"),
+      call,
+      raise,
+      call,
+      collectBets,
+      burn,
+      board("Ac"),
+      raise,
+      call,
+      collectBets,
+      burn,
+      board("Qc"),
+      raise,
+      call,
+      collectBets,
       ...ending,
     ]);
     expect(inProgress(table.hand)).toBe(false);
@@ -211,8 +261,15 @@ unitTest(
     table = drive(start(rhodeIsland.fixedLimit(), [155, 155], automation.none));
     expect(startingStacks(table.hand)).toEqual([155, 155]);
     play(table, [
-      ...[postAnte, postAnte, collectBets],
-      ...[deal("As"), deal("Kc"), call, raise, raise, raise],
+      postAnte,
+      postAnte,
+      collectBets,
+      deal("As"),
+      deal("Kc"),
+      call,
+      raise,
+      raise,
+      raise,
     ]);
     expect(table.can(minimumRaise(table))).toBe(false);
     play(table, [call, collectBets, burn, board("Ac"), raise, raise, raise]);

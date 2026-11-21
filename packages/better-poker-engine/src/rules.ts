@@ -1,9 +1,10 @@
 import type { DeckName } from "./cards.ts";
-import { isChips, type Chips } from "./chips.ts";
+import { isChips } from "./chips.ts";
+import type { Chips } from "./chips.ts";
 import type { HandType } from "./evaluation.ts";
 import type { VariantCode } from "./variants.ts";
 
-export type NonEmpty<T> = readonly [T, ...T[]];
+export type NonEmpty<T> = readonly [T, ...Array<T>];
 
 export type Face = "up" | "down";
 
@@ -20,7 +21,7 @@ export type Opening =
 export type Street = {
   readonly burn: boolean;
   /** One entry per hole card each player receives on this street. */
-  readonly hole: readonly Face[];
+  readonly hole: ReadonlyArray<Face>;
   readonly board: number;
   readonly draw: boolean;
   readonly opening: Opening;
@@ -42,12 +43,12 @@ export type Antes =
   | { readonly kind: "everyone"; readonly amount: Chips }
   | { readonly kind: "button"; readonly amount: Chips }
   | { readonly kind: "bigBlind"; readonly amount: Chips }
-  | { readonly kind: "byPosition"; readonly amounts: readonly Chips[] };
+  | { readonly kind: "byPosition"; readonly amounts: ReadonlyArray<Chips> };
 
 export type ForcedBets = {
   readonly antes: Antes;
   /** By position: small blind, big blind, then straddles. Negative amounts post a bet. */
-  readonly blinds: readonly number[];
+  readonly blinds: ReadonlyArray<number>;
   readonly bringIn: Chips | null;
   /** Return the part of each ante nobody else matched before the first street. */
   readonly anteTrimming: boolean;
@@ -165,12 +166,12 @@ type Options = ConventionOptions & {
 };
 
 export type BlindStakes = Options & {
-  readonly blinds: readonly number[];
+  readonly blinds: ReadonlyArray<number>;
   readonly minBet: Chips;
 };
 
 export type FixedLimitStakes = Options & {
-  readonly blinds: readonly number[];
+  readonly blinds: ReadonlyArray<number>;
   readonly smallBet: Chips;
   readonly bigBet: Chips;
 };
@@ -206,7 +207,7 @@ function streetOf(
   };
 }
 
-function down(count: number): Face[] {
+function down(count: number): Array<Face> {
   return Array.from({ length: count }, () => "down");
 }
 
@@ -275,7 +276,7 @@ function studRules(
   low: boolean
 ): (bets: Bets) => Rules {
   const later = low ? "lowHand" : "highHand";
-  const street = (hole: readonly Face[], bet: Chips) =>
+  const street = (hole: ReadonlyArray<Face>, bet: Chips) =>
     streetOf(
       "fixedLimit",
       { burn: true, hole, board: 0, draw: false, opening: later },
@@ -535,7 +536,7 @@ export const royal = {
   rhodeIsland: rhodeIslandGame("royal"),
 };
 
-function anteAmounts(antes: Antes): readonly number[] {
+function anteAmounts(antes: Antes): ReadonlyArray<number> {
   switch (antes.kind) {
     case "none":
       return [];
@@ -554,7 +555,7 @@ function invalid(field: string, value: number): GameError {
 
 function firstInvalid(
   field: string,
-  values: readonly number[],
+  values: ReadonlyArray<number>,
   valid: (value: number) => boolean
 ): GameError | null {
   const value = values.find((candidate) => !valid(candidate));
@@ -563,7 +564,9 @@ function firstInvalid(
 
 function streetError(street: Street, index: number): GameError | null {
   const field = `streets.${index}`;
-  if (!isChips(street.board)) return invalid(`${field}.board`, street.board);
+  if (!isChips(street.board)) {
+    return invalid(`${field}.board`, street.board);
+  }
   const holeCards = street.hole.length > 0;
   if (!holeCards && street.board === 0 && !street.draw) {
     return { code: "street_deals_nothing", street: index };
@@ -582,7 +585,9 @@ function streetError(street: Street, index: number): GameError | null {
 }
 
 function rakeError(rake: Rake): GameError | null {
-  if (rake.kind === "none") return null;
+  if (rake.kind === "none") {
+    return null;
+  }
   if (!isChips(rake.basisPoints) || rake.basisPoints > 10_000) {
     return invalid("rake.basisPoints", rake.basisPoints);
   }
@@ -597,7 +602,9 @@ export function validateGame(game: Game): GameError | null {
   const { streets } = game.rules;
   for (const [index, street] of streets.entries()) {
     const error = streetError(street, index);
-    if (error !== null) return error;
+    if (error !== null) {
+      return error;
+    }
   }
   if (streets[0].hole.length === 0) {
     return { code: "first_street_without_hole_cards" };
@@ -608,21 +615,29 @@ export function validateGame(game: Game): GameError | null {
     anteAmounts(antes),
     isChips
   );
-  if (anteError !== null) return anteError;
+  if (anteError !== null) {
+    return anteError;
+  }
   const blindError = firstInvalid(
     "forcedBets.blinds",
     blinds,
     Number.isSafeInteger
   );
-  if (blindError !== null) return blindError;
+  if (blindError !== null) {
+    return blindError;
+  }
   if (bringIn !== null && !isChips(bringIn)) {
     return invalid("forcedBets.bringIn", bringIn);
   }
   const anyAnte = anteAmounts(antes).some((amount) => amount > 0);
   const anyBlind = blinds.some((amount) => amount !== 0);
   const anyBringIn = bringIn !== null && bringIn > 0;
-  if (!anyAnte && !anyBlind && !anyBringIn) return { code: "no_forced_bets" };
-  if (anyBlind && anyBringIn) return { code: "blinds_with_bring_in" };
+  if (!anyAnte && !anyBlind && !anyBringIn) {
+    return { code: "no_forced_bets" };
+  }
+  if (anyBlind && anyBringIn) {
+    return { code: "blinds_with_bring_in" };
+  }
   const minBet = streets[0].minCompletionBetOrRaise;
   if (bringIn !== null && bringIn >= minBet) {
     return { code: "bring_in_not_below_min_bet", bringIn, minBet };

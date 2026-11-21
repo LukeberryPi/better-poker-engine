@@ -3,7 +3,8 @@ import { expect } from "bun:test";
 import { doctest } from "../../../../parity/harness.ts";
 import { automation } from "../../src/hand.ts";
 import { holdem } from "../../src/rules.ts";
-import { auditor, drive, start, type Driver } from "../driver.ts";
+import { auditor, drive, start } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 const game = holdem.noLimit({
   antes: { kind: "byPosition", amounts: [0, 2] },

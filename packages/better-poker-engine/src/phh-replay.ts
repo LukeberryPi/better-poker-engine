@@ -1,39 +1,28 @@
 import { decks } from "./cards.ts";
 import type { Stack } from "./chips.ts";
 import type { HandEvent } from "./events.ts";
-import {
-  act,
-  startHand,
-  type Action,
-  type Automation,
-  type Hand,
-  type HandSetup,
-  type PlayerId,
-  type SetupError,
-  type Transition,
-  type Violation,
+import { act, startHand } from "./hand.ts";
+import type {
+  Action,
+  Automation,
+  Hand,
+  HandSetup,
+  PlayerId,
+  SetupError,
+  Transition,
+  Violation,
 } from "./hand.ts";
 import { decisionOf } from "./hand/flow.ts";
 import { stateOf } from "./hand/state.ts";
-import { formatPhhAction, type PhhAction } from "./phh-actions.ts";
-import {
-  toBlindChips,
-  toChips,
-  type AmountScale,
-  type ChipsError,
-  type PhhDecimal,
-} from "./phh-amounts.ts";
+import { formatPhhAction } from "./phh-actions.ts";
+import type { PhhAction } from "./phh-actions.ts";
+import { toBlindChips, toChips } from "./phh-amounts.ts";
+import type { AmountScale, ChipsError, PhhDecimal } from "./phh-amounts.ts";
 import type { Phh, PhhStack } from "./phh.ts";
-import { err, ok, type Result } from "./result.ts";
-import {
-  conventions,
-  draw,
-  holdem,
-  omaha,
-  shortDeck,
-  stud,
-  type Game,
-} from "./rules.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
+import { conventions, draw, holdem, omaha, shortDeck, stud } from "./rules.ts";
+import type { Game } from "./rules.ts";
 
 export type ReplayStep = Transition & {
   /** The history's action as `formatPhhAction` writes it, or null for a step
@@ -45,7 +34,7 @@ export type HistoryReplay = {
   /** Players are "p1".."pN", as in PHH actions; names stay in `history.players`. */
   readonly setup: HandSetup;
   /** The hand as it starts, then one step per action or filled-in step. */
-  readonly steps: readonly ReplayStep[];
+  readonly steps: ReadonlyArray<ReplayStep>;
   readonly final: Hand;
 };
 
@@ -97,14 +86,16 @@ function amountAt(
 
 function amountsAt(
   field: string,
-  amounts: readonly PhhDecimal[],
+  amounts: ReadonlyArray<PhhDecimal>,
   scale: AmountScale,
   convert: ToChips = toChips
-): Result<number[], HistoryReplayError> {
-  const values: number[] = [];
+): Result<Array<number>, HistoryReplayError> {
+  const values: Array<number> = [];
   for (const [index, amount] of amounts.entries()) {
     const value = amountAt(`${field}[${index}]`, amount, scale, convert);
-    if (!value.ok) return value;
+    if (!value.ok) {
+      return value;
+    }
     values.push(value.value);
   }
   return ok(values);
@@ -112,17 +103,19 @@ function amountsAt(
 
 export function stacksAt(
   field: string,
-  stacks: readonly PhhStack[],
+  stacks: ReadonlyArray<PhhStack>,
   scale: AmountScale
-): Result<Stack[], HistoryReplayError> {
-  const values: Stack[] = [];
+): Result<Array<Stack>, HistoryReplayError> {
+  const values: Array<Stack> = [];
   for (const [index, stack] of stacks.entries()) {
     if (stack === "unbounded") {
       values.push(stack);
       continue;
     }
     const value = amountAt(`${field}[${index}]`, stack, scale);
-    if (!value.ok) return value;
+    if (!value.ok) {
+      return value;
+    }
     values.push(value.value);
   }
   return ok(values);
@@ -155,7 +148,9 @@ function historyGame(
   scale: AmountScale
 ): Result<Game, HistoryReplayError> {
   const antes = amountsAt("antes", history.antes, scale);
-  if (!antes.ok) return antes;
+  if (!antes.ok) {
+    return antes;
+  }
   const options = {
     antes: { kind: "byPosition", amounts: antes.value },
     conventions: { ...conventions.cashGame, strandedPots: "unclaimed" },
@@ -172,11 +167,17 @@ function historyGame(
         scale,
         toBlindChips
       );
-      if (!blinds.ok) return blinds;
+      if (!blinds.ok) {
+        return blinds;
+      }
       const smallBet = amountAt("small_bet", history.smallBet, scale);
-      if (!smallBet.ok) return smallBet;
+      if (!smallBet.ok) {
+        return smallBet;
+      }
       const bigBet = amountAt("big_bet", history.bigBet, scale);
-      if (!bigBet.ok) return bigBet;
+      if (!bigBet.ok) {
+        return bigBet;
+      }
       return ok(
         fixedLimitGames[history.variant]({
           ...options,
@@ -196,9 +197,13 @@ function historyGame(
         scale,
         toBlindChips
       );
-      if (!blinds.ok) return blinds;
+      if (!blinds.ok) {
+        return blinds;
+      }
       const minBet = amountAt("min_bet", history.minBet, scale);
-      if (!minBet.ok) return minBet;
+      if (!minBet.ok) {
+        return minBet;
+      }
       return ok(
         minBetGames[history.variant]({
           ...options,
@@ -211,11 +216,17 @@ function historyGame(
     case "F7S/8":
     case "FR": {
       const bringIn = amountAt("bring_in", history.bringIn, scale);
-      if (!bringIn.ok) return bringIn;
+      if (!bringIn.ok) {
+        return bringIn;
+      }
       const smallBet = amountAt("small_bet", history.smallBet, scale);
-      if (!smallBet.ok) return smallBet;
+      if (!smallBet.ok) {
+        return smallBet;
+      }
       const bigBet = amountAt("big_bet", history.bigBet, scale);
-      if (!bigBet.ok) return bigBet;
+      if (!bigBet.ok) {
+        return bigBet;
+      }
       return ok(
         studGames[history.variant]({
           ...options,
@@ -266,7 +277,9 @@ function engineAction(
       return ok({ type: action.type, player: playerOf(action) });
     case "betOrRaiseTo": {
       const amount = amountAt(`actions[${index}]`, action.amount, scale);
-      if (!amount.ok) return amount;
+      if (!amount.ok) {
+        return amount;
+      }
       return ok({
         type: "betOrRaiseTo",
         player: playerOf(action),
@@ -285,13 +298,15 @@ function engineAction(
 }
 
 function pendingActions(
-  actions: readonly PhhAction[],
+  actions: ReadonlyArray<PhhAction>,
   scale: AmountScale
-): Result<Pending[], HistoryReplayError> {
-  const pending: Pending[] = [];
+): Result<Array<Pending>, HistoryReplayError> {
+  const pending: Array<Pending> = [];
   for (const [index, action] of actions.entries()) {
     const converted = engineAction(action, index, scale);
-    if (!converted.ok) return converted;
+    if (!converted.ok) {
+      return converted;
+    }
     pending.push({
       text: formatPhhAction(action),
       action: converted.value,
@@ -320,7 +335,7 @@ function always(action: Action): Repair {
 }
 
 /** What pokerkit's `state_actions` tries, in order, when no history action applies. */
-const repairs: readonly Repair[] = [
+const repairs: ReadonlyArray<Repair> = [
   always({ type: "postAnte" }),
   always({ type: "collectBets" }),
   always({ type: "postBlind" }),
@@ -342,9 +357,13 @@ type Repaired = { readonly action: Action; readonly transition: Transition };
 
 function repair(hand: Hand, actionsLeft: boolean): Repaired | null {
   for (const { action, applies } of repairs) {
-    if (!applies(hand, actionsLeft)) continue;
+    if (!applies(hand, actionsLeft)) {
+      continue;
+    }
     const transition = act(hand, action);
-    if (transition.ok) return { action, transition: transition.value };
+    if (transition.ok) {
+      return { action, transition: transition.value };
+    }
   }
   return null;
 }
@@ -353,7 +372,9 @@ function applyPending(
   hand: Hand,
   pending: Pending
 ): Result<Transition, Violation> {
-  if (pending.action === null) return ok({ hand, events: [] });
+  if (pending.action === null) {
+    return ok({ hand, events: [] });
+  }
   return pending.commentary === null
     ? act(hand, pending.action)
     : act(hand, pending.action, { commentary: pending.commentary });
@@ -363,12 +384,12 @@ function applyPending(
  * it fills in joins the next step instead of being one, as pokerkit does. */
 function replaySteps(
   start: Transition,
-  pending: readonly Pending[],
+  pending: ReadonlyArray<Pending>,
   burnsJoinNextStep: boolean
-): Result<readonly ReplayStep[], HistoryReplayError> {
-  const steps: ReplayStep[] = [{ ...start, action: null }];
+): Result<ReadonlyArray<ReplayStep>, HistoryReplayError> {
+  const steps: Array<ReplayStep> = [{ ...start, action: null }];
   let hand = start.hand;
-  let carried: readonly HandEvent[] = [];
+  let carried: ReadonlyArray<HandEvent> = [];
   const record = (transition: Transition, action: string | null): void => {
     hand = transition.hand;
     steps.push({
@@ -409,10 +430,14 @@ function replaySteps(
   }
   while (inProgress(hand)) {
     const repaired = repair(hand, false);
-    if (repaired === null) break;
+    if (repaired === null) {
+      break;
+    }
     fill(repaired);
   }
-  if (carried.length > 0) record({ hand, events: [] }, null);
+  if (carried.length > 0) {
+    record({ hand, events: [] }, null);
+  }
   return ok(steps);
 }
 
@@ -425,11 +450,17 @@ export function replayHistory(
   const scale = options.amountScale ?? 1;
   const automate = options.automate ?? historyAutomation;
   const game = historyGame(history, scale);
-  if (!game.ok) return game;
+  if (!game.ok) {
+    return game;
+  }
   const stacks = stacksAt("starting_stacks", history.startingStacks, scale);
-  if (!stacks.ok) return stacks;
+  if (!stacks.ok) {
+    return stacks;
+  }
   const pending = pendingActions(history.actions, scale);
-  if (!pending.ok) return pending;
+  if (!pending.ok) {
+    return pending;
+  }
   const setup = {
     game: game.value,
     stacks: stacks.value,
@@ -437,13 +468,17 @@ export function replayHistory(
     automate: automate.filter((step) => step !== "cardBurning"),
   } satisfies HandSetup;
   const started = startHand(setup);
-  if (!started.ok) return err({ code: "setup", error: started.error });
+  if (!started.ok) {
+    return err({ code: "setup", error: started.error });
+  }
   const steps = replaySteps(
     started.value,
     pending.value,
     automate.includes("cardBurning")
   );
-  if (!steps.ok) return steps;
+  if (!steps.ok) {
+    return steps;
+  }
   const final = steps.value.at(-1)?.hand ?? started.value.hand;
   return ok({ setup, steps: steps.value, final });
 }

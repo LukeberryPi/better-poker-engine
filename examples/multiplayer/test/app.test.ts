@@ -5,10 +5,8 @@ import {
   insecureSeededRandom,
   tableEventsFor,
   viewTable,
-  type Audience,
-  type PlayerId,
-  type Table,
 } from "better-poker-engine";
+import type { Audience, PlayerId, Table } from "better-poker-engine";
 import { sqliteStore } from "better-poker-engine/sqlite";
 
 import { createApp } from "../src/app.ts";
@@ -19,21 +17,24 @@ type Json =
   | number
   | boolean
   | null
-  | readonly Json[]
+  | ReadonlyArray<Json>
   | { readonly [key: string]: Json };
 
 const auditor = { kind: "auditor" } as const;
+
+function headersFor(player: PlayerId | null): Headers {
+  const headers = new Headers({ "content-type": "application/json" });
+  if (player !== null) {
+    headers.set("x-player", player);
+  }
+  return headers;
+}
 
 async function dealtTable() {
   const db = new Database(":memory:");
   const store = sqliteStore(bunDriver(db));
   await store.migrate();
   const app = createApp(store, insecureSeededRandom(1));
-  const headersFor = (player: PlayerId | null) => {
-    const headers = new Headers({ "content-type": "application/json" });
-    if (player !== null) headers.set("x-player", player);
-    return headers;
-  };
   const request = (path: string, player: PlayerId | null) =>
     app.request(path, { headers: headersFor(player) });
   const post = (path: string, player: PlayerId | null, body: Json = {}) =>
@@ -48,7 +49,9 @@ async function dealtTable() {
   await post("/tables/t1/deal", "a");
   const stored = async (): Promise<Table> => {
     const table = await store.loadTable("t1");
-    if (table === null) throw new Error("No table");
+    if (table === null) {
+      throw new Error("No table");
+    }
     return table;
   };
   const { version } = viewTable(await stored(), auditor);
@@ -56,12 +59,14 @@ async function dealtTable() {
 }
 
 function wire<T>(value: T): Json {
-  return JSON.parse(JSON.stringify(value));
+  // oxlint-disable-next-line unicorn/prefer-structured-clone -- the round trip is the wire format.
+  const json: Json = JSON.parse(JSON.stringify(value));
+  return json;
 }
 
 test("sends each audience the view of the table redacted for it", async () => {
   const { request, stored } = await dealtTable();
-  const audiences: readonly [PlayerId | null, Audience][] = [
+  const audiences: ReadonlyArray<[PlayerId | null, Audience]> = [
     ["a", { kind: "player", player: "a" }],
     ["b", { kind: "player", player: "b" }],
     [null, { kind: "spectator" }],
@@ -99,7 +104,10 @@ test("refuses a second click on the same version and keeps the attempt", async (
   const attempts = db
     .query<{ rejection: string }, []>("SELECT rejection FROM poker_rejections")
     .all()
-    .map(({ rejection }) => JSON.parse(rejection).attempt);
+    .map(({ rejection }) => {
+      const stored: { attempt: Json } = JSON.parse(rejection);
+      return stored.attempt;
+    });
   expect(attempts).toEqual([{ type: "act", player: "a", ...click }]);
 });
 

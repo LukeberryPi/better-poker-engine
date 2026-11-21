@@ -2,13 +2,8 @@ import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
 import type { Automation } from "../../src/hand.ts";
-import {
-  formatPhh,
-  toAcpc,
-  toPluribus,
-  type AcpcMessage,
-  type Phh,
-} from "../../src/phh.ts";
+import { formatPhh, toAcpc, toPluribus } from "../../src/phh.ts";
+import type { AcpcMessage, Phh } from "../../src/phh.ts";
 import { ok } from "../../src/result.ts";
 import { holdem } from "../../src/rules.ts";
 import { readToml } from "../../src/toml.ts";
@@ -41,7 +36,9 @@ const noLimit = holdem.noLimit({
 
 function tomlOf(text: string) {
   const table = readToml(text);
-  if (!table.ok) throw new Error(JSON.stringify(table.error));
+  if (!table.ok) {
+    throw new Error(JSON.stringify(table.error));
+  }
   return table.value;
 }
 
@@ -84,7 +81,7 @@ unitTest(
 unitTest(
   "pokerkit.tests.test_notation.HandHistoryTestCase.test_to_acpc_protocol_full",
   () => {
-    let table = drive(start(fixedLimit, [20000, 20000], automate));
+    let table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("TdAs"),
       deal("????"),
@@ -136,7 +133,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("????"),
       deal("Qd7c"),
@@ -174,7 +171,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("9d7s"),
       deal("????"),
@@ -212,7 +209,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(noLimit, [20000, 20000], automate));
+    table = drive(start(noLimit, [20_000, 20_000], automate));
     play(table, [
       deal("9s8h"),
       deal("????"),
@@ -280,7 +277,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(noLimit, [20000, 20000], automate));
+    table = drive(start(noLimit, [20_000, 20_000], automate));
     play(table, [
       deal("????"),
       deal("JdTc"),
@@ -295,7 +292,7 @@ unitTest(
       call,
       burn,
       board("Kh"),
-      raiseTo(11000),
+      raiseTo(11_000),
       call,
       show("KsJs"),
       show("JdTc"),
@@ -375,7 +372,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000, 20_000], automate));
     play(table, [
       deal("????"),
       deal("????"),
@@ -422,7 +419,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000, 20_000], automate));
     play(table, [
       deal("Ad6h"),
       deal("????"),
@@ -503,8 +500,8 @@ unitTest(
       ["S->", "MATCHSTATE:0:0:rrc/rc/crc/cr:TdAs|/2c8c3h/9c/Kh\r\n"],
       ["<-C", "MATCHSTATE:0:0:rrc/rc/crc/cr:TdAs|/2c8c3h/9c/Kh:c\r\n"],
       ["S->", "MATCHSTATE:0:0:rrc/rc/crc/crc:TdAs|8hTc/2c8c3h/9c/Kh\r\n"],
-    ] satisfies AcpcMessage[];
-    const table = drive(start(fixedLimit, [20000, 20000], automate));
+    ] satisfies Array<AcpcMessage>;
+    const table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("TdAs"),
       deal("????"),
@@ -566,7 +563,7 @@ unitTest(
       ...automate,
       "holeCardsShowingOrMucking",
     ] as const satisfies Automation;
-    let table = drive(start(noLimit, repeat(10000, 6), shownAutomatically));
+    let table = drive(start(noLimit, repeat(10_000, 6), shownAutomatically));
     play(table, [
       deal("8d5h"),
       deal("6sTs"),
@@ -616,7 +613,7 @@ unitTest(
       )
     );
 
-    table = drive(start(noLimit, repeat(10000, 6), shownAutomatically));
+    table = drive(start(noLimit, repeat(10_000, 6), shownAutomatically));
     play(table, [
       deal("4sAd"),
       deal("3h6d"),

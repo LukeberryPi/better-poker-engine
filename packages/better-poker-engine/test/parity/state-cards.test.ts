@@ -1,8 +1,10 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { Card } from "../../src/cards.ts";
-import { describeHand, type HandValue } from "../../src/evaluation.ts";
+import { describeHand } from "../../src/evaluation.ts";
+import type { HandValue } from "../../src/evaluation.ts";
 import type { Hand } from "../../src/hand.ts";
 import { holdem, stud } from "../../src/rules.ts";
 import {
@@ -22,9 +24,8 @@ import {
   spectator,
   start,
   steps,
-  type Driver,
-  type Step,
 } from "../driver.ts";
+import type { Driver, Step } from "../driver.ts";
 
 const studAutomation = allBut("holeDealing", "runoutCountSelection");
 const studStakes = { bringIn: 1, smallBet: 2, bigBet: 4, anteTrimming: true };
@@ -32,7 +33,7 @@ const studUp = ["down", "down", "up"] as const;
 
 doctest("pokerkit.state.State.get_censored_hole_cards", (example) => {
   let table: Driver;
-  let downCards: Card[];
+  let downCards: Array<Card>;
   example(1, () => {});
   example(2, () => {
     const game = stud.fixedLimitHiLo(studStakes);
@@ -56,14 +57,14 @@ function studHand(): Driver {
   return drive(start(stud.fixedLimit(studStakes), [50, 100], studAutomation));
 }
 
-const studOpening: readonly Step[] = [
+const studOpening: ReadonlyArray<Step> = [
   [3, dealHole("AcAdAh"), holeDealt("p1", "AcAdAh", studUp)],
   [4, dealHole("KcKdKh"), holeDealt("p2", "KcKdKh", studUp)],
 ];
 
 doctest("pokerkit.state.State.get_down_cards", (example) => {
   let table: Driver;
-  let downCards: Card[];
+  let downCards: Array<Card>;
   const down = (position: number) =>
     holeCards(auditor(table.hand), position, "down");
   example(1, () => {});
@@ -137,9 +138,9 @@ function holdemHand(showing: boolean): Driver {
 function checkDown(
   from: number,
   holes: readonly [string, string],
-  gaps: readonly number[]
-): Step[] {
-  const list: Step[] = [];
+  gaps: ReadonlyArray<number>
+): Array<Step> {
+  const list: Array<Step> = [];
   let index = from;
   const add = (step: Step[1], body: Step[2]) => {
     list.push([index, step, body]);
@@ -165,16 +166,20 @@ function interleave(
   example: Example,
   table: () => Driver,
   [first, last]: readonly [number, number],
-  list: readonly Step[],
+  list: ReadonlyArray<Step>,
   checks: ReadonlyMap<number, () => void>
 ): void {
   const byIndex = new Map(list.map((step) => [step[0], step]));
   for (let index = first; index <= last; index += 1) {
     const step = byIndex.get(index);
     const check = checks.get(index);
-    if (step !== undefined) steps(example, table, [step]);
-    else if (check !== undefined) example(index, check);
-    else throw new Error(`Example ${index} is neither a step nor a check`);
+    if (step !== undefined) {
+      steps(example, table, [step]);
+    } else if (check !== undefined) {
+      example(index, check);
+    } else {
+      throw new Error(`Example ${index} is neither a step nor a check`);
+    }
   }
 }
 
@@ -245,11 +250,12 @@ doctest("pokerkit.state.State.get_up_hand", (example) => {
   );
 });
 
+const upHandsOf = (hand: Hand) =>
+  spectator(hand).players.map((player) => player.hands[0]?.[0]);
+
 doctest("pokerkit.state.State.get_up_hands", (example) => {
   let table: Driver;
-  let upHands: (HandValue | null | undefined)[];
-  const upHandsOf = (hand: Hand) =>
-    spectator(hand).players.map((player) => player.hands[0]?.[0]);
+  let upHands: Array<HandValue | null | undefined>;
   example(1, () => {});
   example(2, () => {
     table = holdemHand(true);

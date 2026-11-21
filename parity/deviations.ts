@@ -1,15 +1,18 @@
-import { doctests, type DoctestId } from "./manifest.ts";
+import { doctests } from "./manifest.ts";
+import type { DoctestId } from "./manifest.ts";
 
 /** `differs` examples run and assert our result; the other kinds do not run. */
 export type DeviationKind = "differs" | "dropped" | "builtin";
 
 export type Deviation = {
   readonly kind: DeviationKind;
-  readonly examples: readonly number[];
+  readonly examples: ReadonlyArray<number>;
   readonly reason: string;
 };
 
-export type Deviations = { readonly [Id in DoctestId]?: readonly Deviation[] };
+export type Deviations = {
+  readonly [Id in DoctestId]?: ReadonlyArray<Deviation>;
+};
 
 /** Every doctest example that does not keep pokerkit's result, and why. */
 export const deviations: Deviations = {
@@ -71,7 +74,7 @@ export const deviations: Deviations = {
 export function examplesToRun(
   id: DoctestId,
   declared: Deviations = deviations
-): number[] {
+): Array<number> {
   const notRun = new Set(
     (declared[id] ?? [])
       .filter((deviation) => deviation.kind !== "differs")

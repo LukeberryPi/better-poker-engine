@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { equities, handStrength, type Range } from "../../src/analysis.ts";
+import { equities, handStrength } from "../../src/analysis.ts";
+import type { Range } from "../../src/analysis.ts";
 import { decks } from "../../src/cards.ts";
 import { insecureSeededRandom } from "../../src/random.ts";
 import { err, ok } from "../../src/result.ts";
@@ -27,6 +28,9 @@ const kuhn = {
 } as const;
 
 const anyCards: Range = [[]];
+
+const frozen = (text: string): Range =>
+  Object.freeze(range(text).map((combo) => Object.freeze([...combo])));
 
 describe("equities", () => {
   test("deals players in turn, then the board, with unbiased draws", () => {
@@ -77,8 +81,6 @@ describe("equities", () => {
   });
 
   test("gives the same result for the same seed and leaves inputs alone", () => {
-    const frozen = (text: string): Range =>
-      Object.freeze(range(text).map((combo) => Object.freeze([...combo])));
     const input = Object.freeze({
       ...holdem,
       ranges: Object.freeze([frozen("QQ+"), frozen("AKs")]),
@@ -160,15 +162,16 @@ describe("equities", () => {
   });
 });
 
+const strength = (values: ReadonlyArray<number>) =>
+  handStrength({
+    ...kuhn,
+    players: 2,
+    range: anyCards,
+    random: scripted(values),
+  });
+
 describe("handStrength", () => {
   test("deals the random opponents before the player", () => {
-    const strength = (values: readonly number[]) =>
-      handStrength({
-        ...kuhn,
-        players: 2,
-        range: anyCards,
-        random: scripted(values),
-      });
     expect(strength([0, 2, 0])).toEqual(ok(0));
     expect(strength([0, 0, 1])).toEqual(ok(1));
   });

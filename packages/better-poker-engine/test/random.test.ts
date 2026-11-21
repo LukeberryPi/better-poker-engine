@@ -4,13 +4,15 @@ import {
   randomBelow,
   secureRandom,
   insecureSeededRandom,
-  type RandomSource,
 } from "../src/random.ts";
+import type { RandomSource } from "../src/random.ts";
 import { scripted } from "./support.ts";
 
-const seed42 = [0xde5d7555, 0x6a7c0929, 0x56726734, 0x82a33e12, 0xe19abb75];
+const seed42 = [
+  0xde_5d_75_55, 0x6a_7c_09_29, 0x56_72_67_34, 0x82_a3_3e_12, 0xe1_9a_bb_75,
+];
 
-function draws(random: RandomSource, count: number): number[] {
+function draws(random: RandomSource, count: number): Array<number> {
   return Array.from({ length: count }, () => random.nextUint32());
 }
 
@@ -58,7 +60,7 @@ describe("secureRandom without Web Crypto", () => {
 describe("randomBelow", () => {
   test("redraws the values that would favour low results", () => {
     // 2 ** 32 % 3 === 1, so only 0xffffffff is redrawn for a bound of 3.
-    expect(randomBelow(3, scripted([0xffffffff, 4]))).toBe(1);
-    expect(randomBelow(3, scripted([0xfffffffe]))).toBe(0xfffffffe % 3);
+    expect(randomBelow(3, scripted([0xff_ff_ff_ff, 4]))).toBe(1);
+    expect(randomBelow(3, scripted([0xff_ff_ff_fe]))).toBe(0xff_ff_ff_fe % 3);
   });
 });

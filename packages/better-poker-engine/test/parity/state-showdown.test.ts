@@ -1,6 +1,7 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { PlayerId } from "../../src/hand.ts";
 import { draw, holdem } from "../../src/rules.ts";
 import {
@@ -19,9 +20,8 @@ import {
   pending,
   start,
   steps,
-  type Driver,
-  type Step,
 } from "../driver.ts";
+import type { Driver, Step } from "../driver.ts";
 
 const threeHanded = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
 const forcedOnly = ["antePosting", "betCollection", "blindPosting"] as const;
@@ -32,7 +32,7 @@ function checkedDown(): Driver {
 
 /** showdown_index and can_show_or_muck_hole_cards check down to the river's last check. */
 function toLastCheck(example: Example, table: () => Driver): void {
-  const list: Step[] = [
+  const list: Array<Step> = [
     [3, dealHole("JcJd"), holeDealt("p1", "JcJd")],
     [4, dealHole("KcKd"), holeDealt("p2", "KcKd")],
     [5, dealHole("QcQd"), holeDealt("p3", "QcQd")],
@@ -46,17 +46,21 @@ function toLastCheck(example: Example, table: () => Driver): void {
   ];
   let index = 9;
   for (const board of ["AcAdAh", "2c", "2d"]) {
-    list.push([index, burn("??"), burned("??")]);
-    list.push([index + 1, dealBoard(board), boardDealt(board)]);
-    list.push([index + 2, checkOrCall, checked("p1")]);
-    list.push([index + 3, checkOrCall, checked("p2")]);
-    if (index < 19) list.push([index + 4, checkOrCall, checked("p3")]);
+    list.push(
+      [index, burn("??"), burned("??")],
+      [index + 1, dealBoard(board), boardDealt(board)],
+      [index + 2, checkOrCall, checked("p1")],
+      [index + 3, checkOrCall, checked("p2")]
+    );
+    if (index < 19) {
+      list.push([index + 4, checkOrCall, checked("p3")]);
+    }
     index += 5;
   }
   steps(example, table, list);
 }
 
-const showdownSteps: readonly Step[] = [
+const showdownSteps: ReadonlyArray<Step> = [
   [
     26,
     { type: "timeout" },
@@ -150,7 +154,7 @@ function allInHand(): Driver {
 
 doctest("pokerkit.state.State.hand_killing_indices", (example) => {
   let table: Driver;
-  let killable: PlayerId[];
+  let killable: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     table = allInHand();
@@ -203,12 +207,12 @@ function tripleDraw(pushing: boolean): Driver {
   return drive(start(game, [200, 200, 200], allBut(...manual)));
 }
 
-const foldsToBigBlind: readonly Step[] = [
+const foldsToBigBlind: ReadonlyArray<Step> = [
   [0, { type: "fold" }, { type: "folded", player: "p3", needless: false }],
   [1, { type: "fold" }, { type: "folded", player: "p1", needless: false }],
 ];
 
-function numbered(from: number, list: readonly Step[]): Step[] {
+function numbered(from: number, list: ReadonlyArray<Step>): Array<Step> {
   return list.map(([offset, action, body]) => [from + offset, action, body]);
 }
 
@@ -225,7 +229,7 @@ doctest("pokerkit.state.State.can_push_chips", (example) => {
 
 doctest("pokerkit.state.State.chips_pulling_indices", (example) => {
   let table: Driver;
-  let pullers: PlayerId[];
+  let pullers: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     table = tripleDraw(true);

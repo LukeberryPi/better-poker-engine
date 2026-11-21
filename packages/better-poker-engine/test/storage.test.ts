@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { inspect } from "node:util";
 
 import { decks, shuffle } from "../src/cards.ts";
-import { act, automation, type Hand } from "../src/hand.ts";
+import { act, automation } from "../src/hand.ts";
+import type { Hand } from "../src/hand.ts";
 import { insecureSeededRandom } from "../src/random.ts";
 import { holdem, kuhn } from "../src/rules.ts";
-import { actAtTable, createTable, type Table } from "../src/table.ts";
+import { actAtTable, createTable } from "../src/table.ts";
+import type { Table } from "../src/table.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
 import { auditor, start } from "./driver.ts";
 import { randomWalk } from "./random-hands.ts";
@@ -20,15 +22,18 @@ function threeHanded(): Hand {
 
 type Stored = {
   setup: {
-    stacks: number[];
-    deck: string[];
+    stacks: Array<number>;
+    deck: Array<string>;
     game: { rules?: object; boards: number };
   };
-  events: { body: { type: string; player?: string; cards?: object[] } }[];
+  events: Array<{
+    body: { type: string; player?: string; cards?: Array<object> };
+  }>;
 };
 
 function stored(hand: Hand): Stored {
-  return JSON.parse(serializeHand(hand));
+  const data: Stored = JSON.parse(serializeHand(hand));
+  return data;
 }
 
 function tampered(hand: Hand, edit: (data: Stored) => void): string {
@@ -37,26 +42,30 @@ function tampered(hand: Hand, edit: (data: Stored) => void): string {
   return JSON.stringify(data);
 }
 
-describe("a raw hand or table", () => {
-  const seated = (): Table => {
-    const created = createTable({ game, seats: 2 });
-    if (!created.ok) throw new Error(JSON.stringify(created.error));
-    let table = created.value;
-    for (const command of [
-      { type: "join", player: "ann", seat: 0, stack: 200 },
-      { type: "join", player: "bo", seat: 1, stack: 200 },
-      {
-        type: "startHand",
-        deck: shuffle(decks.standard, insecureSeededRandom(3)),
-      },
-    ] as const) {
-      const next = actAtTable(table, command);
-      if (!next.ok) throw new Error(JSON.stringify(next.error));
-      table = next.value.table;
+const seated = (): Table => {
+  const created = createTable({ game, seats: 2 });
+  if (!created.ok) {
+    throw new Error(JSON.stringify(created.error));
+  }
+  let table = created.value;
+  for (const command of [
+    { type: "join", player: "ann", seat: 0, stack: 200 },
+    { type: "join", player: "bo", seat: 1, stack: 200 },
+    {
+      type: "startHand",
+      deck: shuffle(decks.standard, insecureSeededRandom(3)),
+    },
+  ] as const) {
+    const next = actAtTable(table, command);
+    if (!next.ok) {
+      throw new Error(JSON.stringify(next.error));
     }
-    return table;
-  };
+    table = next.value.table;
+  }
+  return table;
+};
 
+describe("a raw hand or table", () => {
   test("refuses JSON, so a log line or a response body can't carry the deck", () => {
     expect(() => JSON.stringify(threeHanded())).toThrow(/serializeHand/u);
     expect(() => JSON.stringify({ table: seated() })).toThrow(
@@ -79,14 +88,18 @@ describe("serializeHand and parseHand", () => {
       for (const step of walk.steps.filter((_, index) => index % 4 === 0)) {
         const text = serializeHand(step.before);
         const parsed = parseHand(text);
-        if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+        if (!parsed.ok) {
+          throw new Error(JSON.stringify(parsed.error));
+        }
         expect(serializeHand(parsed.value)).toBe(text);
         expect(
           sameTransition(act(parsed.value, step.action), step.result)
         ).toBe(true);
       }
       const parsed = parseHand(serializeHand(walk.hand));
-      if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+      if (!parsed.ok) {
+        throw new Error(JSON.stringify(parsed.error));
+      }
       expect(auditor(parsed.value)).toEqual(auditor(walk.hand));
       for (const event of stored(walk.hand).events) {
         bodies.add(event.body.type);
@@ -111,7 +124,9 @@ describe("serializeHand and parseHand", () => {
       const dealt = data.events.find(
         ({ body }) => body.type === "holeDealt" && body.player === "p3"
       );
-      if (dealt?.body.cards === undefined) throw new Error("p3 got no cards");
+      if (dealt?.body.cards === undefined) {
+        throw new Error("p3 got no cards");
+      }
       dealt.body.cards = dealt.body.cards.map(() => ({
         card: "As",
         face: "down",
@@ -133,7 +148,9 @@ describe("serializeHand and parseHand", () => {
 
   test("refuse an action the replay rejects", () => {
     const called = act(threeHanded(), { type: "checkOrCall" });
-    if (!called.ok) throw new Error(called.error.code);
+    if (!called.ok) {
+      throw new Error(called.error.code);
+    }
     const text = serializeHand(called.value.hand).replace(
       '"action":{"type":"checkOrCall"}',
       '"action":{"type":"betOrRaiseTo","amount":1}'

@@ -1,15 +1,7 @@
-import {
-  examplesToRun,
-  type Deviation,
-  type Deviations,
-} from "./deviations.ts";
-import {
-  doctests,
-  unitTests,
-  type DoctestId,
-  type SourceFile,
-  type UnitTestId,
-} from "./manifest.ts";
+import { examplesToRun } from "./deviations.ts";
+import type { Deviation, Deviations } from "./deviations.ts";
+import { doctests, unitTests } from "./manifest.ts";
+import type { DoctestId, SourceFile, UnitTestId } from "./manifest.ts";
 
 export type Outcome = "passed" | "failed" | "skipped";
 
@@ -28,19 +20,21 @@ export type DeclaredDeviation = {
 };
 
 export type ParityReport = {
-  readonly files: readonly FileProgress[];
-  readonly deviations: readonly DeclaredDeviation[];
-  readonly errors: readonly string[];
+  readonly files: ReadonlyArray<FileProgress>;
+  readonly deviations: ReadonlyArray<DeclaredDeviation>;
+  readonly errors: ReadonlyArray<string>;
 };
 
 const testCase =
   /<testcase\b[^>]*?\bname="([^"]*)"[^>]*?(?:\/>|>([\s\S]*?)<\/testcase>)/g;
 
-export function outcomesFromJunit(xml: string): Map<string, Outcome[]> {
-  const outcomes = new Map<string, Outcome[]>();
+export function outcomesFromJunit(xml: string): Map<string, Array<Outcome>> {
+  const outcomes = new Map<string, Array<Outcome>>();
   for (const match of xml.matchAll(testCase)) {
     const name = match[1];
-    if (name === undefined) continue;
+    if (name === undefined) {
+      continue;
+    }
     const body = match[2] ?? "";
     const outcome: Outcome = /<(failure|error)\b/.test(body)
       ? "failed"
@@ -59,27 +53,32 @@ type ManifestEntry = {
   readonly notRun: number;
 };
 
-function entries(declared: Deviations): readonly ManifestEntry[] {
-  const unit = Object.entries(unitTests).map(([id, file]) => ({
-    // SAFETY: Object.entries over the const manifest yields its own keys.
-    id: id as UnitTestId,
-    file,
+function idsOf<Id extends string, Value>(
+  manifest: Readonly<Record<Id, Value>>
+): Array<Id> {
+  // SAFETY: a const manifest has exactly the keys Id.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys returns strings.
+  return Object.keys(manifest) as Array<Id>;
+}
+
+function entries(declared: Deviations): ReadonlyArray<ManifestEntry> {
+  const unit = idsOf(unitTests).map((id) => ({
+    id,
+    file: unitTests[id],
     cases: 1,
     notRun: 0,
   }));
-  const doc = Object.entries(doctests).map(([key, entry]) => {
-    // SAFETY: Object.entries over the const manifest yields its own keys.
-    const id = key as DoctestId;
+  const doc = idsOf(doctests).map((id) => {
+    const entry = doctests[id];
     const notRun = entry.examples - examplesToRun(id, declared).length;
     return { id, file: entry.file, cases: entry.examples, notRun };
   });
   return [...unit, ...doc];
 }
 
-function deviationErrors(declared: Deviations): string[] {
-  return Object.entries(doctests).flatMap(([key, entry]) => {
-    // SAFETY: Object.entries over the const manifest yields its own keys.
-    const id = key as DoctestId;
+function deviationErrors(declared: Deviations): Array<string> {
+  return idsOf(doctests).flatMap((id) => {
+    const entry = doctests[id];
     const indexes = (declared[id] ?? []).flatMap((item) => item.examples);
     const outOfRange = indexes.filter(
       (index) => !Number.isInteger(index) || index < 1 || index > entry.examples
@@ -100,7 +99,7 @@ function deviationErrors(declared: Deviations): string[] {
 }
 
 export function parityReport(
-  outcomes: ReadonlyMap<string, readonly Outcome[]>,
+  outcomes: ReadonlyMap<string, ReadonlyArray<Outcome>>,
   required: ReadonlySet<SourceFile>,
   declared: Deviations
 ): ParityReport {
@@ -118,9 +117,9 @@ export function parityReport(
       passed: counts.passed + (passed ? cases - notRun : 0),
       notRun: counts.notRun + notRun,
     });
-    if (results.length > 1)
+    if (results.length > 1) {
       errors.push(`${id}: ported ${results.length} times`);
-    else if (!passed && notRun < cases && required.has(file)) {
+    } else if (!passed && notRun < cases && required.has(file)) {
       errors.push(`${id}: ${results[0] ?? "missing"} (${file} is required)`);
     }
   }
@@ -129,10 +128,8 @@ export function parityReport(
     required: required.has(file),
     ...counts,
   }));
-  const listed = Object.keys(doctests).flatMap((key) => {
-    // SAFETY: Object.keys over the const manifest yields its own keys.
-    const id = key as DoctestId;
-    return (declared[id] ?? []).map((deviation) => ({ id, deviation }));
-  });
+  const listed = idsOf(doctests).flatMap((id) =>
+    (declared[id] ?? []).map((deviation) => ({ id, deviation }))
+  );
   return { files, deviations: listed, errors };
 }

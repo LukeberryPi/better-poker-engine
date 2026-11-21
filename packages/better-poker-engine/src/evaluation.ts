@@ -1,11 +1,5 @@
-import {
-  cardOf,
-  isKnownCard,
-  rankOrders,
-  suits,
-  type Card,
-  type KnownCard,
-} from "./cards.ts";
+import { cardOf, isKnownCard, rankOrders, suits } from "./cards.ts";
+import type { Card, KnownCard } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 import {
   cardKeyOf,
@@ -13,11 +7,8 @@ import {
   entryAt,
   entryOf,
   lookup,
-  type Entry,
-  type HandCategory,
-  type Lookup,
-  type LookupName,
 } from "./lookups.ts";
+import type { Entry, HandCategory, Lookup, LookupName } from "./lookups.ts";
 
 export type HandType =
   | "standardHigh"
@@ -37,7 +28,7 @@ export type HandType =
 
 export type HandValue<T extends HandType = HandType> = {
   readonly type: T;
-  readonly cards: readonly KnownCard[];
+  readonly cards: ReadonlyArray<KnownCard>;
   readonly category: HandCategory;
   /** Higher is stronger; only comparable within one hand type. */
   readonly strength: number;
@@ -45,9 +36,9 @@ export type HandValue<T extends HandType = HandType> = {
 
 /** Positions in `[...hole, ...board]` of each card set that may form a hand. */
 type Candidates = (
-  hole: readonly number[],
-  board: readonly number[]
-) => (readonly number[])[];
+  hole: ReadonlyArray<number>,
+  board: ReadonlyArray<number>
+) => Array<ReadonlyArray<number>>;
 
 function anyCards(size: number): Candidates {
   return (hole, board) => combinations([...hole, ...board], size);
@@ -105,27 +96,34 @@ function strengthOf(rules: HandRules, table: Lookup, entry: Entry): number {
 /** These exact cards as a hand of `type`, as pokerkit's `Hand(cards)`. */
 export function handValue<T extends HandType>(
   type: T,
-  cards: readonly KnownCard[]
+  cards: ReadonlyArray<KnownCard>
 ): HandValue<T> | null {
   const rules = handRules[type];
   const table = lookup(rules.lookup);
   const entry = entryOf(table, cards);
-  if (entry === null) return null;
+  if (entry === null) {
+    return null;
+  }
   const strength = strengthOf(rules, table, entry);
   return { type, cards, category: entry.category, strength };
 }
 
-const candidatesByCounts = new Map<string, readonly (readonly number[])[]>();
+const candidatesByCounts = new Map<
+  string,
+  ReadonlyArray<ReadonlyArray<number>>
+>();
 
 /** Built once per hand type and card counts; never modified. */
 function candidatesOf(
   type: HandType,
   holeCount: number,
   boardCount: number
-): readonly (readonly number[])[] {
+): ReadonlyArray<ReadonlyArray<number>> {
   const counts = `${type} ${holeCount} ${boardCount}`;
   const cached = candidatesByCounts.get(counts);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    return cached;
+  }
   const positions = Array.from(
     { length: holeCount + boardCount },
     (_, position) => position
@@ -139,7 +137,7 @@ function candidatesOf(
 }
 
 type Best = {
-  readonly positions: readonly number[];
+  readonly positions: ReadonlyArray<number>;
   readonly entry: Entry;
   readonly strength: number;
 };
@@ -147,10 +145,12 @@ type Best = {
 /** The strongest hand of `type`; null if none forms or a card is not fully known. */
 export function evaluate<T extends HandType>(
   type: T,
-  hole: readonly Card[],
-  board: readonly Card[]
+  hole: ReadonlyArray<Card>,
+  board: ReadonlyArray<Card>
 ): HandValue<T> | null {
-  if (!hole.every(isKnownCard) || !board.every(isKnownCard)) return null;
+  if (!hole.every(isKnownCard) || !board.every(isKnownCard)) {
+    return null;
+  }
   const rules = handRules[type];
   const table = lookup(rules.lookup);
   const cards = [...hole, ...board];
@@ -158,17 +158,26 @@ export function evaluate<T extends HandType>(
   let best: Best | null = null;
   for (const positions of candidatesOf(type, hole.length, board.length)) {
     const entry = entryAt(table, keys, positions);
-    if (entry === null) continue;
+    if (entry === null) {
+      continue;
+    }
     const strength = strengthOf(rules, table, entry);
     if (best === null || strength > best.strength) {
       best = { positions, entry, strength };
     }
   }
-  if (best === null) return null;
+  if (best === null) {
+    return null;
+  }
   return {
     type,
-    // SAFETY: candidate positions index `cards`, whose counts built them.
-    cards: best.positions.map((position) => cards[position] as KnownCard),
+    cards: best.positions.map((position) => {
+      const card = cards[position];
+      if (card === undefined) {
+        throw new Error(`No card at ${position}`);
+      }
+      return card;
+    }),
     category: best.entry.category,
     strength: best.strength,
   };
@@ -178,7 +187,9 @@ export function compareHands<T extends HandType>(
   a: HandValue<T>,
   b: HandValue<NoInfer<T>>
 ): -1 | 0 | 1 {
-  if (a.strength === b.strength) return 0;
+  if (a.strength === b.strength) {
+    return 0;
+  }
   return a.strength > b.strength ? 1 : -1;
 }
 
@@ -192,7 +203,7 @@ type SevenCardTables = {
   readonly ranks: Int8Array;
   /** By a card's character codes: its suit index, or -1. */
   readonly suits: Int8Array;
-  readonly primes: readonly number[];
+  readonly primes: ReadonlyArray<number>;
   /** By the 13-bit rank mask of a suit holding five cards or more. */
   readonly flushes: Uint16Array;
   /** By the product of the seven cards' rank primes, when no suit holds five. */
@@ -205,17 +216,21 @@ let sevenCardTables: SevenCardTables | null = null;
  * `visit` must not keep the array, which the walk reuses. */
 function forEachRankMultiset(
   size: number,
-  visit: (ranks: readonly number[]) => void
+  visit: (ranks: ReadonlyArray<number>) => void
 ): void {
-  const held: number[] = [];
+  const held: Array<number> = [];
   const walk = (from: number, left: number): void => {
     if (left === 0) {
       visit(held);
       return;
     }
-    if (from === rankOrders.standard.length) return;
+    if (from === rankOrders.standard.length) {
+      return;
+    }
     for (let count = 0; count <= Math.min(4, left); count += 1) {
-      for (let added = 0; added < count; added += 1) held.push(from);
+      for (let added = 0; added < count; added += 1) {
+        held.push(from);
+      }
       walk(from + 1, left - count);
       held.length -= count;
     }
@@ -226,7 +241,7 @@ function forEachRankMultiset(
 /** Entry indices of five-card hands by their rank primes' product, suited or not. */
 function fiveCardIndices(
   table: Lookup,
-  primes: readonly number[],
+  primes: ReadonlyArray<number>,
   suited: boolean
 ): Map<number, number> {
   const indices = new Map<number, number>();
@@ -249,7 +264,7 @@ function fiveCardIndices(
 
 /** The best five of seven: each product less two of its primes is a five-card hand. */
 function bestOfSeven(
-  primes: readonly number[],
+  primes: ReadonlyArray<number>,
   fives: ReadonlyMap<number, number>
 ): number {
   const product = primes.reduce((total, prime) => total * prime, 1);
@@ -265,7 +280,9 @@ function bestOfSeven(
 
 /** Built once, from the lookup `evaluate` uses, so the two agree on every hand. */
 function tablesForSevenCards(): SevenCardTables {
-  if (sevenCardTables !== null) return sevenCardTables;
+  if (sevenCardTables !== null) {
+    return sevenCardTables;
+  }
   const table = lookup("standard");
   const ranks = rankOrders.standard;
   const primes = ranks.map((rank) => cardKeyOf(cardOf(rank, "c")).prime);
@@ -320,8 +337,8 @@ function tablesForSevenCards(): SevenCardTables {
  * standard high hands, which equity simulations need, take one table lookup. */
 export function evaluateStrength(
   type: HandType,
-  hole: readonly Card[],
-  board: readonly Card[]
+  hole: ReadonlyArray<Card>,
+  board: ReadonlyArray<Card>
 ): number | null {
   if (type !== "standardHigh" || hole.length + board.length !== 7) {
     return evaluate(type, hole, board)?.strength ?? null;
@@ -335,16 +352,21 @@ export function evaluateStrength(
     const card = index < hole.length ? hole[index] : board[index - hole.length];
     const rank = tables.ranks[card?.charCodeAt(0) ?? 0] ?? -1;
     const suit = tables.suits[card?.charCodeAt(1) ?? 0] ?? -1;
-    if (rank === -1 || suit === -1) return null;
+    if (rank === -1 || suit === -1) {
+      return null;
+    }
     product *= tables.primes[rank] ?? 1;
     counts += 1 << (suit * 3);
-    if (suit < 2) lowSuits |= 1 << (suit * 13 + rank);
-    else highSuits |= 1 << ((suit - 2) * 13 + rank);
+    if (suit < 2) {
+      lowSuits |= 1 << (suit * 13 + rank);
+    } else {
+      highSuits |= 1 << ((suit - 2) * 13 + rank);
+    }
   }
   for (let suit = 0; suit < 4; suit += 1) {
     if (((counts >> (suit * 3)) & 7) >= 5) {
       const suits = suit < 2 ? lowSuits : highSuits;
-      return tables.flushes[(suits >> ((suit % 2) * 13)) & 0x1fff] ?? null;
+      return tables.flushes[(suits >> ((suit % 2) * 13)) & 0x1f_ff] ?? null;
     }
   }
   return tables.others.get(product) ?? null;

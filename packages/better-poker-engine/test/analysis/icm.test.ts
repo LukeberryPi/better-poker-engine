@@ -6,8 +6,13 @@ import { err, ok } from "../../src/result.ts";
 import { okValue } from "../support.ts";
 
 /** `itertools.permutations(items, size)`, in its order. */
-function permutations<T>(items: readonly T[], size: number): (readonly T[])[] {
-  if (size === 0) return [[]];
+function permutations<T>(
+  items: ReadonlyArray<T>,
+  size: number
+): Array<ReadonlyArray<T>> {
+  if (size === 0) {
+    return [[]];
+  }
   return items.flatMap((item, index) =>
     permutations(items.toSpliced(index, 1), size - 1).map((rest) => [
       item,
@@ -18,9 +23,9 @@ function permutations<T>(items: readonly T[], size: number): (readonly T[])[] {
 
 /** pokerkit's `calculate_icm`, transcribed line by line. */
 function transcribedIcm(
-  payouts: readonly number[],
-  chips: readonly number[]
-): number[] {
+  payouts: ReadonlyArray<number>,
+  chips: ReadonlyArray<number>
+): Array<number> {
   const chipSum = chips.reduce((sum, chip) => sum + chip, 0);
   const players = chips.map((chip) => ({
     chipPercentage: chip / chipSum,

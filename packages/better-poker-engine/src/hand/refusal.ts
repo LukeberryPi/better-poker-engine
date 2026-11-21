@@ -1,11 +1,8 @@
 import type { Violation } from "../hand.ts";
-import { err, ok, type Result } from "../result.ts";
-import {
-  playerAt,
-  positionsOf,
-  type HandState,
-  type Position,
-} from "./state.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
+import { playerAt, positionsOf } from "./state.ts";
+import type { HandState, Position } from "./state.ts";
 
 /** A violation before `act` knows which action and decision to name in `not_now`. */
 export type Refusal =
@@ -15,7 +12,7 @@ export type Refusal =
 export function notEligible(
   state: HandState,
   position: Position,
-  eligible: readonly Position[]
+  eligible: ReadonlyArray<Position>
 ): Refusal {
   return {
     code: "not_eligible",
@@ -27,13 +24,19 @@ export function notEligible(
 /** The named player if they are pending, else the first pending one. */
 export function pendingPlayer(
   state: HandState,
-  pending: readonly boolean[],
+  pending: ReadonlyArray<boolean>,
   player: Position | undefined
 ): Result<Position, Refusal> {
   const first = pending.indexOf(true);
-  if (first === -1) return err({ code: "not_now" });
-  if (player === undefined) return ok(first);
-  if (pending[player]) return ok(player);
+  if (first === -1) {
+    return err({ code: "not_now" });
+  }
+  if (player === undefined) {
+    return ok(first);
+  }
+  if (pending[player]) {
+    return ok(player);
+  }
   return err(
     notEligible(
       state,

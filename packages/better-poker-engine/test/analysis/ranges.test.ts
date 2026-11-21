@@ -39,17 +39,20 @@ describe("parseRange", () => {
     expect(range(" ,; ")).toEqual([]);
   });
 
-  test("splits where Python's str.split() does, not at JavaScript's \\s", () => {
-    expect(sortedCombos(range("AK\u001cQQ\u0085JJ\u3000T9s"))).toEqual(
-      sortedCombos(range("AK QQ JJ T9s"))
-    );
-    for (const text of ["JJ\ufeffQQ", "AsKh\ufeffQd"]) {
-      expect(parseRange(text)).toEqual({
-        ok: false,
-        error: { code: "invalid_range", at: 0, text },
-      });
+  test(
+    String.raw`splits where Python's str.split() does, not at JavaScript's \s`,
+    () => {
+      expect(sortedCombos(range("AK\u001cQQ\u0085JJ\u3000T9s"))).toEqual(
+        sortedCombos(range("AK QQ JJ T9s"))
+      );
+      for (const text of ["JJ\ufeffQQ", "AsKh\ufeffQd"]) {
+        expect(parseRange(text)).toEqual({
+          ok: false,
+          error: { code: "invalid_range", at: 0, text },
+        });
+      }
     }
-  });
+  );
 
   test("accepts either rank first", () => {
     expect(sortedCombos(range("KA"))).toEqual(sortedCombos(range("AK")));
