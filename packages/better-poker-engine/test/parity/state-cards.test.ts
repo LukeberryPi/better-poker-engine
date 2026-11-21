@@ -172,9 +172,13 @@ function interleave(
   for (let index = first; index <= last; index += 1) {
     const step = byIndex.get(index);
     const check = checks.get(index);
-    if (step !== undefined) steps(example, table, [step]);
-    else if (check !== undefined) example(index, check);
-    else throw new Error(`Example ${index} is neither a step nor a check`);
+    if (step !== undefined) {
+      steps(example, table, [step]);
+    } else if (check !== undefined) {
+      example(index, check);
+    } else {
+      throw new Error(`Example ${index} is neither a step nor a check`);
+    }
   }
 }
 

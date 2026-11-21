@@ -61,7 +61,9 @@ function invalidCount(simulation: Simulation): EquityError | null {
     ["samples", simulation.samples, 1],
   ] as const;
   const invalid = counts.find(([, value, minimum]) => !isCount(value, minimum));
-  if (invalid === undefined) return null;
+  if (invalid === undefined) {
+    return null;
+  }
   const [field, value] = invalid;
   return { code: "invalid_count", field, value };
 }
@@ -73,7 +75,9 @@ function selectionsOf(
 ): Array<Selection> {
   const selections: Array<Selection> = [];
   const used = new Set(board);
-  if (used.size < board.length) return selections;
+  if (used.size < board.length) {
+    return selections;
+  }
   const playable = ranges.map((range) =>
     range.filter((combo) => new Set(combo).size === combo.length)
   );
@@ -85,12 +89,18 @@ function selectionsOf(
       return;
     }
     for (const combo of range) {
-      if (combo.some((card) => used.has(card))) continue;
-      for (const card of combo) used.add(card);
+      if (combo.some((card) => used.has(card))) {
+        continue;
+      }
+      for (const card of combo) {
+        used.add(card);
+      }
       chosen.push(combo);
       choose(player + 1);
       chosen.pop();
-      for (const card of combo) used.delete(card);
+      for (const card of combo) {
+        used.delete(card);
+      }
     }
   };
   choose(0);
@@ -147,12 +157,16 @@ function withShares(
       evaluateStrength(type, hole, deal.board)
     );
     const formed = strengths.filter((strength) => strength !== null);
-    if (formed.length === 0) return [];
+    if (formed.length === 0) {
+      return [];
+    }
     const best = Math.max(...formed);
     const winners = formed.filter((strength) => strength === best).length;
     return [{ strengths, best, winners }];
   });
-  if (outcomes.length === 0 && deal.holes.length > 0) return null;
+  if (outcomes.length === 0 && deal.holes.length > 0) {
+    return null;
+  }
   return totals.map((total, player) => {
     const won = outcomes.reduce(
       (share, { strengths, best, winners }) =>
@@ -169,7 +183,9 @@ export function equities(
 ): Result<ReadonlyArray<number>, EquityError> {
   const { ranges, board, holeCount, boardCount, samples, random } = input;
   const invalid = invalidCount(input);
-  if (invalid !== null) return err(invalid);
+  if (invalid !== null) {
+    return err(invalid);
+  }
   if (board.length > boardCount) {
     return err({ code: "too_many_board_cards", cards: board.length });
   }
@@ -184,16 +200,22 @@ export function equities(
     }
   }
   const selections = selectionsOf(ranges, board);
-  if (selections.length === 0) return err({ code: "no_deal" });
+  if (selections.length === 0) {
+    return err({ code: "no_deal" });
+  }
   const deck = [...new Set(input.deck)];
   let totals: ReadonlyArray<number> = ranges.map(() => 0);
   for (let sample = 0; sample < samples; sample += 1) {
     const chosen = randomBelow(selections.length, random);
     // SAFETY: randomBelow returns an index below the number of selections.
     const deal = dealOf(selections[chosen] as Selection, input, deck);
-    if (!deal.ok) return deal;
+    if (!deal.ok) {
+      return deal;
+    }
     const shared = withShares(totals, deal.value, input.handTypes);
-    if (shared === null) return err({ code: "no_hand" });
+    if (shared === null) {
+      return err({ code: "no_hand" });
+    }
     totals = shared;
   }
   return ok(totals.map((total) => total / samples));
@@ -210,7 +232,9 @@ export function handStrength(
   }
   const opponents = Array.from({ length: players - 1 }, (): Range => [[]]);
   const shares = equities({ ...input, ranges: [...opponents, range] });
-  if (!shares.ok) return shares;
+  if (!shares.ok) {
+    return shares;
+  }
   // SAFETY: equities returns one share per range, and `range` is the last.
   return ok(shares.value[players - 1] as number);
 }

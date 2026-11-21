@@ -110,7 +110,9 @@ function fromDeck(
 
 function removeFirst(cards: Array<Card>, card: Card): void {
   const index = cards.indexOf(card);
-  if (index !== -1) cards.splice(index, 1);
+  if (index !== -1) {
+    cards.splice(index, 1);
+  }
 }
 
 /** pokerkit's `_produce_cards`: known cards back into the deck, once each. */
@@ -119,7 +121,9 @@ export function returnToDeck(
   cards: ReadonlyArray<Card>
 ): void {
   for (const card of cards) {
-    if (isKnownCard(card) && !state.deck.includes(card)) state.deck.push(card);
+    if (isKnownCard(card) && !state.deck.includes(card)) {
+      state.deck.push(card);
+    }
   }
 }
 
@@ -137,7 +141,9 @@ export function takeCards(state: HandState, cards: ReadonlyArray<Card>): void {
     removeFirst(state.deck, card);
     removeFirst(state.burned, card);
     removeFirst(state.mucked, card);
-    for (const discarded of state.discarded) removeFirst(discarded, card);
+    for (const discarded of state.discarded) {
+      removeFirst(discarded, card);
+    }
   }
 }
 
@@ -146,9 +152,13 @@ export function burnCard(
   card: Card | undefined
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);
-  if (phase === null || !canBurn(phase)) return err({ code: "not_now" });
+  if (phase === null || !canBurn(phase)) {
+    return err({ code: "not_now" });
+  }
   const cards = card === undefined ? fromDeck(state, 1) : ok([card]);
-  if (!cards.ok) return cards;
+  if (!cards.ok) {
+    return cards;
+  }
   const burned = at(cards.value, 0);
   takeCards(state, cards.value);
   phase.burn = false;
@@ -163,14 +173,18 @@ function nextDealee(state: HandState, phase: Dealing): Position {
   }
   let dealee = 0;
   for (const [position, faces] of phase.hole.entries()) {
-    if (faces.length > at(phase.hole, dealee).length) dealee = position;
+    if (faces.length > at(phase.hole, dealee).length) {
+      dealee = position;
+    }
   }
   return dealee;
 }
 
 export function holeDealee(state: HandState): Position | null {
   const phase = dealing(state);
-  if (phase === null || !canDealHole(phase)) return null;
+  if (phase === null || !canDealHole(phase)) {
+    return null;
+  }
   return nextDealee(state, phase);
 }
 
@@ -180,9 +194,13 @@ export function dealHole(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);
-  if (phase === null || !canDealHole(phase)) return err({ code: "not_now" });
+  if (phase === null || !canDealHole(phase)) {
+    return err({ code: "not_now" });
+  }
   const dealt = cards === undefined ? fromDeck(state, 1) : ok(cards);
-  if (!dealt.ok) return dealt;
+  if (!dealt.ok) {
+    return dealt;
+  }
   const dealee = player ?? nextDealee(state, phase);
   const owed = at(phase.hole, dealee);
   if (owed.length === 0) {
@@ -221,7 +239,9 @@ export function nextBoard(
   state: HandState
 ): { readonly board: number; readonly cards: number } | null {
   const phase = dealing(state);
-  if (phase === null || !canDealBoard(phase)) return null;
+  if (phase === null || !canDealBoard(phase)) {
+    return null;
+  }
   const cards = phase.board.find((count) => count > 0) ?? 0;
   return {
     board: state.boards[firstSlot(state, cards)]?.length ?? 0,
@@ -243,10 +263,14 @@ export function dealBoard(
   cards: ReadonlyArray<Card> | undefined
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);
-  if (phase === null || !canDealBoard(phase)) return err({ code: "not_now" });
+  if (phase === null || !canDealBoard(phase)) {
+    return err({ code: "not_now" });
+  }
   const owed = phase.board.find((count) => count > 0) ?? 0;
   const dealt = cards === undefined ? fromDeck(state, owed) : ok(cards);
-  if (!dealt.ok) return dealt;
+  if (!dealt.ok) {
+    return dealt;
+  }
   if (dealt.value.length === 0 || dealt.value.length > owed) {
     return err({
       code: "wrong_card_count",
@@ -260,7 +284,9 @@ export function dealBoard(
   phase.board[phase.board.indexOf(owed)] = owed - dealt.value.length;
   for (const [offset, card] of dealt.value.entries()) {
     const slot = first + offset;
-    while (state.boards.length <= slot) state.boards.push([]);
+    while (state.boards.length <= slot) {
+      state.boards.push([]);
+    }
     at(state.boards, slot).push(card);
   }
   return ok({ type: "boardDealt", board, cards: dealt.value });
@@ -268,7 +294,9 @@ export function dealBoard(
 
 export function drawer(state: HandState): Position | null {
   const phase = dealing(state);
-  if (phase === null) return null;
+  if (phase === null) {
+    return null;
+  }
   const position = phase.draw.indexOf(true);
   return position === -1 ? null : position;
 }
@@ -280,14 +308,18 @@ export function draw(
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);
   const position = drawer(state);
-  if (phase === null || position === null) return err({ code: "not_now" });
+  if (phase === null || position === null) {
+    return err({ code: "not_now" });
+  }
   if (player !== undefined && player !== position) {
     return err(notEligible(state, player, [position]));
   }
   const held = at(state.hole, position).map((hole) => hole.card);
   for (const card of discard) {
     const index = held.indexOf(card);
-    if (index === -1) return err({ code: "card_not_held", card });
+    if (index === -1) {
+      return err({ code: "card_not_held", card });
+    }
     held.splice(index, 1);
   }
   phase.draw[position] = false;

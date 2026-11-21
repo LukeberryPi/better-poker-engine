@@ -231,7 +231,9 @@ function tableFrom(state: TableState): Table {
 
 export function createTable(setup: TableSetup): Result<Table, TableSetupError> {
   const gameError = validateGame(setup.game);
-  if (gameError !== null) return err(gameError);
+  if (gameError !== null) {
+    return err(gameError);
+  }
   if (!Number.isSafeInteger(setup.seats) || setup.seats < 2) {
     return err({ code: "seat_count", seats: setup.seats });
   }
@@ -282,7 +284,9 @@ export function actAtTable(
 ): Result<TableTransition, TableRejection> {
   const state = tableStateOf(table);
   const change = applyCommand(state, command);
-  if (!change.ok) return err({ attempt: command, violation: change.error });
+  if (!change.ok) {
+    return err({ attempt: command, violation: change.error });
+  }
   const version = state.version + 1;
   const events = change.value.bodies.map((body, index): TableEvent => ({
     seq: state.eventCount + index + 1,
@@ -358,7 +362,9 @@ function seatOf(state: TableState, player: PlayerId): number | null {
 
 function occupant(state: TableState, seat: number): SeatedPlayer {
   const seated = at(state.seats, seat);
-  if (seated === null) throw new Error(`Seat ${seat} is empty`);
+  if (seated === null) {
+    throw new Error(`Seat ${seat} is empty`);
+  }
   return seated;
 }
 
@@ -425,8 +431,12 @@ function leave(
 ): Result<Change, TableViolation> {
   const { player } = command;
   const seat = seatOf(state, player);
-  if (seat === null) return err({ code: "not_seated", player });
-  if (state.hand?.seats.includes(seat)) return err({ code: "in_hand", player });
+  if (seat === null) {
+    return err({ code: "not_seated", player });
+  }
+  if (state.hand?.seats.includes(seat)) {
+    return err({ code: "in_hand", player });
+  }
   const { stack } = occupant(state, seat);
   return ok({
     state: {
@@ -448,7 +458,9 @@ function sit(
 ): Result<Change, TableViolation> {
   const { player } = command;
   const seat = seatOf(state, player);
-  if (seat === null) return err({ code: "not_seated", player });
+  if (seat === null) {
+    return err({ code: "not_seated", player });
+  }
   const seated = occupant(state, seat);
   const sittingOut = command.type === "sitOut";
   if (seated.sittingOut === sittingOut) {
@@ -473,9 +485,13 @@ function postBlinds(
 ): Result<Change, TableViolation> {
   const { player } = command;
   const seat = seatOf(state, player);
-  if (seat === null) return err({ code: "not_seated", player });
+  if (seat === null) {
+    return err({ code: "not_seated", player });
+  }
   const seated = occupant(state, seat);
-  if (seated.owes === "nothing") return err({ code: "nothing_owed", player });
+  if (seated.owes === "nothing") {
+    return err({ code: "nothing_owed", player });
+  }
   return ok({
     state: {
       ...state,
@@ -499,7 +515,9 @@ function deal(
   state: TableState,
   command: Extract<TableCommand, { type: "startHand" }>
 ): Result<Change, TableViolation> {
-  if (state.hand !== null) return err({ code: "hand_running" });
+  if (state.hand !== null) {
+    return err({ code: "hand_running" });
+  }
   const { game } = state.setup;
   if (!isWholeDeck(command.deck, decks[game.rules.deck])) {
     return err({ code: "not_a_full_deck" });
@@ -511,7 +529,9 @@ function deal(
     rotation: state.rotation,
     firstButton: command.button ?? 0,
   });
-  if (!planned.ok) return err(planned.error);
+  if (!planned.ok) {
+    return err(planned.error);
+  }
   const { positions: seats, rotation, smallBlind, bigBlind } = planned.value;
   const players = seats.map((seat) => occupant(state, seat));
   const started = startHand({
@@ -521,7 +541,9 @@ function deal(
     deck: command.deck,
     automate: automation.all,
   });
-  if (!started.ok) return err({ code: "setup", error: started.error });
+  if (!started.ok) {
+    return err({ code: "setup", error: started.error });
+  }
   const number = state.hands + 1;
   const { hand, events } = started.value;
   return ok(
@@ -566,10 +588,14 @@ function play(
     return err({ code: "not_at_tables", attempted: type });
   }
   const running = state.hand;
-  if (running === null) return err({ code: "no_hand" });
+  if (running === null) {
+    return err({ code: "no_hand" });
+  }
   const action: PlayerAction = { ...command.action, player };
   const next = act(running.hand, action);
-  if (!next.ok) return next;
+  if (!next.ok) {
+    return next;
+  }
   const { hand, events } = next.value;
   return ok(
     settle(
@@ -595,7 +621,9 @@ function settle(
 ): Change {
   const running = state.hand;
   const record = running === null ? null : summarizeHand(running.hand);
-  if (running === null || record === null) return { state, bodies, command };
+  if (running === null || record === null) {
+    return { state, bodies, command };
+  }
   let { seats, session } = state;
   for (const { position, net } of record.players) {
     const seat = at(running.seats, position);
@@ -681,7 +709,9 @@ function redactTableEvent(
   switch (body.type) {
     case "handEvent": {
       const [event] = eventsFor([body.event], audience);
-      if (event === undefined) throw new Error("eventsFor dropped an event");
+      if (event === undefined) {
+        throw new Error("eventsFor dropped an event");
+      }
       return { seq, version, body: { ...body, event } };
     }
     case "handEnded":

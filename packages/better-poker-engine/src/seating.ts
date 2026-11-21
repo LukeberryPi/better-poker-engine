@@ -107,8 +107,12 @@ function settled(seat: SeatState): SeatState {
 /** Only a newcomer can owe the big blind when the small blind passes them, and a newcomer
  * owes the big blind alone, as card rooms charge new players. */
 function owingAlso(owes: Owed, blind: "smallBlind" | "bigBlind"): Owed {
-  if (owes === "nothing" || owes === blind) return blind;
-  if (owes === "bigBlind") return owes;
+  if (owes === "nothing" || owes === blind) {
+    return blind;
+  }
+  if (owes === "bigBlind") {
+    return owes;
+  }
   return "bothBlinds";
 }
 
@@ -149,7 +153,9 @@ function restart(
     (seat) => seat !== button && playable.includes(seat)
   );
   const [smallBlind = button, bigBlind = button] = after;
-  if (after.length === 1) return headsUp(input, smallBlind, button);
+  if (after.length === 1) {
+    return headsUp(input, smallBlind, button);
+  }
   return {
     positions: [...after, button],
     game: input.game,
@@ -173,7 +179,9 @@ function deadButton(
   const bigBlind = clockwise(last.big, count).find((seat) =>
     playable.includes(seat)
   );
-  if (bigBlind === undefined) return null;
+  if (bigBlind === undefined) {
+    return null;
+  }
   const smallSeat = last.big;
   // Back from heads-up the button sat on the small blind; it goes just behind it.
   const button =
@@ -189,7 +197,9 @@ function deadButton(
         within(bigBlind, button, seat, count) &&
         (!owing(seat) || (seats[seat]?.posting === true && seat !== button)))
   );
-  if (dealt.length < 2) return null;
+  if (dealt.length < 2) {
+    return null;
+  }
   if (dealt.length === 2) {
     return headsUp(
       input,
@@ -289,9 +299,15 @@ export function planHand(
   return ok({
     ...layout,
     seats: seats.map((seat, index) => {
-      if (seat === null) return null;
-      if (layout.positions.includes(index)) return settled(seat);
-      if (playable.includes(index)) return seat;
+      if (seat === null) {
+        return null;
+      }
+      if (layout.positions.includes(index)) {
+        return settled(seat);
+      }
+      if (playable.includes(index)) {
+        return seat;
+      }
       if (missedBig.has(index)) {
         return { ...seat, owes: owingAlso(seat.owes, "bigBlind") };
       }

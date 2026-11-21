@@ -191,7 +191,9 @@ unitTest("pokerkit.tests.test_papers.Kim2023TestCase.test_figure_2", () => {
 unitTest("pokerkit.tests.test_papers.Kim2023TestCase.test_figure_3", () => {
   const h0 = evaluate("omahaHigh", cards("6c7c8c9c"), cards("8s9sTc"));
   const h1 = handValue("omahaHigh", known("6c7c8s9sTc"));
-  if (h0 === null || h1 === null) throw new Error("Both are Omaha hands");
+  if (h0 === null || h1 === null) {
+    throw new Error("Both are Omaha hands");
+  }
 
   expect(compareHands(h0, h1)).toBe(0);
 });

@@ -183,7 +183,9 @@ describe("viewRecord", () => {
     const table = drive(start(game, [100, 100, 100], automation.all));
     play(table, [moves.fold, moves.fold]);
     const record = summarizeHand(table.hand);
-    if (record === null) throw new Error("The hand is not complete");
+    if (record === null) {
+      throw new Error("The hand is not complete");
+    }
     return record;
   }
 
@@ -209,7 +211,9 @@ describe("viewRecord", () => {
     table.act({ type: "show" });
     table.act({ type: "muck" });
     const record = summarizeHand(table.hand);
-    if (record === null) throw new Error("The hand is not complete");
+    if (record === null) {
+      throw new Error("The hand is not complete");
+    }
     expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
       ["As", "Qh"],
       hidden,
@@ -237,12 +241,16 @@ function learn(known: Set<string>, audience: Audience, event: HandEvent) {
   switch (body.type) {
     case "holeDealt":
       for (const { card, face } of body.cards) {
-        if (face === "up" || seesAll(audience, body.player)) known.add(card);
+        if (face === "up" || seesAll(audience, body.player)) {
+          known.add(card);
+        }
       }
       return;
     case "boardDealt":
     case "shown":
-      for (const card of body.cards) known.add(card);
+      for (const card of body.cards) {
+        known.add(card);
+      }
       return;
     default:
       return;
@@ -300,7 +308,9 @@ describe("random hands", () => {
   test("show each audience only cards it may know in the hand's record", () => {
     const leaks = walks.flatMap((walk) => {
       const record = summarizeHand(walk.hand);
-      if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
+      if (record === null) {
+        throw new Error(`Seed ${walk.seed} is not complete`);
+      }
       const events = transitions(walk).flatMap((step) => step.events);
       const audiences: Array<Audience> = [
         { kind: "spectator" },
@@ -311,7 +321,9 @@ describe("random hands", () => {
       ];
       return audiences.flatMap((audience) => {
         const known = new Set<string>();
-        for (const event of events) learn(known, audience, event);
+        for (const event of events) {
+          learn(known, audience, event);
+        }
         return cardsIn(viewRecord(record, audience))
           .filter((card) => !known.has(card))
           .map((card) => ({ seed: walk.seed, audience, card }));

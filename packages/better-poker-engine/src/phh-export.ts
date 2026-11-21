@@ -43,7 +43,9 @@ function dealingAction(
     body.type === "holeDealt"
       ? cardsOf(body.cards.map(({ card }) => card))
       : cardsOf(body.cards);
-  if (cards === null) return { type: "noOp", commentary };
+  if (cards === null) {
+    return { type: "noOp", commentary };
+  }
   return body.type === "holeDealt"
     ? { type: "dealHole", player: seat(body.player), cards, commentary }
     : { type: "dealBoard", cards, commentary };
@@ -107,7 +109,9 @@ function actionsOf(
   const flush = (): void => {
     for (const [player, held] of [...hole].sort(([a], [b]) => a - b)) {
       const cards = cardsOf(held);
-      if (cards === null) continue;
+      if (cards === null) {
+        continue;
+      }
       actions.push({ type: "dealHole", player, cards, commentary: null });
     }
     hole.clear();
@@ -121,7 +125,9 @@ function actionsOf(
     if (body.type !== "holeDealt" && body.type !== "boardDealt") {
       flush();
       const action = playerAction(body, seat, commentary, scale);
-      if (action !== null) actions.push(action);
+      if (action !== null) {
+        actions.push(action);
+      }
     } else if (commentary !== null) {
       flush();
       actions.push(dealingAction(body, seat, commentary));
@@ -154,12 +160,22 @@ export function historyFromHand(
 ): Result<Phh, HistoryExportError> {
   const state = stateOf(hand);
   const { game } = state;
-  if (game.variant === "custom") return err({ code: "custom_variant" });
-  if (game.boards !== 1) return err({ code: "boards", boards: game.boards });
+  if (game.variant === "custom") {
+    return err({ code: "custom_variant" });
+  }
+  if (game.boards !== 1) {
+    return err({ code: "boards", boards: game.boards });
+  }
   const runouts = state.runoutCount ?? 1;
-  if (runouts !== 1) return err({ code: "runouts", runouts });
-  if (game.rake.kind !== "none") return err({ code: "rake" });
-  if (!playsLikePokerkit(game.conventions)) return err({ code: "conventions" });
+  if (runouts !== 1) {
+    return err({ code: "runouts", runouts });
+  }
+  if (game.rake.kind !== "none") {
+    return err({ code: "rake" });
+  }
+  if (!playsLikePokerkit(game.conventions)) {
+    return err({ code: "conventions" });
+  }
   const scale = options.amountScale ?? 1;
   const amount = (chips: number) => fromChips(chips, scale);
   const [first, ...rest] = game.rules.streets;
@@ -233,7 +249,9 @@ export function historyFromHand(
     case "F7S/8":
     case "FR": {
       const { bringIn } = game.forcedBets;
-      if (bringIn === null) return err({ code: "no_bring_in" });
+      if (bringIn === null) {
+        return err({ code: "no_bring_in" });
+      }
       return ok({
         ...details,
         variant: game.variant,

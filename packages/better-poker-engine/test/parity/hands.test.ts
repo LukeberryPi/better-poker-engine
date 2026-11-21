@@ -14,7 +14,9 @@ import { cards, known } from "../support.ts";
 
 function hand<T extends HandType>(type: T, text: string): HandValue<T> {
   const value = handValue(type, known(text));
-  if (value === null) throw new Error(`${text} is no ${type} hand`);
+  if (value === null) {
+    throw new Error(`${text} is no ${type} hand`);
+  }
   return value;
 }
 
@@ -24,7 +26,9 @@ function best<T extends HandType>(
   board = ""
 ): HandValue<T> {
   const value = evaluate(type, cards(hole), cards(board));
-  if (value === null) throw new Error(`${hole} ${board} make no ${type} hand`);
+  if (value === null) {
+    throw new Error(`${hole} ${board} make no ${type} hand`);
+  }
   return value;
 }
 

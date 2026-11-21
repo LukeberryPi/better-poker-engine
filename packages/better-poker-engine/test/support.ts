@@ -33,13 +33,17 @@ export function sameTransition(
 }
 
 export function okValue<T, E>(result: Result<T, E>): T {
-  if (!result.ok) throw new Error(`Not ok: ${JSON.stringify(result.error)}`);
+  if (!result.ok) {
+    throw new Error(`Not ok: ${JSON.stringify(result.error)}`);
+  }
   return result.value;
 }
 
 export function cards(text: string): Array<Card> {
   const parsed = parseCards(text);
-  if (!parsed.ok) throw new Error(`Test cards do not parse: ${text}`);
+  if (!parsed.ok) {
+    throw new Error(`Test cards do not parse: ${text}`);
+  }
   return [...parsed.value];
 }
 
@@ -54,7 +58,9 @@ export function known(text: string): Array<KnownCard> {
 /** pokerkit's `parse_range(*texts)`, which joins its arguments with a space. */
 export function range(...texts: ReadonlyArray<string>): Range {
   const parsed = parseRange(texts.join(" "));
-  if (!parsed.ok) throw new Error(`Test range does not parse: ${texts}`);
+  if (!parsed.ok) {
+    throw new Error(`Test range does not parse: ${texts}`);
+  }
   return parsed.value;
 }
 
@@ -70,7 +76,9 @@ export function scripted(values: ReadonlyArray<number>): RandomSource {
   return {
     nextUint32: () => {
       const value = remaining.shift();
-      if (value === undefined) throw new Error("Scripted values ran out");
+      if (value === undefined) {
+        throw new Error("Scripted values ran out");
+      }
       return value;
     },
   };
@@ -90,7 +98,9 @@ export function forEachCombination(
     return;
   }
   deck.forEach((card, index) => {
-    if (deck.length - index < size) return;
+    if (deck.length - index < size) {
+      return;
+    }
     forEachCombination(deck.slice(index + 1), size - 1, visit, [
       ...chosen,
       card,
@@ -106,7 +116,9 @@ export function digestSortedByEntry(
   const lines = Array.from({ length: table.size }, (): Array<string> => []);
   combinations((hand) => {
     const entry = entryOf(table, hand);
-    if (entry === null) throw new Error(`${hand.join("")} has no entry`);
+    if (entry === null) {
+      throw new Error(`${hand.join("")} has no entry`);
+    }
     lines[entry.index]?.push(hand.join(""));
   });
   const md5 = createHash("md5");

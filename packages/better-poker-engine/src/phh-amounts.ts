@@ -30,14 +30,22 @@ const radixNumeral = /^0(?:b[01]+|o[0-7]+|x[\da-f]+)$/iu;
 /** Reads any finite numeric string `Number(text)` accepts, without rounding. */
 function exactDecimal(text: string): ExactDecimal | null {
   const trimmed = text.trim();
-  if (radixNumeral.test(trimmed)) return exactDecimal(String(BigInt(trimmed)));
+  if (radixNumeral.test(trimmed)) {
+    return exactDecimal(String(BigInt(trimmed)));
+  }
   const match = decimalNumeral.exec(trimmed);
-  if (match === null) return null;
+  if (match === null) {
+    return null;
+  }
   const [, sign = "", whole = "", fraction = "", exponent = "0"] = match;
-  if (trimmed !== "" && whole === "" && fraction === "") return null;
+  if (trimmed !== "" && whole === "" && fraction === "") {
+    return null;
+  }
   const digits = `${whole}${fraction}`;
   const significant = digits.replace(/0+$/u, "");
-  if (significant === "") return { units: 0n, exponent: 0 };
+  if (significant === "") {
+    return { units: 0n, exponent: 0 };
+  }
   return {
     units: BigInt(`${sign}${significant}`),
     exponent:
@@ -72,7 +80,9 @@ export function toChips(
   if (exact === null || exact.units < 0n || shift > 15) {
     return err({ code: "out_of_range", amount, scale });
   }
-  if (shift < 0) return err({ code: "not_integral", amount, scale });
+  if (shift < 0) {
+    return err({ code: "not_integral", amount, scale });
+  }
   const chips = exact.units * 10n ** BigInt(shift);
   return chips > BigInt(Number.MAX_SAFE_INTEGER)
     ? err({ code: "out_of_range", amount, scale })
@@ -86,7 +96,9 @@ export function toBlindChips(
   scale: AmountScale
 ): Result<number, ChipsError> {
   const exact = exactDecimal(amount);
-  if (exact === null || exact.units >= 0n) return toChips(amount, scale);
+  if (exact === null || exact.units >= 0n) {
+    return toChips(amount, scale);
+  }
   const size = toChips(canonicalText({ ...exact, units: -exact.units }), scale);
   return size.ok ? ok(-size.value) : err({ ...size.error, amount });
 }

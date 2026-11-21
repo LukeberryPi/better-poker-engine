@@ -155,20 +155,28 @@ function redactBody(body: EventBody, audience: Audience): EventBody {
 
 /** The action that caused an event repeats its cards; they follow the body. */
 function redactCause(cause: Cause, body: EventBody): Cause {
-  if (cause.kind !== "action") return cause;
+  if (cause.kind !== "action") {
+    return cause;
+  }
   const { action } = cause;
   switch (action.type) {
     case "dealHole":
-      if (body.type !== "holeDealt" || action.cards === undefined) return cause;
+      if (body.type !== "holeDealt" || action.cards === undefined) {
+        return cause;
+      }
       return {
         kind: "action",
         action: { ...action, cards: body.cards.map((hole) => hole.card) },
       };
     case "burnCard":
-      if (body.type !== "cardBurned" || action.card === undefined) return cause;
+      if (body.type !== "cardBurned" || action.card === undefined) {
+        return cause;
+      }
       return { kind: "action", action: { ...action, card: body.card } };
     case "draw":
-      if (body.type !== "drew") return cause;
+      if (body.type !== "drew") {
+        return cause;
+      }
       return { kind: "action", action: { ...action, discard: body.discarded } };
     default:
       return cause;

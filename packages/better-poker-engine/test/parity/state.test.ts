@@ -97,7 +97,9 @@ doctest("pokerkit.state.BetCollection.total_bets", (example) => {
     const body = drive(start(game, [100, 100, 100], ["antePosting"])).act({
       type: "collectBets",
     });
-    if (body.type !== "betsCollected") throw new Error(body.type);
+    if (body.type !== "betsCollected") {
+      throw new Error(body.type);
+    }
     collected = body.collected;
   });
   example(2, () => expect(collected).toBe(6));
@@ -219,7 +221,9 @@ doctest("pokerkit.state.State", (example) => {
   });
   example(24, () => {
     const body = table.act({ type: "dealHole" });
-    if (body.type !== "holeDealt") throw new Error(body.type);
+    if (body.type !== "holeDealt") {
+      throw new Error(body.type);
+    }
     expect(body.player).toBe("p2");
     expect(body.cards.map(({ card, face }) => [suitOf(card), face])).toEqual([
       ["s", "down"],

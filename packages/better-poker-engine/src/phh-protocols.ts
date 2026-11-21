@@ -45,7 +45,9 @@ function handNumberOf(
   options: ProtocolOptions
 ): Result<number, ProtocolError> {
   const { hand } = history;
-  if (options.handNumber !== undefined) return ok(options.handNumber);
+  if (options.handNumber !== undefined) {
+    return ok(options.handNumber);
+  }
   return hand?.kind === "integer"
     ? ok(hand.value)
     : err({ code: "hand_number_required" });
@@ -84,7 +86,9 @@ function see(
       const first = table.dealt[position] ?? 0;
       table.dealt[position] = first + body.cards.length;
       const slots = table.holes[position];
-      if (slots === undefined || !shownTo(position)) return false;
+      if (slots === undefined || !shownTo(position)) {
+        return false;
+      }
       for (const [index, { card }] of body.cards.entries()) {
         if (isKnownCard(card) && first + index < slots.length) {
           slots[first + index] = card;
@@ -94,9 +98,13 @@ function see(
     }
     case "shown": {
       const slots = table.holes[seat(body.player)];
-      if (slots === undefined) return false;
+      if (slots === undefined) {
+        return false;
+      }
       for (const [index, card] of body.cards.entries()) {
-        if (isKnownCard(card) && index < slots.length) slots[index] = card;
+        if (isKnownCard(card) && index < slots.length) {
+          slots[index] = card;
+        }
       }
       return false;
     }
@@ -133,7 +141,9 @@ function betOf(
     case "called":
       return { player: body.player, letter: "c" };
     case "betOrRaised": {
-      if (!noLimit) return { player: body.player, letter: "r" };
+      if (!noLimit) {
+        return { player: body.player, letter: "r" };
+      }
       const state = stateOf(hand);
       const paid = -(state.payoffs[state.players.indexOf(body.player)] ?? 0);
       return { player: body.player, letter: `r${fromChips(paid, scale)}` };
@@ -159,13 +169,19 @@ export function toAcpc(
     return err({ code: "unsupported_variant", variant: history.variant });
   }
   const hand = handNumberOf(history, options);
-  if (!hand.ok) return hand;
+  if (!hand.ok) {
+    return hand;
+  }
   const table = tableFor(history.startingStacks.length);
   const own = table.holes[position];
-  if (own === undefined) return err({ code: "unknown_position", position });
+  if (own === undefined) {
+    return err({ code: "unknown_position", position });
+  }
   const scale = options.amountScale ?? 1;
   const replay = replayHistory(history, { amountScale: scale });
-  if (!replay.ok) return replay;
+  if (!replay.ok) {
+    return replay;
+  }
   const seat = seatsOf(replay.value);
   const messages: Array<AcpcMessage> = [];
   let actions = "";
@@ -174,8 +190,9 @@ export function toAcpc(
     for (const event of step.events) {
       const bet = betOf(event, step.hand, history.variant === "NT", scale);
       if (bet !== null) {
-        if (own.includes(""))
+        if (own.includes("")) {
           return err({ code: "hole_cards_unknown", position });
+        }
         messages.push(["S->", `${matchState}\r\n`]);
         actions += bet.letter;
         if (seat(bet.player) === position) {
@@ -190,7 +207,9 @@ export function toAcpc(
   }
   const last = decisionOf(stateOf(replay.value.final)).kind;
   if (last === "complete" || last === "betting") {
-    if (own.includes("")) return err({ code: "hole_cards_unknown", position });
+    if (own.includes("")) {
+      return err({ code: "hole_cards_unknown", position });
+    }
     messages.push(["S->", `${matchState}\r\n`]);
   }
   return ok(messages);
@@ -206,24 +225,32 @@ export function toPluribus(
     return err({ code: "unsupported_variant", variant: history.variant });
   }
   const hand = handNumberOf(history, options);
-  if (!hand.ok) return hand;
+  if (!hand.ok) {
+    return hand;
+  }
   const scale = options.amountScale ?? 1;
   const replay = replayHistory(history, { amountScale: scale });
-  if (!replay.ok) return replay;
+  if (!replay.ok) {
+    return replay;
+  }
   const seat = seatsOf(replay.value);
   const table = tableFor(history.startingStacks.length);
   let actions = "";
   for (const step of replay.value.steps) {
     for (const event of step.events) {
       actions += betOf(event, step.hand, true, scale)?.letter ?? "";
-      if (see(table, event, seat, () => true)) actions += "/";
+      if (see(table, event, seat, () => true)) {
+        actions += "/";
+      }
     }
   }
   const finishing =
     history.finishingStacks === null
       ? ok(stateOf(replay.value.final).stacks)
       : stacksAt("finishing_stacks", history.finishingStacks, scale);
-  if (!finishing.ok) return finishing;
+  if (!finishing.ok) {
+    return finishing;
+  }
   const payoffs: Array<string> = [];
   for (const [position, start] of replay.value.setup.stacks.entries()) {
     const end = finishing.value[position];

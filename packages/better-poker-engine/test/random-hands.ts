@@ -39,7 +39,9 @@ import { rawJson } from "./support.ts";
 
 function pick<T>(items: ReadonlyArray<T>, random: RandomSource): T {
   const item = items[randomBelow(items.length, random)];
-  if (item === undefined) throw new Error("Picked from an empty list");
+  if (item === undefined) {
+    throw new Error("Picked from an empty list");
+  }
   return item;
 }
 
@@ -217,7 +219,9 @@ function plausibleAction(
       return null;
     case "betting": {
       const options: Array<Action> = [];
-      if (decision.fold !== null) options.push({ type: "fold" });
+      if (decision.fold !== null) {
+        options.push({ type: "fold" });
+      }
       if (decision.checkOrCall !== null) {
         options.push({ type: "checkOrCall" }, { type: "checkOrCall" });
       }
@@ -229,7 +233,9 @@ function plausibleAction(
           amount: between(min, top, random),
         });
       }
-      if (decision.bringIn !== null) options.push({ type: "postBringIn" });
+      if (decision.bringIn !== null) {
+        options.push({ type: "postBringIn" });
+      }
       return pick(options, random);
     }
     case "drawing": {
@@ -357,7 +363,9 @@ export function randomWalk(
       hand = result.value.hand;
       continue;
     }
-    if (stray) continue;
+    if (stray) {
+      continue;
+    }
     const timeout = act(hand, { type: "timeout" });
     if (!timeout.ok) {
       throw new Error(

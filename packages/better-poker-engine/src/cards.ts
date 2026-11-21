@@ -88,8 +88,12 @@ export function parseSuit(symbol: string): SuitSymbol | null {
 function cardFrom(rankText: string, suitText: string): Card | null {
   const rank = parseRank(rankText);
   const suit = parseSuit(suitText);
-  if (rank === null || suit === null) return null;
-  if (rank === "?") return suit === "?" ? "??" : null;
+  if (rank === null || suit === null) {
+    return null;
+  }
+  if (rank === "?") {
+    return suit === "?" ? "??" : null;
+  }
   return suit === "?" ? `${rank}?` : cardOf(rank, suit);
 }
 
@@ -108,15 +112,21 @@ export function parseCards(
   let rank: { readonly text: string; readonly at: number } | null = null;
   for (const token of text.matchAll(/10|./gsu)) {
     const symbol = token[0] === "10" ? "T" : token[0];
-    if (symbol === ",") continue;
+    if (symbol === ",") {
+      continue;
+    }
     if (isWhitespace(symbol)) {
-      if (rank !== null) return invalidCard(text, rank.at, token.index);
+      if (rank !== null) {
+        return invalidCard(text, rank.at, token.index);
+      }
     } else if (rank === null) {
       rank = { text: symbol, at: token.index };
     } else {
       const card = cardFrom(rank.text, symbol);
       const end = token.index + token[0].length;
-      if (card === null) return invalidCard(text, rank.at, end);
+      if (card === null) {
+        return invalidCard(text, rank.at, end);
+      }
       cards.push(card);
       rank = null;
     }

@@ -145,5 +145,7 @@ test("the README's TypeScript compiles and runs against the tarball", async () =
   expect(
     run([tsc, "-p", "tsconfig.readme.json", "--module", "nodenext"], consumer)
   ).toBe("");
-  for (const file of files) run([process.execPath, file], consumer);
+  for (const file of files) {
+    run([process.execPath, file], consumer);
+  }
 });

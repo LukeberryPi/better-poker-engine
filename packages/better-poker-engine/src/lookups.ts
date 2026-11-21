@@ -273,7 +273,9 @@ function multisetProducts(
   groups: ReadonlyArray<Group>
 ): Array<number> {
   const [group, ...rest] = groups;
-  if (group === undefined) return [1];
+  if (group === undefined) {
+    return [1];
+  }
   return combinations(ranks.toReversed(), group.count).flatMap((sample) => {
     const product = productOf(sample) ** group.multiplicity;
     const remaining = ranks.filter((rank) => !sample.includes(rank));
@@ -331,7 +333,9 @@ const built = new Map<LookupName, Lookup>();
 /** Built on first use, as all tables together take about 30 ms; never modified. */
 export function lookup(name: LookupName): Lookup {
   const cached = built.get(name);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    return cached;
+  }
   const table = build(definitions[name]);
   built.set(name, table);
   return table;
@@ -342,11 +346,15 @@ export function entryOf(
   table: Lookup,
   cards: ReadonlyArray<Card>
 ): Entry | null {
-  if (table.badugi && !areRainbow(cards)) return null;
+  if (table.badugi && !areRainbow(cards)) {
+    return null;
+  }
   let product = 1;
   for (const card of cards) {
     const rank = rankOf(card);
-    if (rank === "?") return null;
+    if (rank === "?") {
+      return null;
+    }
     product *= primes[rank];
   }
   return table.entries.get(keyOf(product, areSuited(cards))) ?? null;
@@ -383,6 +391,8 @@ export function entryAt(
     rainbow &&= (seen & key.suit) === 0;
     seen |= key.suit;
   }
-  if (table.badugi && !rainbow) return null;
+  if (table.badugi && !rainbow) {
+    return null;
+  }
   return table.entries.get(keyOf(product, suited)) ?? null;
 }

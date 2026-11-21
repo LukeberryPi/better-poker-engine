@@ -50,7 +50,9 @@ function withSuits(
 ): Combos | null {
   const high = rankFrom(first);
   const low = rankFrom(second);
-  if (high === null || low === null) return null;
+  if (high === null || low === null) {
+    return null;
+  }
   return pairs.map(([s0, s1]) => [cardOf(high, s0), cardOf(low, s1)]);
 }
 
@@ -61,7 +63,9 @@ function rankPair(
   second: string,
   suffix: Suffix
 ): Combos | null {
-  if (first !== second) return withSuits(first, second, suitsBySuffix[suffix]);
+  if (first !== second) {
+    return withSuits(first, second, suitsBySuffix[suffix]);
+  }
   return suffix === "s" ? null : withSuits(first, second, pairSuits);
 }
 
@@ -80,7 +84,9 @@ function interval(
   const i1 = order.indexOf(r1);
   const i2 = order.indexOf(r2);
   const i3 = order.indexOf(r3);
-  if (Math.min(i0, i1, i2, i3) < 0 || i1 - i0 !== i3 - i2) return null;
+  if (Math.min(i0, i1, i2, i3) < 0 || i1 - i0 !== i3 - i2) {
+    return null;
+  }
   const start = Math.min(i0, i2);
   const steps = Array.from(
     { length: Math.abs(i2 - i0) + 1 },
@@ -106,7 +112,9 @@ function plus(
   }
   const i0 = order.indexOf(r0);
   const i1 = order.indexOf(r1);
-  if (i0 < 0 || i1 < 0) return null;
+  if (i0 < 0 || i1 < 0) {
+    return null;
+  }
   const high = order.charAt(Math.max(i0, i1));
   const kickers = [...order.slice(Math.min(i0, i1), Math.max(i0, i1))];
   return unionOf(kickers.map((kicker) => rankPair(high, kicker, suffix)));
@@ -114,7 +122,9 @@ function plus(
 
 function explicitCards(notation: string): Combos | null {
   const parsed = parseCards(notation);
-  if (!parsed.ok) return null;
+  if (!parsed.ok) {
+    return null;
+  }
   const cards = parsed.value;
   return cards.every(isKnownCard) ? [[...new Set(cards)]] : null;
 }
@@ -124,12 +134,18 @@ const rankNotation = /^(.)(.)([so]?)(\+|-(.)(.)\3)?$/su;
 
 function combosOf(notation: string, order: string): Combos | null {
   const match = rankNotation.exec(notation);
-  if (match === null) return explicitCards(notation);
+  if (match === null) {
+    return explicitCards(notation);
+  }
   const [, r0 = "", r1 = "", third = "", tail = "", r2 = "", r3 = ""] = match;
   // SAFETY: the pattern's third group is empty, `s` or `o`.
   const suffix = third as Suffix;
-  if (tail === "") return rankPair(r0, r1, suffix);
-  if (tail === "+") return plus(r0, r1, suffix, order);
+  if (tail === "") {
+    return rankPair(r0, r1, suffix);
+  }
+  if (tail === "+") {
+    return plus(r0, r1, suffix, order);
+  }
   return interval([r0, r1, r2, r3], suffix, order);
 }
 
@@ -148,7 +164,9 @@ export function parseRange(
     }
     for (const combo of parsed) {
       const cards = combo.toSorted().join("");
-      if (!combos.has(cards)) combos.set(cards, combo);
+      if (!combos.has(cards)) {
+        combos.set(cards, combo);
+      }
     }
   }
   return ok([...combos.values()]);

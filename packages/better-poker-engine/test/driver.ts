@@ -63,12 +63,16 @@ export function drive(hand: Hand): Driver {
       driver.hand = result.value.hand;
       events = result.value.events;
       const first = events[0];
-      if (first === undefined) throw new Error("An action without an event");
+      if (first === undefined) {
+        throw new Error("An action without an event");
+      }
       return first.body;
     },
     reject: (action) => {
       const result = act(driver.hand, action);
-      if (result.ok) throw new Error(`${action.type} was accepted`);
+      if (result.ok) {
+        throw new Error(`${action.type} was accepted`);
+      }
       return result.error;
     },
     can: (action) => act(driver.hand, action).ok,
@@ -149,7 +153,9 @@ export function steps(
 export type Move = (table: Driver) => void;
 
 export function play(table: Driver, moves: ReadonlyArray<Move>): void {
-  for (const move of moves) move(table);
+  for (const move of moves) {
+    move(table);
+  }
 }
 
 export function accept(action: Action): Move {
@@ -210,7 +216,9 @@ export function pending(
   step: "antePosting" | "blindPosting" | "handKilling" | "chipsPulling"
 ): Array<PlayerId> {
   const decision = auditor(hand).decision;
-  if (decision.kind !== "dealer") return [];
+  if (decision.kind !== "dealer") {
+    return [];
+  }
   switch (decision.step) {
     case "antePosting":
     case "blindPosting":
@@ -250,7 +258,9 @@ export function holeCards(
   face: "down" | "up"
 ): Array<Card> {
   const player = view.players[position];
-  if (player === undefined) throw new Error(`No position ${position}`);
+  if (player === undefined) {
+    throw new Error(`No position ${position}`);
+  }
   return player.holeCards
     .filter((hole) => hole.face === face)
     .map((hole) => hole.card);

@@ -56,7 +56,9 @@ function run(table: Table, commands: ReadonlyArray<TableCommand>): Run {
   let current = table;
   for (const command of commands) {
     const next = actAtTable(current, command);
-    if (!next.ok) throw new Error(JSON.stringify(next.error));
+    if (!next.ok) {
+      throw new Error(JSON.stringify(next.error));
+    }
     current = next.value.table;
     events.push(...next.value.events);
   }
@@ -65,7 +67,9 @@ function run(table: Table, commands: ReadonlyArray<TableCommand>): Run {
 
 function refusal(table: Table, command: TableCommand): TableViolation {
   const result = actAtTable(table, command);
-  if (result.ok) throw new Error(`Accepted ${JSON.stringify(command)}`);
+  if (result.ok) {
+    throw new Error(`Accepted ${JSON.stringify(command)}`);
+  }
   expect(result.error.attempt).toEqual(command);
   return result.error.violation;
 }
@@ -127,8 +131,12 @@ describe("a table", () => {
     const events = [...started.events];
     for (;;) {
       const hand = viewTable(current, auditor).hand;
-      if (hand === null) return { table: current, events };
-      if (hand.decision.kind !== "betting") throw new Error("Not betting");
+      if (hand === null) {
+        return { table: current, events };
+      }
+      if (hand.decision.kind !== "betting") {
+        throw new Error("Not betting");
+      }
       const next = run(current, [
         actAs(current, hand.decision.player, { type: "fold" }),
       ]);
@@ -267,7 +275,9 @@ describe("a table", () => {
     let table = started.table;
     while (viewTable(table, auditor).hand !== null) {
       const decision = viewTable(table, auditor).hand?.decision;
-      if (decision?.kind !== "betting") throw new Error("Not betting");
+      if (decision?.kind !== "betting") {
+        throw new Error("Not betting");
+      }
       table = run(table, [
         actAs(table, decision.player, { type: "fold" }),
       ]).table;
@@ -489,7 +499,9 @@ describe("a table", () => {
 
 function pick<T>(items: ReadonlyArray<T>, random: RandomSource): T {
   const item = items[randomBelow(items.length, random)];
-  if (item === undefined) throw new Error("Picked from an empty list");
+  if (item === undefined) {
+    throw new Error("Picked from an empty list");
+  }
   return item;
 }
 
@@ -511,15 +523,21 @@ function chooseAction(hand: HandView, random: RandomSource): Choice {
   switch (decision.kind) {
     case "betting": {
       const options: Array<PlayerAction> = [];
-      if (decision.checkOrCall !== null) options.push({ type: "checkOrCall" });
-      if (decision.fold === "standard") options.push({ type: "fold" });
+      if (decision.checkOrCall !== null) {
+        options.push({ type: "checkOrCall" });
+      }
+      if (decision.fold === "standard") {
+        options.push({ type: "fold" });
+      }
       if (decision.betOrRaiseTo !== null) {
         const { min, max } = decision.betOrRaiseTo;
         const top = max === "unbounded" ? min : max;
         const amount = min + randomBelow(top - min + 1, random);
         options.push({ type: "betOrRaiseTo", amount });
       }
-      if (decision.bringIn !== null) options.push({ type: "postBringIn" });
+      if (decision.bringIn !== null) {
+        options.push({ type: "postBringIn" });
+      }
       return { player: decision.player, action: pick(options, random) };
     }
     case "drawing": {
@@ -561,8 +579,9 @@ function randomSession(seed: number): Session {
   const players: Array<PlayerId> = [];
   const send = (command: TableCommand) => {
     const next = actAtTable(table, command);
-    if (!next.ok)
+    if (!next.ok) {
       throw new Error(`Seed ${seed}: ${JSON.stringify(next.error)}`);
+    }
     table = next.value.table;
     commands.push(command);
     events.push(...next.value.events);
@@ -595,7 +614,9 @@ function randomSession(seed: number): Session {
     const dealt = viewTable(table, auditor).seats.filter(
       (seated) => seated !== null && seated.stack > 0 && !seated.sittingOut
     );
-    if (dealt.length < 2) continue;
+    if (dealt.length < 2) {
+      continue;
+    }
     send({
       type: "startHand",
       deck: shuffle(decks[played.rules.deck], random),
@@ -603,7 +624,9 @@ function randomSession(seed: number): Session {
     });
     for (;;) {
       const view = viewTable(table, auditor);
-      if (view.hand === null) break;
+      if (view.hand === null) {
+        break;
+      }
       const { player, action } = chooseAction(view.hand, random);
       send({ type: "act", player, expectedVersion: view.version, action });
     }
@@ -619,7 +642,9 @@ function seesHoleCards(audience: Audience, player: PlayerId): boolean {
 }
 
 function learn(known: Set<string>, audience: Audience, body: TableEventBody) {
-  if (body.type !== "handEvent") return;
+  if (body.type !== "handEvent") {
+    return;
+  }
   const event = body.event.body;
   switch (event.type) {
     case "holeDealt":
@@ -631,12 +656,16 @@ function learn(known: Set<string>, audience: Audience, body: TableEventBody) {
       return;
     case "drew":
       if (seesHoleCards(audience, event.player)) {
-        for (const card of event.discarded) known.add(card);
+        for (const card of event.discarded) {
+          known.add(card);
+        }
       }
       return;
     case "boardDealt":
     case "shown":
-      for (const card of event.cards) known.add(card);
+      for (const card of event.cards) {
+        known.add(card);
+      }
       return;
     default:
       return;
@@ -667,9 +696,13 @@ describe("a dead-button table", () => {
     let current = table;
     for (;;) {
       const view = viewTable(current, auditor);
-      if (view.hand === null) return current;
+      if (view.hand === null) {
+        return current;
+      }
       const { decision } = view.hand;
-      if (decision.kind !== "betting") throw new Error(decision.kind);
+      if (decision.kind !== "betting") {
+        throw new Error(decision.kind);
+      }
       const fold = decision.fold === null ? "checkOrCall" : "fold";
       current = run(current, [
         {
@@ -823,10 +856,14 @@ describe("random sessions", () => {
     for (const { checkpoints } of sessions) {
       for (const { table } of checkpoints) {
         const view = viewTable(table, auditor);
-        if (view.lastHand === null || view.hand !== null) continue;
+        if (view.lastHand === null || view.hand !== null) {
+          continue;
+        }
         for (const { player, endingStack } of view.lastHand.players) {
           const seat = view.seats.find((seated) => seated?.player === player);
-          if (seat === undefined || seat === null) continue;
+          if (seat === undefined || seat === null) {
+            continue;
+          }
           expect(endingStack).toBe(seat.stack);
         }
       }
@@ -862,10 +899,14 @@ describe("random sessions", () => {
   test("store and load to a table that plays the same, every tenth command", () => {
     for (const { checkpoints, commands } of sessions) {
       for (const [index, { table }] of checkpoints.entries()) {
-        if (index % 10 !== 0 && index !== checkpoints.length - 1) continue;
+        if (index % 10 !== 0 && index !== checkpoints.length - 1) {
+          continue;
+        }
         const text = serializeTable(table);
         const parsed = parseTable(text);
-        if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+        if (!parsed.ok) {
+          throw new Error(JSON.stringify(parsed.error));
+        }
         expect(JSON.parse(serializeTable(parsed.value))).toEqual(
           JSON.parse(text)
         );
@@ -873,7 +914,9 @@ describe("random sessions", () => {
           viewTable(table, auditor)
         );
         const command = commands[index];
-        if (command === undefined) continue;
+        if (command === undefined) {
+          continue;
+        }
         expect(actAtTable(parsed.value, command)).toEqual(
           actAtTable(table, command)
         );
@@ -909,7 +952,9 @@ describe("serializeTable and parseTable", () => {
       ]).table;
       while (viewTable(current, auditor).hand !== null) {
         const decision = viewTable(current, auditor).hand?.decision;
-        if (decision?.kind !== "betting") throw new Error("Not betting");
+        if (decision?.kind !== "betting") {
+          throw new Error("Not betting");
+        }
         current = run(current, [
           actAs(current, decision.player, { type: "checkOrCall" }),
         ]).table;
@@ -922,7 +967,9 @@ describe("serializeTable and parseTable", () => {
     ];
     current = run(current, sinceStart).table;
     const decision = viewTable(current, auditor).hand?.decision;
-    if (decision?.kind !== "betting") throw new Error("Not betting");
+    if (decision?.kind !== "betting") {
+      throw new Error("Not betting");
+    }
     const call = actAs(current, decision.player, { type: "checkOrCall" });
     current = run(current, [call]).table;
     const text = serializeTable(current);

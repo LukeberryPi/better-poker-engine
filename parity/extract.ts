@@ -46,13 +46,17 @@ function scanLine(line: string, start: LineEnd): LineEnd {
   while (index < line.length) {
     if (openString !== null) {
       const close = line.indexOf(openString, index);
-      if (close === -1) return { openString, depth, joined: false };
+      if (close === -1) {
+        return { openString, depth, joined: false };
+      }
       openString = null;
       index = close + 3;
       continue;
     }
     const char = line[index];
-    if (char === "#") return { openString, depth, joined: false };
+    if (char === "#") {
+      return { openString, depth, joined: false };
+    }
     if (char === '"' || char === "'") {
       if (line.startsWith(char.repeat(3), index)) {
         openString = char === '"' ? '"""' : "'''";
@@ -66,8 +70,12 @@ function scanLine(line: string, start: LineEnd): LineEnd {
       index += 1;
       continue;
     }
-    if (char === "(" || char === "[" || char === "{") depth += 1;
-    if (char === ")" || char === "]" || char === "}") depth -= 1;
+    if (char === "(" || char === "[" || char === "{") {
+      depth += 1;
+    }
+    if (char === ")" || char === "]" || char === "}") {
+      depth -= 1;
+    }
     index += 1;
   }
   return { openString, depth, joined: line.endsWith("\\") };
@@ -118,10 +126,15 @@ export function unitTestsIn(
   let testCase: string | undefined;
   for (const line of source.split("\n")) {
     const caseName = testCaseClass.exec(line)?.[1];
-    if (caseName !== undefined) testCase = caseName;
-    else if (topLevelFunction.test(line)) testCase = undefined;
+    if (caseName !== undefined) {
+      testCase = caseName;
+    } else if (topLevelFunction.test(line)) {
+      testCase = undefined;
+    }
     const method = testMethod.exec(line)?.[1];
-    if (method === undefined) continue;
+    if (method === undefined) {
+      continue;
+    }
     if (testCase === undefined) {
       throw new Error(`${file}: ${method} is outside a TestCase`);
     }
@@ -140,7 +153,9 @@ async function pythonFiles(
   const files = await Promise.all(
     entries.map((entry) => {
       const relative = path.posix.join(directory, entry.name);
-      if (entry.isDirectory()) return pythonFiles(root, relative);
+      if (entry.isDirectory()) {
+        return pythonFiles(root, relative);
+      }
       return entry.name.endsWith(".py") ? [relative] : [];
     })
   );

@@ -40,7 +40,9 @@ export function outcomesFromJunit(xml: string): Map<string, Array<Outcome>> {
   const outcomes = new Map<string, Array<Outcome>>();
   for (const match of xml.matchAll(testCase)) {
     const name = match[1];
-    if (name === undefined) continue;
+    if (name === undefined) {
+      continue;
+    }
     const body = match[2] ?? "";
     const outcome: Outcome = /<(failure|error)\b/.test(body)
       ? "failed"
@@ -118,9 +120,9 @@ export function parityReport(
       passed: counts.passed + (passed ? cases - notRun : 0),
       notRun: counts.notRun + notRun,
     });
-    if (results.length > 1)
+    if (results.length > 1) {
       errors.push(`${id}: ported ${results.length} times`);
-    else if (!passed && notRun < cases && required.has(file)) {
+    } else if (!passed && notRun < cases && required.has(file)) {
       errors.push(`${id}: ${results[0] ?? "missing"} (${file} is required)`);
     }
   }

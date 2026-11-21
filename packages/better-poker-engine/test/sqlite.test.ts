@@ -46,7 +46,9 @@ async function openStore() {
 
 function step(table: Table, command: TableCommand): TableTransition {
   const next = actAtTable(table, command);
-  if (!next.ok) throw new Error(JSON.stringify(next.error));
+  if (!next.ok) {
+    throw new Error(JSON.stringify(next.error));
+  }
   return next.value;
 }
 
@@ -71,9 +73,13 @@ async function playStored(
   const events: Array<TableEvent> = [];
   for (let moves = 0; moves < 200; moves += 1) {
     const table = await store.loadTable(id);
-    if (table === null) throw new Error("No table");
+    if (table === null) {
+      throw new Error("No table");
+    }
     const view = viewTable(table, auditor);
-    if (view.hand === null && view.hands === 2) return events;
+    if (view.hand === null && view.hands === 2) {
+      return events;
+    }
     const decision = view.hand?.decision;
     if (decision !== undefined && decision.kind !== "betting") {
       throw new Error(`A table asked for ${decision.kind}`);
@@ -108,7 +114,9 @@ describe("sqliteStore", () => {
     });
     const events = await playStored(store, "t1");
     const loaded = await store.loadTable("t1");
-    if (loaded === null) throw new Error("No table");
+    if (loaded === null) {
+      throw new Error("No table");
+    }
     expect(viewTable(loaded, auditor).hands).toBe(2);
     expect(await store.events("t1")).toEqual(events);
     const records = events.flatMap(({ body }) =>
@@ -162,7 +170,9 @@ describe("sqliteStore", () => {
     const table = seated();
     const attempt = { type: "leave", player: "z" } as const;
     const rejected = actAtTable(table, attempt);
-    if (rejected.ok) throw new Error("Accepted");
+    if (rejected.ok) {
+      throw new Error("Accepted");
+    }
     await store.saveRejection("t1", table, rejected.error);
     const rows = db
       .query<{ version: number; rejection: string }, []>(

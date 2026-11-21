@@ -89,6 +89,8 @@ function splitmix32(seed: number): () => number {
 export function randomBelow(bound: number, random: RandomSource): number {
   const unbiased = 2 ** 32 - (2 ** 32 % bound);
   let value = random.nextUint32();
-  while (value >= unbiased) value = random.nextUint32();
+  while (value >= unbiased) {
+    value = random.nextUint32();
+  }
   return value % bound;
 }

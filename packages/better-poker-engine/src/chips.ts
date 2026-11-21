@@ -24,8 +24,12 @@ export function capAt(amount: Chips, stack: Stack): Chips {
 }
 
 export function minStack(a: Stack, b: Stack): Stack {
-  if (a === "unbounded") return b;
-  if (b === "unbounded") return a;
+  if (a === "unbounded") {
+    return b;
+  }
+  if (b === "unbounded") {
+    return a;
+  }
   return Math.min(a, b);
 }
 
@@ -34,8 +38,14 @@ export function exceeds(stack: Stack, amount: Chips): boolean {
 }
 
 export function compareStacks(a: Stack, b: Stack): number {
-  if (a === b) return 0;
-  if (a === "unbounded") return 1;
-  if (b === "unbounded") return -1;
+  if (a === b) {
+    return 0;
+  }
+  if (a === "unbounded") {
+    return 1;
+  }
+  if (b === "unbounded") {
+    return -1;
+  }
   return a - b;
 }

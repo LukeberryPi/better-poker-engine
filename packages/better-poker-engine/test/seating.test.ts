@@ -186,10 +186,15 @@ describe("planHand, dead button", () => {
   test("charges a small blind missed right after the big blind, posted dead", () => {
     const plans = advance(first, 3, (seats, hand) => {
       const c = seats[2];
-      if (c === null || c === undefined) return seats;
-      if (hand === 0) return seats.with(2, { ...c, sittingOut: true });
-      if (hand === 1)
+      if (c === null || c === undefined) {
+        return seats;
+      }
+      if (hand === 0) {
+        return seats.with(2, { ...c, sittingOut: true });
+      }
+      if (hand === 1) {
         return seats.with(2, { ...c, sittingOut: false, posting: true });
+      }
       return seats;
     });
     expect(plans[0]?.seats[2]?.owes).toBe("smallBlind");
@@ -298,11 +303,14 @@ describe("planHand over random sessions", () => {
           rotation,
           firstButton: 0,
         });
-        if (!planned.ok) continue;
+        if (!planned.ok) {
+          continue;
+        }
         const { positions, bigBlind } = planned.value;
         const bigBlindPlayer = seats[bigBlind]?.player ?? null;
-        if (!positions.includes(bigBlind))
+        if (!positions.includes(bigBlind)) {
           problems.push(`${session}/${hand}: big blind out`);
+        }
         if (bigBlindPlayer === lastBigBlind) {
           problems.push(`${session}/${hand}: big blind twice`);
         }

@@ -178,7 +178,9 @@ const text = z.string(expected("a string"));
 
 const decimal = z.transform((value: bigint | number, context) => {
   const amount = canonicalDecimal(String(value));
-  if (amount !== null) return amount;
+  if (amount !== null) {
+    return amount;
+  }
   context.issues.push({
     code: "custom",
     message: "expected a number",
@@ -243,7 +245,9 @@ const label = z.union(
 /** Reads a TOML local time as `TomlDate` writes it, e.g. `12:34:56.789`. */
 function localTimeOf(time: string): PhhTime | null {
   const match = /^(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/u.exec(time);
-  if (match === null) return null;
+  if (match === null) {
+    return null;
+  }
   const [, hour = "", minute = "", second = "", fraction = ""] = match;
   return {
     hour: Number(hour),
@@ -264,7 +268,9 @@ const localTime = z.pipe(
     ),
   z.transform((date, context) => {
     const time = localTimeOf(date.toISOString());
-    if (time !== null) return time;
+    if (time !== null) {
+      return time;
+    }
     context.issues.push({
       code: "custom",
       message: "expected a local time",
@@ -345,7 +351,9 @@ const onePerPlayer = z.superRefine((fields: PlayerArrays, context) => {
     time_banks: fields.time_banks,
   };
   for (const [key, values] of Object.entries(arrays)) {
-    if (values === undefined || values.length === players) continue;
+    if (values === undefined || values.length === players) {
+      continue;
+    }
     context.issues.push({
       code: "custom",
       path: [key],
@@ -514,7 +522,9 @@ function actionsOf(
   const actions: Array<PhhAction> = [];
   for (const [index, text] of texts.entries()) {
     const action = parsePhhAction(text);
-    if (action === null) return err({ code: "action_syntax", index, text });
+    if (action === null) {
+      return err({ code: "action_syntax", index, text });
+    }
     if ("player" in action && action.player > players) {
       return err({
         code: "unknown_player",
@@ -530,7 +540,9 @@ function actionsOf(
 
 function historyFrom(table: TomlTable): Result<Phh, DocumentError> {
   const variant = variantOf(table["variant"]);
-  if (!variant.ok) return variant;
+  if (!variant.ok) {
+    return variant;
+  }
   const entries = Object.entries(table);
   const fields = historySchemas[variant.value].safeParse(
     Object.fromEntries(entries.filter(([key]) => standardFields.has(key)))
@@ -542,7 +554,9 @@ function historyFrom(table: TomlTable): Result<Phh, DocumentError> {
     fields.data.actions,
     fields.data.startingStacks.length
   );
-  if (!actions.ok) return actions;
+  if (!actions.ok) {
+    return actions;
+  }
   const extra = entries
     .filter(([key]) => !standardFields.has(key))
     .map(([key, value]) => [key, userValueOf(value)] as const);
@@ -563,7 +577,9 @@ export function parsePhh(text: string): Result<Phh, PhhError> {
 /** Reads a `.phhs` file: a table of histories such as `[1]`, `[2]`, in order. */
 export function parsePhhs(text: string): Result<ReadonlyArray<Phh>, PhhsError> {
   const table = readToml(text);
-  if (!table.ok) return table;
+  if (!table.ok) {
+    return table;
+  }
   const histories: Array<Phh> = [];
   for (const [document, value] of Object.entries(table.value)) {
     const history: Result<Phh, DocumentError> = isTable(value)
@@ -572,7 +588,9 @@ export function parsePhhs(text: string): Result<ReadonlyArray<Phh>, PhhsError> {
           code: "schema",
           issues: [{ path: "", message: "expected a table" }],
         });
-    if (!history.ok) return err({ ...history.error, document });
+    if (!history.ok) {
+      return err({ ...history.error, document });
+    }
     histories.push(history.value);
   }
   return ok(histories);

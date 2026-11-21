@@ -28,7 +28,9 @@ export function icm(
     }
   }
   const total = stacks.reduce((sum, stack) => sum + stack, 0);
-  if (stacks.length > 0 && total === 0) return err({ code: "no_chips_left" });
+  if (stacks.length > 0 && total === 0) {
+    return err({ code: "no_chips_left" });
+  }
   const contenders = stacks.map((stack): Contender => ({
     share: stack / total,
     value: 0,
@@ -46,8 +48,12 @@ export function icm(
       return true;
     }
     for (const contender of contenders) {
-      if (contender.placed || contender.share === 0) continue;
-      if (remaining === 0) return false;
+      if (contender.placed || contender.share === 0) {
+        continue;
+      }
+      if (remaining === 0) {
+        return false;
+      }
       contender.placed = true;
       finishes.push({ contender, payout });
       const paid = place(
@@ -56,11 +62,15 @@ export function icm(
       );
       finishes.pop();
       contender.placed = false;
-      if (!paid) return false;
+      if (!paid) {
+        return false;
+      }
     }
     return true;
   };
-  if (!place(1, 1)) return err({ code: "no_chips_left" });
+  if (!place(1, 1)) {
+    return err({ code: "no_chips_left" });
+  }
   const busted = stacks.length - holders;
   const left = payouts.slice(holders, stacks.length);
   const shared =

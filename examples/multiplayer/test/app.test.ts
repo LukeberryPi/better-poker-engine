@@ -31,7 +31,9 @@ async function dealtTable() {
   const app = createApp(store, insecureSeededRandom(1));
   const headersFor = (player: PlayerId | null) => {
     const headers = new Headers({ "content-type": "application/json" });
-    if (player !== null) headers.set("x-player", player);
+    if (player !== null) {
+      headers.set("x-player", player);
+    }
     return headers;
   };
   const request = (path: string, player: PlayerId | null) =>
@@ -48,7 +50,9 @@ async function dealtTable() {
   await post("/tables/t1/deal", "a");
   const stored = async (): Promise<Table> => {
     const table = await store.loadTable("t1");
-    if (table === null) throw new Error("No table");
+    if (table === null) {
+      throw new Error("No table");
+    }
     return table;
   };
   const { version } = viewTable(await stored(), auditor);

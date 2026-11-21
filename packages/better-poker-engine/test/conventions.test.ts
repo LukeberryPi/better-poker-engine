@@ -36,7 +36,9 @@ function played(
   automate: Automation = automation.all
 ): Driver {
   const table = drive(start(game, stacks, automate));
-  for (const action of actions) table.act(action);
+  for (const action of actions) {
+    table.act(action);
+  }
   return table;
 }
 
@@ -228,8 +230,12 @@ describe("oddChips", () => {
         royalBoard
       )
     );
-    for (const action of [raiseTo(11), call, call, fold]) table.act(action);
-    for (let check = 0; check < 9; check += 1) table.act(call);
+    for (const action of [raiseTo(11), call, call, fold]) {
+      table.act(action);
+    }
+    for (let check = 0; check < 9; check += 1) {
+      table.act(call);
+    }
     return summarizeHand(table.hand)?.pots.flatMap((pot) =>
       pot.winners.map((winner) => [winner.player, winner.amount])
     );
@@ -359,7 +365,9 @@ describe("actAs", () => {
       deck: cards("AsKsQsJsTs9s8s7s6s5s4s3s2s"),
       automate: automation.all,
     });
-    if (!started.ok) throw new Error(JSON.stringify(started.error));
+    if (!started.ok) {
+      throw new Error(JSON.stringify(started.error));
+    }
     return started.value.hand;
   };
 

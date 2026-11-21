@@ -43,7 +43,9 @@ function playerOf(label: string): number | null {
 
 function cardsOf(text: string): Cards | null {
   const parsed = parseCards(text);
-  if (!parsed.ok) return null;
+  if (!parsed.ok) {
+    return null;
+  }
   const [first, ...rest] = parsed.value;
   return first === undefined ? null : [first, ...rest];
 }
@@ -51,19 +53,25 @@ function cardsOf(text: string): Cards | null {
 /** Reads a `cbr` amount, pokerkit's `parse_value`: a positive decimal such as
  * `7000` or `0.25`, written without a sign, exponent or digit separators. */
 export function parseAmount(text: string): PhhDecimal | null {
-  if (!/^\d+(?:\.\d+)?$/u.test(text)) return null;
+  if (!/^\d+(?:\.\d+)?$/u.test(text)) {
+    return null;
+  }
   const amount = canonicalDecimal(text);
   return amount === "0" ? null : amount;
 }
 
 function dealing(words: ReadonlyArray<string>): ActionBody | null {
   const [code, first, second, ...rest] = words;
-  if (first === undefined || rest.length > 0) return null;
+  if (first === undefined || rest.length > 0) {
+    return null;
+  }
   if (code === "db" && second === undefined) {
     const cards = cardsOf(first);
     return cards === null ? null : { type: "dealBoard", cards };
   }
-  if (code !== "dh" || second === undefined) return null;
+  if (code !== "dh" || second === undefined) {
+    return null;
+  }
   const player = playerOf(first);
   const cards = cardsOf(second);
   return player === null || cards === null
@@ -101,17 +109,27 @@ function withArgument(
     return { type: "show", player, cards: null };
   }
   const cards = cardsOf(argument);
-  if (cards === null) return null;
-  if (code === "sd") return { type: "draw", player, discard: cards };
+  if (cards === null) {
+    return null;
+  }
+  if (code === "sd") {
+    return { type: "draw", player, discard: cards };
+  }
   return code === "sm" ? { type: "show", player, cards } : null;
 }
 
 function bodyOf(words: ReadonlyArray<string>): ActionBody | null {
   const [actor, code, argument, ...rest] = words;
-  if (actor === undefined) return { type: "noOp" };
-  if (actor === "d") return dealing(words.slice(1));
+  if (actor === undefined) {
+    return { type: "noOp" };
+  }
+  if (actor === "d") {
+    return dealing(words.slice(1));
+  }
   const player = playerOf(actor);
-  if (player === null || code === undefined || rest.length > 0) return null;
+  if (player === null || code === undefined || rest.length > 0) {
+    return null;
+  }
   return argument === undefined
     ? bare(player, code)
     : withArgument(player, code, argument);
@@ -123,7 +141,9 @@ export function parsePhhAction(text: string): PhhAction | null {
   const words = wordsOf(text).map((word) => word.text);
   const hash = words.indexOf("#");
   const body = bodyOf(hash === -1 ? words : words.slice(0, hash));
-  if (body === null) return null;
+  if (body === null) {
+    return null;
+  }
   const at = text.indexOf("#");
   return { ...body, commentary: at === -1 ? null : text.slice(at + 2) };
 }
@@ -158,7 +178,9 @@ function bodyText(action: PhhAction): string {
 /** Writes an action the way pokerkit's `HandHistory.from_game_state` does. */
 export function formatPhhAction(action: PhhAction): string {
   const body = bodyText(action);
-  if (action.commentary === null) return body;
+  if (action.commentary === null) {
+    return body;
+  }
   const hash = body === "" ? "#" : `${body} #`;
   return action.commentary === "" ? hash : `${hash} ${action.commentary}`;
 }

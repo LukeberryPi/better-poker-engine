@@ -107,10 +107,15 @@ function afterBetCollection(state: HandState): void {
     state.street = runout.returnStreet - 1;
     runout.remaining -= 1;
   }
-  if (activeCount(state) === 1) beginChipsPushing(state);
-  else if (state.street === null) beginBlindPosting(state);
-  else if (isLastStreet(state) || state.allIn) beginShowdown(state);
-  else beginDealing(state);
+  if (activeCount(state) === 1) {
+    beginChipsPushing(state);
+  } else if (state.street === null) {
+    beginBlindPosting(state);
+  } else if (isLastStreet(state) || state.allIn) {
+    beginShowdown(state);
+  } else {
+    beginDealing(state);
+  }
 }
 
 function finishPhase(state: HandState): void {
@@ -142,7 +147,9 @@ function finishPhase(state: HandState): void {
 
 /** Runs every phase change due, as pokerkit's `_update_*` methods do. */
 export function settle(state: HandState): void {
-  while (phaseOver(state)) finishPhase(state);
+  while (phaseOver(state)) {
+    finishPhase(state);
+  }
 }
 
 function idsOf(
@@ -189,7 +196,9 @@ function foldKind(
   actor: Position,
   needless: boolean
 ): "standard" | "needless" | null {
-  if (!needless) return "standard";
+  if (!needless) {
+    return "standard";
+  }
   return needlessFoldAllowed(state, actor) ? "needless" : null;
 }
 
@@ -202,7 +211,9 @@ function dealingDecision(state: HandState, phase: Dealing): Decision {
       maxDiscards: at(state.hole, drawing).length,
     };
   }
-  if (canBurn(phase)) return { kind: "dealer", step: "cardBurning" };
+  if (canBurn(phase)) {
+    return { kind: "dealer", step: "cardBurning" };
+  }
   const dealee = holeDealee(state);
   if (dealee !== null) {
     return {
@@ -213,7 +224,9 @@ function dealingDecision(state: HandState, phase: Dealing): Decision {
     };
   }
   const board = nextBoard(state);
-  if (board === null) throw new Error("Dealing has nothing left to deal");
+  if (board === null) {
+    throw new Error("Dealing has nothing left to deal");
+  }
   return { kind: "dealer", step: "boardDealing", ...board };
 }
 
@@ -371,7 +384,9 @@ export function automate(state: HandState, events: Array<HandEvent>): void {
     for (const step of steps) {
       const street = state.street;
       const body = performStep(state, step);
-      if (!body.ok) continue;
+      if (!body.ok) {
+        continue;
+      }
       record(
         state,
         events,
@@ -383,7 +398,9 @@ export function automate(state: HandState, events: Array<HandEvent>): void {
       performed = true;
       break;
     }
-    if (!performed) return;
+    if (!performed) {
+      return;
+    }
   }
 }
 
@@ -395,8 +412,12 @@ function timeout(
   switch (phase.kind) {
     case "betting": {
       const actor = phase.actors[0];
-      if (actor === undefined) return err({ code: "not_now" });
-      if (phase.bringIn) return postBringIn(state, player);
+      if (actor === undefined) {
+        return err({ code: "not_now" });
+      }
+      if (phase.bringIn) {
+        return postBringIn(state, player);
+      }
       return callAmount(state, actor) === 0
         ? checkOrCall(state, player)
         : fold(state, player);
@@ -476,9 +497,13 @@ function positionOf(
   action: Action
 ): Result<Position | undefined, Violation> {
   const player = namedPlayer(action);
-  if (player === undefined) return ok(undefined);
+  if (player === undefined) {
+    return ok(undefined);
+  }
   const position = state.players.indexOf(player);
-  if (position === -1) return err({ code: "unknown_player", player });
+  if (position === -1) {
+    return err({ code: "unknown_player", player });
+  }
   return ok(position);
 }
 
@@ -489,7 +514,9 @@ export function apply(
   commentary: string | null
 ): Result<ReadonlyArray<HandEvent>, Violation> {
   const player = positionOf(state, action);
-  if (!player.ok) return player;
+  if (!player.ok) {
+    return player;
+  }
   const street = state.street;
   const waitingFor = decisionKind(state);
   const body = perform(state, action, player.value);

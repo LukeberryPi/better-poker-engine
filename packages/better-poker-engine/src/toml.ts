@@ -38,7 +38,9 @@ export function readToml(text: string): Result<TomlTable, TomlSyntaxError> {
   try {
     return ok(parse(text, { integersAsBigInt: true }));
   } catch (error) {
-    if (!(error instanceof TomlError)) throw error;
+    if (!(error instanceof TomlError)) {
+      throw error;
+    }
     const [summary = ""] = error.message.split("\n", 1);
     return err({
       code: "toml",
@@ -59,9 +61,15 @@ export function isTable(value: TomlValue): value is TomlTable {
 }
 
 function floatText(value: number): `${number}` | "inf" | "-inf" | "nan" {
-  if (Number.isNaN(value)) return "nan";
-  if (value === Infinity) return "inf";
-  if (value === -Infinity) return "-inf";
+  if (Number.isNaN(value)) {
+    return "nan";
+  }
+  if (value === Infinity) {
+    return "inf";
+  }
+  if (value === -Infinity) {
+    return "-inf";
+  }
   return Object.is(value, -0) ? "-0" : `${value}`;
 }
 
@@ -98,7 +106,9 @@ export function userValueOf(value: TomlValue): PhhValue {
   if (Array.isArray(value)) {
     return { type: "array", value: value.map(userValueOf) };
   }
-  if (!isTable(value)) return scalarValue.parse(value);
+  if (!isTable(value)) {
+    return scalarValue.parse(value);
+  }
   const entries = Object.entries(value).map(
     ([key, item]) => [key, userValueOf(item)] as const
   );
@@ -142,12 +152,16 @@ function basicString(text: string): string {
 /** pokerkit's quoting: `'...'`, or `'''...'''` around a `'`. Text those cannot
  * hold, such as a newline, gets an escaped `"..."` string instead. */
 export function tomlString(text: string): string {
-  if (!fitsLiteral(text) || text.includes("'''")) return basicString(text);
+  if (!fitsLiteral(text) || text.includes("'''")) {
+    return basicString(text);
+  }
   return text.includes("'") ? `'''${text}'''` : `'${text}'`;
 }
 
 export function tomlKey(key: string): string {
-  if (/^[\w-]+$/u.test(key)) return key;
+  if (/^[\w-]+$/u.test(key)) {
+    return key;
+  }
   return fitsLiteral(key) && !key.includes("'") ? `'${key}'` : basicString(key);
 }
 

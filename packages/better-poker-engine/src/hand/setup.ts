@@ -14,7 +14,9 @@ export function perPosition(
   for (const [position, amount] of amounts) {
     const index = position < 0 ? count + position : position;
     const current = values[index];
-    if (current !== undefined) values[index] = current + amount;
+    if (current !== undefined) {
+      values[index] = current + amount;
+    }
   }
   return values;
 }
@@ -53,30 +55,41 @@ function dealsEveryStreet(game: Game, players: number): boolean {
   for (const street of game.rules.streets) {
     const holes = players * street.hole.length;
     const fits = holes <= left;
-    if (holes > 0 && !fits && !dealtHoles) return false;
+    if (holes > 0 && !fits && !dealtHoles) {
+      return false;
+    }
     dealtHoles ||= holes > 0;
-    if (street.burn && left === 0) return false;
+    if (street.burn && left === 0) {
+      return false;
+    }
     left -= fits
       ? holes + street.board * game.boards
       : (street.board + street.hole.length) * game.boards;
-    if (left < 0) return false;
+    if (left < 0) {
+      return false;
+    }
   }
   return true;
 }
 
 export function validateSetup(setup: HandSetup): SetupError | null {
   const gameError = validateGame(setup.game);
-  if (gameError !== null) return gameError;
+  if (gameError !== null) {
+    return gameError;
+  }
   const { stacks } = setup;
-  if (stacks.length < 2 || !dealsEveryStreet(setup.game, stacks.length))
+  if (stacks.length < 2 || !dealsEveryStreet(setup.game, stacks.length)) {
     return { code: "player_count", players: stacks.length };
+  }
   const players = setup.players ?? defaultPlayers(stacks.length);
   if (players.length !== stacks.length) {
     return { code: "player_ids", ids: players.length, stacks: stacks.length };
   }
   const seen = new Set<string>();
   for (const player of players) {
-    if (seen.has(player)) return { code: "duplicate_player", player };
+    if (seen.has(player)) {
+      return { code: "duplicate_player", player };
+    }
     seen.add(player);
   }
   for (const [position, stack] of stacks.entries()) {
@@ -90,7 +103,9 @@ export function validateSetup(setup: HandSetup): SetupError | null {
   }
   const cards = new Set<KnownCard>();
   for (const card of setup.deck.filter(isKnownCard)) {
-    if (cards.has(card)) return { code: "duplicate_card", card };
+    if (cards.has(card)) {
+      return { code: "duplicate_card", card };
+    }
     cards.add(card);
   }
   return null;

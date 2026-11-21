@@ -31,9 +31,15 @@ export function pendingPlayer(
   player: Position | undefined
 ): Result<Position, Refusal> {
   const first = pending.indexOf(true);
-  if (first === -1) return err({ code: "not_now" });
-  if (player === undefined) return ok(first);
-  if (pending[player]) return ok(player);
+  if (first === -1) {
+    return err({ code: "not_now" });
+  }
+  if (player === undefined) {
+    return ok(first);
+  }
+  if (pending[player]) {
+    return ok(player);
+  }
   return err(
     notEligible(
       state,

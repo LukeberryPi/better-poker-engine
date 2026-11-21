@@ -87,7 +87,9 @@ function parseJson<Stored>(
     return err({ code: "invalid_json" });
   }
   const parsed = schema.safeParse(json);
-  if (parsed.success) return ok(parsed.data);
+  if (parsed.success) {
+    return ok(parsed.data);
+  }
   const [issue] = parsed.error.issues;
   return err({
     code: "invalid_format",
@@ -99,7 +101,9 @@ function parseJson<Stored>(
 /** Rebuilds the hand by replaying its actions, so it holds only what the engine produced. */
 export function parseHand(text: string): Result<Hand, HandParseError> {
   const stored = parseJson(storedHandSchema, text);
-  if (!stored.ok) return stored;
+  if (!stored.ok) {
+    return stored;
+  }
   try {
     return replay(stored.value);
   } catch (cause) {
@@ -109,14 +113,20 @@ export function parseHand(text: string): Result<Hand, HandParseError> {
 
 function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
   const started = startHand(setup);
-  if (!started.ok) return err({ code: "setup", error: started.error });
+  if (!started.ok) {
+    return err({ code: "setup", error: started.error });
+  }
   let { hand } = started.value;
   const replayed = [...started.value.events];
   for (const { cause, commentary, seq } of events) {
-    if (cause.kind !== "action") continue;
+    if (cause.kind !== "action") {
+      continue;
+    }
     const options = commentary === null ? {} : { commentary };
     const next = act(hand, cause.action, options);
-    if (!next.ok) return err({ code: "rejected", seq, violation: next.error });
+    if (!next.ok) {
+      return err({ code: "rejected", seq, violation: next.error });
+    }
     hand = next.value.hand;
     replayed.push(...next.value.events);
   }
@@ -128,7 +138,9 @@ function replay({ setup, events }: StoredHand): Result<Hand, HandParseError> {
       event.success &&
       expected !== undefined &&
       JSON.stringify(event.data) === JSON.stringify(expected);
-    if (!same) return err({ code: "mismatch", seq: index + 1 });
+    if (!same) {
+      return err({ code: "mismatch", seq: index + 1 });
+    }
   }
   return ok(hand);
 }
@@ -218,7 +230,9 @@ export type TableParseError =
  * Reads format 2 from 0.2.0 too, as a table with a moving button. */
 export function parseTable(text: string): Result<Table, TableParseError> {
   const stored = parseStoredTable(text);
-  if (!stored.ok) return stored;
+  if (!stored.ok) {
+    return stored;
+  }
   try {
     return replayTable(stored.value);
   } catch (cause) {
@@ -228,7 +242,9 @@ export function parseTable(text: string): Result<Table, TableParseError> {
 
 function parseStoredTable(text: string): Result<StoredTable, FormatError> {
   const current = parseJson(storedTableSchema, text);
-  if (current.ok) return current;
+  if (current.ok) {
+    return current;
+  }
   const legacy = parseJson(storedTableSchemaV2, text);
   return legacy.ok ? ok(fromV2(legacy.value)) : current;
 }
@@ -239,7 +255,9 @@ function replayTable({
   commands,
 }: StoredTable): Result<Table, TableParseError> {
   const created = createTable(setup);
-  if (!created.ok) return err({ code: "setup", error: created.error });
+  if (!created.ok) {
+    return err({ code: "setup", error: created.error });
+  }
   let table = resumeTable(created.value, checkpoint);
   for (const [index, command] of commands.entries()) {
     const next = actAtTable(table, command);

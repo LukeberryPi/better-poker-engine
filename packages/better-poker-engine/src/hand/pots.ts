@@ -56,7 +56,9 @@ export function shareOf(
   oddChips: Conventions["oddChips"]
 ): Chips {
   const [quotient, remainder] = splitChips(amount, ways);
-  if (oddChips === "oneEach") return quotient + (order < remainder ? 1 : 0);
+  if (oddChips === "oneEach") {
+    return quotient + (order < remainder ? 1 : 0);
+  }
   return quotient + (order === 0 ? remainder : 0);
 }
 
@@ -69,8 +71,12 @@ function sameEligible(
 
 /** Main pot first; a level only folded players reached stays unclaimed. */
 export function potsOf(state: HandState): ReadonlyArray<PotState> {
-  if (state.pots !== null) return state.pots;
-  if (sum(state.payoffs) === -sum(state.bets)) return [];
+  if (state.pots !== null) {
+    return state.pots;
+  }
+  if (sum(state.payoffs) === -sum(state.bets)) {
+    return [];
+  }
   const positions = positionsOf(state);
   const contributions = positions.map(
     (position) => -at(state.payoffs, position) - at(state.bets, position)
@@ -95,7 +101,9 @@ export function potsOf(state: HandState): ReadonlyArray<PotState> {
   let previous = 0;
   for (const level of [...new Set(contributions)].sort((a, b) => a - b)) {
     for (const contribution of contributions) {
-      if (contribution >= level) amount += level - previous;
+      if (contribution >= level) {
+        amount += level - previous;
+      }
     }
     const eligible = positions.filter(
       (position) => at(pending, position) >= level && at(state.active, position)
@@ -169,7 +177,9 @@ export function beginChipsPushing(state: HandState): void {
       });
       continue;
     }
-    if (active === 0) continue;
+    if (active === 0) {
+      continue;
+    }
     const boards = boardCount(state);
     for (let board = 0; board < boards; board += 1) {
       const boardAmount = shareOf(pot.unraked, boards, board, oddChips);
@@ -187,7 +197,9 @@ export function beginChipsPushing(state: HandState): void {
       }
       for (const [order, handType] of handTypes.entries()) {
         const amount = shareOf(boardAmount, handTypes.length, order, oddChips);
-        if (amount > 0) subPots.push({ amount, pot: index, board, handType });
+        if (amount > 0) {
+          subPots.push({ amount, pot: index, board, handType });
+        }
       }
     }
   }
@@ -200,9 +212,12 @@ function winnersOf(
   subPot: SubPot,
   pot: PotState
 ): Array<Position> {
-  if (subPot.board === null)
+  if (subPot.board === null) {
     return pot.eligible.length === 1 ? [...pot.eligible] : [];
-  if (subPot.handType === null) return [];
+  }
+  if (subPot.handType === null) {
+    return [];
+  }
   const { board, handType } = subPot;
   const hands = pot.eligible.map((position) =>
     upHandOf(state, position, board, handType)
@@ -214,9 +229,13 @@ function winnersOf(
 }
 
 export function pushChips(state: HandState): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "chipsPushing") return err({ code: "not_now" });
+  if (state.phase.kind !== "chipsPushing") {
+    return err({ code: "not_now" });
+  }
   const subPot = state.phase.subPots.shift();
-  if (subPot === undefined) return err({ code: "not_now" });
+  if (subPot === undefined) {
+    return err({ code: "not_now" });
+  }
   const pot = at(state.pots ?? [], subPot.pot);
   const winners = winnersOf(state, subPot, pot);
   const awards: Array<PlayerAmount> = [];
@@ -226,8 +245,9 @@ export function pushChips(state: HandState): Result<EventBody, Refusal> {
     for (const [order, position] of winners.entries()) {
       const amount = shareOf(subPot.amount, winners.length, order, oddChips);
       state.bets[position] = at(state.bets, position) + amount;
-      if (amount > 0)
+      if (amount > 0) {
         awards.push({ player: playerAt(state, position), amount });
+      }
     }
   }
   return ok({
@@ -251,10 +271,14 @@ export function pullChips(
   state: HandState,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "chipsPulling") return err({ code: "not_now" });
+  if (state.phase.kind !== "chipsPulling") {
+    return err({ code: "not_now" });
+  }
   const { pending } = state.phase;
   const position = pendingPlayer(state, pending, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   const amount = at(state.bets, position.value);
   pending[position.value] = false;
   state.bets[position.value] = 0;

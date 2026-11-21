@@ -50,7 +50,9 @@ function toLastCheck(example: Example, table: () => Driver): void {
     list.push([index + 1, dealBoard(board), boardDealt(board)]);
     list.push([index + 2, checkOrCall, checked("p1")]);
     list.push([index + 3, checkOrCall, checked("p2")]);
-    if (index < 19) list.push([index + 4, checkOrCall, checked("p3")]);
+    if (index < 19) {
+      list.push([index + 4, checkOrCall, checked("p3")]);
+    }
     index += 5;
   }
   steps(example, table, list);

@@ -41,7 +41,9 @@ function commented(hand: Hand, action: Action, commentary?: string): Hand {
     commentary === undefined
       ? act(hand, action)
       : act(hand, action, { commentary });
-  if (!next.ok) throw new Error(JSON.stringify(next.error));
+  if (!next.ok) {
+    throw new Error(JSON.stringify(next.error));
+  }
   return next.value.hand;
 }
 

@@ -31,13 +31,17 @@ export function canWinNow(state: HandState, position: Position): boolean {
   for (let board = 0; board < boardCount(state); board += 1) {
     for (const [handType] of state.game.rules.handTypes.entries()) {
       const hand = bestHandOf(state, position, board, handType);
-      if (hand === null) continue;
+      if (hand === null) {
+        continue;
+      }
       for (const pot of pots) {
         const best = maxOrNull(
           pot.eligible.map((index) => upHandOf(state, index, board, handType)),
           (value) => value.strength
         );
-        if (best === null || best.strength <= hand.strength) return true;
+        if (best === null || best.strength <= hand.strength) {
+          return true;
+        }
       }
     }
   }
@@ -101,10 +105,14 @@ export function selectRunoutCount(
   count: number | null,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "showdown") return err({ code: "not_now" });
+  if (state.phase.kind !== "showdown") {
+    return err({ code: "not_now" });
+  }
   const { selectors } = state.phase;
   const position = pendingPlayer(state, selectors, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   const maximum = maxRunouts(state);
   if (
     count !== null &&
@@ -162,8 +170,12 @@ function reveal(
     ? []
     : held.filter((card) => isKnownCard(card) && !up.includes(card));
   const hole = [...up, ...kept].slice(0, held.length);
-  while (hole.length < held.length) hole.push("??");
-  while (faces.length < held.length) faces.push("down");
+  while (hole.length < held.length) {
+    hole.push("??");
+  }
+  while (faces.length < held.length) {
+    faces.push("down");
+  }
   return ok({
     cards,
     hole: hole.map((card, i) => ({ card, face: at(faces, i) })),
@@ -179,7 +191,9 @@ function shownHole(
     case "muck":
       return ok(null);
     case "default":
-      if (!state.allIn && !canWinNow(state, position)) return ok(null);
+      if (!state.allIn && !canWinNow(state, position)) {
+        return ok(null);
+      }
       break;
     case "show":
       if (choice.cards !== undefined) {
@@ -226,12 +240,18 @@ export function showOrMuck(
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const turn = showdownTurn(state, player);
-  if (!turn.ok) return turn;
+  if (!turn.ok) {
+    return turn;
+  }
   const position = turn.value;
   // pokerkit takes this no-op before the deal; a PHH history can't place it, as forced bets replay first.
-  if (at(state.hole, position).length === 0) return err({ code: "not_now" });
+  if (at(state.hole, position).length === 0) {
+    return err({ code: "not_now" });
+  }
   const shown = shownHole(state, position, choice);
-  if (!shown.ok) return shown;
+  if (!shown.ok) {
+    return shown;
+  }
   if (shown.value === null && strandsPot(state, position)) {
     return err({ code: "must_show" });
   }
@@ -298,10 +318,14 @@ export function killHand(
   state: HandState,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "handKilling") return err({ code: "not_now" });
+  if (state.phase.kind !== "handKilling") {
+    return err({ code: "not_now" });
+  }
   const { pending } = state.phase;
   const position = pendingPlayer(state, pending, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   pending[position.value] = false;
   muck(state, position.value);
   return ok({ type: "handKilled", player: playerAt(state, position.value) });

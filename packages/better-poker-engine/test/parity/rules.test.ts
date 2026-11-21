@@ -46,7 +46,9 @@ unitTest(
 function raiseRange(table: Driver) {
   expect(table.can(minimumRaise(table))).toBe(true);
   const decision = auditor(table.hand).decision;
-  if (decision.kind !== "betting") throw new Error(decision.kind);
+  if (decision.kind !== "betting") {
+    throw new Error(decision.kind);
+  }
   return decision.betOrRaiseTo;
 }
 

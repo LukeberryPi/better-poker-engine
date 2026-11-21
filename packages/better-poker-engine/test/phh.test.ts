@@ -197,7 +197,9 @@ describe("parsePhhs", () => {
 
   test("reads every history in order and writes them back", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     expect(parsed.value).toHaveLength(30);
     expect(parsed.value.map((item) => item.hand).slice(0, 2)).toEqual([
       { kind: "integer", value: 59_937_794_410 },
@@ -211,7 +213,9 @@ describe("parsePhhs", () => {
 
   test("keeps pokerkit's layout, losing only the trailing zeros of floats", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     const sections = text
       .trimEnd()
       .split("\n\n")
@@ -223,7 +227,9 @@ describe("parsePhhs", () => {
 
   test("reads the metadata online histories carry", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     const [first] = parsed.value;
     expect(first).toMatchObject({
       blinds: ["0.1", "0.25", "0", "0"],
@@ -241,7 +247,9 @@ describe("parsePhhs", () => {
 
   test("keeps pokerkit's negative post bets in the blinds", () => {
     const parsed = parsePhhs(text);
-    if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
+    if (!parsed.ok) {
+      throw new Error(JSON.stringify(parsed.error));
+    }
     expect(parsed.value[8]?.blinds).toEqual(["0.1", "0.25", "-0.25", "0", "0"]);
   });
 
@@ -645,8 +653,9 @@ describe("formatPhh", () => {
   });
 
   test("writes hand-built amounts and actions in canonical form", () => {
-    if (base.minBet === null)
+    if (base.minBet === null) {
       throw new Error("The base history has no min_bet");
+    }
     const written = formatPhh({
       ...base,
       antes: ["1e1", "0.50"],

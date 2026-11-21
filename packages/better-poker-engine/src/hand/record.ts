@@ -38,7 +38,9 @@ function heldCards(
       const discarded = [...body.discarded];
       held = held.filter(({ card }) => {
         const index = discarded.indexOf(card);
-        if (index === -1) return true;
+        if (index === -1) {
+          return true;
+        }
         discarded.splice(index, 1);
         return false;
       });
@@ -47,7 +49,9 @@ function heldCards(
         const index = held.findIndex((hole) => hole.card === card);
         const unknown = held.findIndex((hole) => !isKnownCard(hole.card));
         const slot = index === -1 ? unknown : index;
-        if (slot !== -1) held[slot] = { card, face: "up" };
+        if (slot !== -1) {
+          held[slot] = { card, face: "up" };
+        }
       }
     }
   }
@@ -94,7 +98,9 @@ function winnersOf(
   pot: number
 ): Array<Winner> {
   return events.flatMap(({ body }) => {
-    if (body.type !== "chipsPushed" || body.pot !== pot) return [];
+    if (body.type !== "chipsPushed" || body.pot !== pot) {
+      return [];
+    }
     const { board, handType } = body;
     return body.awards.map(({ player, amount }) => {
       const position = state.players.indexOf(player);
@@ -122,11 +128,15 @@ function partsOf(
   let covered = 0;
   while (covered < amount) {
     const part = contested.shift();
-    if (part === undefined) throw new Error("Contested pots ran out");
+    if (part === undefined) {
+      throw new Error("Contested pots ran out");
+    }
     parts.push(part);
     covered += part.amount;
   }
-  if (covered !== amount) throw new Error("Contested pots split a pushed pot");
+  if (covered !== amount) {
+    throw new Error("Contested pots split a pushed pot");
+  }
   return parts;
 }
 
@@ -149,7 +159,9 @@ function apportion(
         a.remainder === b.remainder ? 0 : a.remainder > b.remainder ? -1 : 1
       );
     for (const { index } of order) {
-      if (short === 0n) break;
+      if (short === 0n) {
+        break;
+      }
       shares[index] = at(shares, index) + 1n;
       short -= 1n;
     }

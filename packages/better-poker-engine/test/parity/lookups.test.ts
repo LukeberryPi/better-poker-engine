@@ -24,7 +24,9 @@ type Hand = ReadonlyArray<KnownCard>;
 
 function entryIn(table: Lookup, text: string): Entry {
   const entry = entryOf(table, cards(text));
-  if (entry === null) throw new Error(`${text} has no entry`);
+  if (entry === null) {
+    throw new Error(`${text} has no entry`);
+  }
   return entry;
 }
 
@@ -48,7 +50,9 @@ function badugiDigest(name: LookupName, deck: Hand): string {
       if (!arePaired(hand) && areRainbow(hand)) {
         badugis.push(hand);
       } else if (arePaired(hand) || areSuited(hand)) {
-        if (entryOf(table, hand) !== null) accepted.push(hand.join(""));
+        if (entryOf(table, hand) !== null) {
+          accepted.push(hand.join(""));
+        }
       }
     });
   }
@@ -276,7 +280,9 @@ unitTest(
     const table = lookup("eightOrBetter");
     const digest = digestSortedByEntry(table, (visit) =>
       forEachCombination(decks.regular, 5, (hand) => {
-        if (entryOf(table, hand) !== null) visit(hand);
+        if (entryOf(table, hand) !== null) {
+          visit(hand);
+        }
       })
     );
     expect(digest).toBe("ecf2b6b16031562a6761932b1ce1de91");

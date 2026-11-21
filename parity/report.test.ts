@@ -95,7 +95,9 @@ test("files that are not required yet only report progress", () => {
 
 test("an id ported twice is an error even when both copies pass", () => {
   const [id] = rulesIds;
-  if (id === undefined) throw new Error("test_rules.py has no tests");
+  if (id === undefined) {
+    throw new Error("test_rules.py has no tests");
+  }
   const report = parityReport(
     new Map([[id, ["passed", "passed"]]]),
     new Set(),

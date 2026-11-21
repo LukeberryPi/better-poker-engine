@@ -71,7 +71,9 @@ describe("startHand", () => {
 
   test("names players by the ids given", () => {
     const started = startHand({ ...setup(noLimit), players: ["ann", "bo"] });
-    if (!started.ok) throw new Error(started.error.code);
+    if (!started.ok) {
+      throw new Error(started.error.code);
+    }
     expect(started.value.events.slice(0, 2).map((event) => event.body)).toEqual(
       [
         { type: "blindPosted", player: "ann", amount: 2 },
@@ -144,7 +146,9 @@ describe("startHand", () => {
         for (let step = 0; step < 1000; step += 1) {
           const view = auditor(hand);
           const { decision } = view;
-          if (decision.kind === "complete") break;
+          if (decision.kind === "complete") {
+            break;
+          }
           const drawer = decision.kind === "drawing" ? decision.player : null;
           const held =
             view.players.find(({ player }) => player === drawer)?.holeCards ??
@@ -156,7 +160,9 @@ describe("startHand", () => {
                 ? { type: "checkOrCall" }
                 : { type: "draw", discard: held.map(({ card }) => card) };
           const result = act(hand, action);
-          if (!result.ok) throw new Error(JSON.stringify(result.error));
+          if (!result.ok) {
+            throw new Error(JSON.stringify(result.error));
+          }
           hand = result.value.hand;
         }
         expect(auditor(hand).decision.kind).toBe("complete");
@@ -231,7 +237,9 @@ describe("act", () => {
     const hand = start(noLimit, [100, 100, 100], automation.all);
     const seen = spectator(hand).version;
     const called = act(hand, { type: "checkOrCall" });
-    if (!called.ok) throw new Error(called.error.code);
+    if (!called.ok) {
+      throw new Error(called.error.code);
+    }
     const next = called.value.hand;
     expect(
       act(next, { type: "checkOrCall" }, { expectedVersion: seen })
@@ -401,7 +409,9 @@ describe("act", () => {
       (hole) => hole.card
     );
     const missing = decks.standard.find((card) => !held?.includes(card));
-    if (missing === undefined) throw new Error("Every card is held");
+    if (missing === undefined) {
+      throw new Error("Every card is held");
+    }
     expect(table.reject({ type: "draw", discard: [missing] })).toEqual({
       code: "card_not_held",
       card: missing,
@@ -458,7 +468,9 @@ describe("act", () => {
   test("stores commentary on the action's event only", () => {
     const hand = start(noLimit, [100, 100], automation.all);
     const result = act(hand, { type: "checkOrCall" }, { commentary: "limp" });
-    if (!result.ok) throw new Error(result.error.code);
+    if (!result.ok) {
+      throw new Error(result.error.code);
+    }
     expect(result.value.events.map((event) => event.commentary)).toEqual([
       "limp",
     ]);
@@ -472,7 +484,9 @@ describe("act", () => {
     const held = [...discard];
     const result = act(table.hand, { type: "draw", discard });
     discard.length = 0;
-    if (!result.ok) throw new Error(result.error.code);
+    if (!result.ok) {
+      throw new Error(result.error.code);
+    }
     expect(result.value.events[0]?.body).toEqual({
       type: "drew",
       player: "p1",
@@ -579,7 +593,9 @@ describe("reshuffling", () => {
     for (;;) {
       const view = auditor(hand);
       const { decision } = view;
-      if (decision.kind === "complete") break;
+      if (decision.kind === "complete") {
+        break;
+      }
       const drawer = decision.kind === "drawing" ? decision.player : null;
       const held =
         view.players.find(({ player }) => player === drawer)?.holeCards ?? [];
@@ -588,7 +604,9 @@ describe("reshuffling", () => {
           ? { type: "checkOrCall" }
           : { type: "draw", discard: held.map(({ card }) => card) };
       const result = act(hand, action);
-      if (!result.ok) throw new Error(result.error.code);
+      if (!result.ok) {
+        throw new Error(result.error.code);
+      }
       hand = result.value.hand;
       actions.push(action);
     }
@@ -596,12 +614,16 @@ describe("reshuffling", () => {
       { game, stacks: repeat(200, 6), deck, automate: automation.all },
       actions
     );
-    if (!replayed.ok) throw new Error(replayed.error.code);
+    if (!replayed.ok) {
+      throw new Error(replayed.error.code);
+    }
     expect(auditor(replayed.value.hand)).toEqual(auditor(hand));
 
     const bodies = replayed.value.events.map(({ body }) => body);
     const dealt = bodies.flatMap((body) => {
-      if (body.type === "cardBurned") return [body.card];
+      if (body.type === "cardBurned") {
+        return [body.card];
+      }
       return body.type === "holeDealt"
         ? body.cards.map(({ card }) => card)
         : [];
@@ -713,7 +735,9 @@ describe("summarizeHand", () => {
         const table = shove("7cKsAs2dKhAh", automation.dealer);
         for (;;) {
           const { decision } = spectator(table.hand);
-          if (decision.kind !== "showdown") break;
+          if (decision.kind !== "showdown") {
+            break;
+          }
           table.act({ type: decision.player === "p3" ? "show" : last });
         }
         return summarizeHand(table.hand)?.pots.map((pot) => pot.eligible);
@@ -747,7 +771,9 @@ describe("replayHand", () => {
 
   test("returns every event since the start", () => {
     const replayed = replayHand(setup(noLimit), [{ type: "fold" }]);
-    if (!replayed.ok) throw new Error(replayed.error.code);
+    if (!replayed.ok) {
+      throw new Error(replayed.error.code);
+    }
     const { hand, events } = replayed.value;
     expect(events.map((event) => event.seq)).toEqual(
       events.map((_, index) => index + 1)

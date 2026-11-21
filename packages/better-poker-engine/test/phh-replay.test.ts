@@ -68,9 +68,13 @@ describe("replayHistory", () => {
 
   test("reads a negative blind as a live post bet", () => {
     const histories = parsePhhs(fixture("handhq-ps-25nlh-1-30.phhs"));
-    if (!histories.ok) throw new Error(JSON.stringify(histories.error));
+    if (!histories.ok) {
+      throw new Error(JSON.stringify(histories.error));
+    }
     const postBet = histories.value[8];
-    if (postBet === undefined) throw new Error("No ninth history");
+    if (postBet === undefined) {
+      throw new Error("No ninth history");
+    }
     const replay = replayed(postBet, { amountScale: 100 });
     expect(replay.steps[0]?.events.map((event) => event.body)).toEqual([
       { type: "blindPosted", player: "p1", amount: 10 },
@@ -219,9 +223,13 @@ describe("replayHistory errors", () => {
       })
     );
     const histories = parsePhhs(fixture("handhq-ps-25nlh-1-30.phhs"));
-    if (!histories.ok) throw new Error(JSON.stringify(histories.error));
+    if (!histories.ok) {
+      throw new Error(JSON.stringify(histories.error));
+    }
     const cents = histories.value[0];
-    if (cents === undefined) throw new Error("No first history");
+    if (cents === undefined) {
+      throw new Error("No first history");
+    }
     expect(replayHistory(cents, { amountScale: 10 })).toEqual(
       err({
         code: "not_integral",

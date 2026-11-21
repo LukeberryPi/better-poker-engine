@@ -563,7 +563,9 @@ function firstInvalid(
 
 function streetError(street: Street, index: number): GameError | null {
   const field = `streets.${index}`;
-  if (!isChips(street.board)) return invalid(`${field}.board`, street.board);
+  if (!isChips(street.board)) {
+    return invalid(`${field}.board`, street.board);
+  }
   const holeCards = street.hole.length > 0;
   if (!holeCards && street.board === 0 && !street.draw) {
     return { code: "street_deals_nothing", street: index };
@@ -582,7 +584,9 @@ function streetError(street: Street, index: number): GameError | null {
 }
 
 function rakeError(rake: Rake): GameError | null {
-  if (rake.kind === "none") return null;
+  if (rake.kind === "none") {
+    return null;
+  }
   if (!isChips(rake.basisPoints) || rake.basisPoints > 10_000) {
     return invalid("rake.basisPoints", rake.basisPoints);
   }
@@ -597,7 +601,9 @@ export function validateGame(game: Game): GameError | null {
   const { streets } = game.rules;
   for (const [index, street] of streets.entries()) {
     const error = streetError(street, index);
-    if (error !== null) return error;
+    if (error !== null) {
+      return error;
+    }
   }
   if (streets[0].hole.length === 0) {
     return { code: "first_street_without_hole_cards" };
@@ -608,21 +614,29 @@ export function validateGame(game: Game): GameError | null {
     anteAmounts(antes),
     isChips
   );
-  if (anteError !== null) return anteError;
+  if (anteError !== null) {
+    return anteError;
+  }
   const blindError = firstInvalid(
     "forcedBets.blinds",
     blinds,
     Number.isSafeInteger
   );
-  if (blindError !== null) return blindError;
+  if (blindError !== null) {
+    return blindError;
+  }
   if (bringIn !== null && !isChips(bringIn)) {
     return invalid("forcedBets.bringIn", bringIn);
   }
   const anyAnte = anteAmounts(antes).some((amount) => amount > 0);
   const anyBlind = blinds.some((amount) => amount !== 0);
   const anyBringIn = bringIn !== null && bringIn > 0;
-  if (!anyAnte && !anyBlind && !anyBringIn) return { code: "no_forced_bets" };
-  if (anyBlind && anyBringIn) return { code: "blinds_with_bring_in" };
+  if (!anyAnte && !anyBlind && !anyBringIn) {
+    return { code: "no_forced_bets" };
+  }
+  if (anyBlind && anyBringIn) {
+    return { code: "blinds_with_bring_in" };
+  }
   const minBet = streets[0].minCompletionBetOrRaise;
   if (bringIn !== null && bringIn >= minBet) {
     return { code: "bring_in_not_below_min_bet", bringIn, minBet };

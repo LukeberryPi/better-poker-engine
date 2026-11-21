@@ -122,7 +122,9 @@ export function sqliteStore(driver: SqliteDriver): TableStore {
         [id]
       );
       const [state] = column(rows, "state");
-      if (state === undefined) return null;
+      if (state === undefined) {
+        return null;
+      }
       const parsed = parseTable(state);
       if (!parsed.ok) {
         throw new Error(`Stored table ${id} does not load`, {

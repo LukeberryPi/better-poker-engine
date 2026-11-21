@@ -41,7 +41,9 @@ function fromGame<T extends HandType>(
   board: ReadonlyArray<KnownCard>
 ): HandValue<T> {
   const value = evaluate(type, hole, board);
-  if (value === null) throw new Error(`${hole} ${board} make no ${type} hand`);
+  if (value === null) {
+    throw new Error(`${hole} ${board} make no ${type} hand`);
+  }
   return value;
 }
 

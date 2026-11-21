@@ -65,10 +65,14 @@ export function postAnte(
   state: HandState,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "antePosting") return err({ code: "not_now" });
+  if (state.phase.kind !== "antePosting") {
+    return err({ code: "not_now" });
+  }
   const { pending } = state.phase;
   const position = pendingPlayer(state, pending, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   const amount = effectiveAnte(state, position.value);
   pending[position.value] = false;
   placeBet(state, position.value, amount);
@@ -83,10 +87,14 @@ export function postBlind(
   state: HandState,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
-  if (state.phase.kind !== "blindPosting") return err({ code: "not_now" });
+  if (state.phase.kind !== "blindPosting") {
+    return err({ code: "not_now" });
+  }
   const { pending } = state.phase;
   const position = pendingPlayer(state, pending, player);
-  if (!position.ok) return position;
+  if (!position.ok) {
+    return position;
+  }
   const amount = effectiveBlind(state, position.value);
   pending[position.value] = false;
   placeBet(state, position.value, amount);
@@ -122,7 +130,9 @@ export function collectBets(state: HandState): Result<EventBody, Refusal> {
     );
     for (const position of collectors) {
       const over = at(state.bets, position) - cutoff;
-      if (over <= 0) continue;
+      if (over <= 0) {
+        continue;
+      }
       state.bets[position] = cutoff;
       state.stacks[position] = addToStack(at(state.stacks, position), over);
       state.payoffs[position] = at(state.payoffs, position) + over;

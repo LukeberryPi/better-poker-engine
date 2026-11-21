@@ -10,7 +10,9 @@ function permutations<T>(
   items: ReadonlyArray<T>,
   size: number
 ): Array<ReadonlyArray<T>> {
-  if (size === 0) return [[]];
+  if (size === 0) {
+    return [[]];
+  }
   return items.flatMap((item, index) =>
     permutations(items.toSpliced(index, 1), size - 1).map((rest) => [
       item,

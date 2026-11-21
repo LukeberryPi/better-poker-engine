@@ -41,7 +41,9 @@ const noLimit = holdem.noLimit({
 
 function tomlOf(text: string) {
   const table = readToml(text);
-  if (!table.ok) throw new Error(JSON.stringify(table.error));
+  if (!table.ok) {
+    throw new Error(JSON.stringify(table.error));
+  }
   return table.value;
 }
 

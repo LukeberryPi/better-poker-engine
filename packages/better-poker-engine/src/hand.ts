@@ -252,7 +252,9 @@ export type Transition = {
 
 export function startHand(setup: HandSetup): Result<Transition, SetupError> {
   const error = validateSetup(setup);
-  if (error !== null) return err(error);
+  if (error !== null) {
+    return err(error);
+  }
   const state = initialState(setup);
   const events: Array<HandEvent> = [];
   settle(state);
@@ -299,7 +301,9 @@ export function act(
   const copied = copyAction(action);
   const commentary = options.commentary ?? null;
   const events = apply(state, copied, commentary);
-  if (!events.ok) return events;
+  if (!events.ok) {
+    return events;
+  }
   state.log = [...current.log, { action: copied, commentary }];
   return ok({ hand: handFrom(state), events: events.value });
 }
@@ -324,7 +328,9 @@ export function actAs(
 /** Null until the hand is complete. Auditor data: it holds every hole card. */
 export function summarizeHand(hand: Hand): HandRecord | null {
   const state = stateOf(hand);
-  if (state.phase.kind !== "complete") return null;
+  if (state.phase.kind !== "complete") {
+    return null;
+  }
   return summarize(state, eventsOf(hand));
 }
 
@@ -338,7 +344,9 @@ export function eventsOf(hand: Hand): Array<HandEvent> {
     deck: state.startingDeck,
     automate: state.automate,
   });
-  if (!started.ok) throw new Error("A hand no longer starts from its setup");
+  if (!started.ok) {
+    throw new Error("A hand no longer starts from its setup");
+  }
   let replayed = started.value.hand;
   const events = [...started.value.events];
   for (const { action, commentary } of state.log) {
@@ -347,7 +355,9 @@ export function eventsOf(hand: Hand): Array<HandEvent> {
       action,
       commentary === null ? {} : { commentary }
     );
-    if (!next.ok) throw new Error("A hand no longer replays its own log");
+    if (!next.ok) {
+      throw new Error("A hand no longer replays its own log");
+    }
     replayed = next.value.hand;
     events.push(...next.value.events);
   }
@@ -367,7 +377,9 @@ export function replayHand(
   actions: ReadonlyArray<Action>
 ): Result<Transition, ReplayError> {
   const started = startHand(setup);
-  if (!started.ok) return err({ code: "setup", error: started.error });
+  if (!started.ok) {
+    return err({ code: "setup", error: started.error });
+  }
   let { hand } = started.value;
   const events = [...started.value.events];
   for (const [index, action] of actions.entries()) {

@@ -136,10 +136,14 @@ export function stateOf(hand: Hand): HandState {
 
 /** Skips frozen objects: everything a hand holds was frozen whole when first reached. */
 export function deepFreeze<T extends {}>(value: T): T {
-  if (Object.isFrozen(value)) return value;
+  if (Object.isFrozen(value)) {
+    return value;
+  }
   Object.freeze(value);
   for (const child of Object.values(value)) {
-    if (child !== null && child !== undefined) deepFreeze(child);
+    if (child !== null && child !== undefined) {
+      deepFreeze(child);
+    }
   }
   return value;
 }
@@ -229,13 +233,17 @@ export function positionsOf(state: HandState): Array<Position> {
 
 export function playerAt(state: HandState, position: Position): PlayerId {
   const player = state.players[position];
-  if (player === undefined) throw new Error(`No player at ${position}`);
+  if (player === undefined) {
+    throw new Error(`No player at ${position}`);
+  }
   return player;
 }
 
 export function at<T>(values: ReadonlyArray<T>, index: number): T {
   const value = values[index];
-  if (value === undefined) throw new Error(`No value at ${index}`);
+  if (value === undefined) {
+    throw new Error(`No value at ${index}`);
+  }
   return value;
 }
 
@@ -265,7 +273,9 @@ export function streetAt(state: HandState, index: number): Street {
 }
 
 export function currentStreet(state: HandState): Street {
-  if (state.street === null) throw new Error("No street is in progress");
+  if (state.street === null) {
+    throw new Error("No street is in progress");
+  }
   return streetAt(state, state.street);
 }
 
@@ -323,7 +333,9 @@ export function bestHandOf(
   board: number,
   handType: number
 ): HandValue | null {
-  if (!at(state.active, position)) return null;
+  if (!at(state.active, position)) {
+    return null;
+  }
   return evaluate(
     at(state.game.rules.handTypes, handType),
     knownCards(at(state.hole, position).map((hole) => hole.card)),
@@ -338,7 +350,9 @@ export function upHandOf(
   board: number,
   handType: number
 ): HandValue | null {
-  if (!at(state.active, position)) return null;
+  if (!at(state.active, position)) {
+    return null;
+  }
   return evaluate(
     at(state.game.rules.handTypes, handType),
     knownCards(upCards(state, position)),

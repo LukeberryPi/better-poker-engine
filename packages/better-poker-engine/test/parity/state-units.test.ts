@@ -509,7 +509,9 @@ function startedEvents(game: Game, automate: Automation): Array<HandEvent> {
     deck: decks.standard,
     automate,
   });
-  if (!started.ok) throw new Error(started.error.code);
+  if (!started.ok) {
+    throw new Error(started.error.code);
+  }
   return [...started.value.events];
 }
 
@@ -576,7 +578,9 @@ unitTest(
     const flop = drive(start(oneStreet(3), sixStacks, manualDealing));
     expect(dealable(flop)).toEqual([false, true, false]);
     expect(actor(flop.hand)).toBeNull();
-    while (flop.can({ type: "dealHole" })) flop.act({ type: "dealHole" });
+    while (flop.can({ type: "dealHole" })) {
+      flop.act({ type: "dealHole" });
+    }
     expect(dealable(flop)).toEqual([true, false, false]);
     expect(actor(flop.hand)).toBeNull();
     flop.act({ type: "burnCard" });
@@ -592,7 +596,9 @@ unitTest(
     noBoard.act({ type: "burnCard" });
     expect(dealable(noBoard)).toEqual([false, true, false]);
     expect(actor(noBoard.hand)).toBeNull();
-    while (noBoard.can({ type: "dealHole" })) noBoard.act({ type: "dealHole" });
+    while (noBoard.can({ type: "dealHole" })) {
+      noBoard.act({ type: "dealHole" });
+    }
     expect(dealable(noBoard)).toEqual([false, false, false]);
     expect(actor(noBoard.hand)).toBe("p1");
 
@@ -602,7 +608,9 @@ unitTest(
       anteTrimming: true,
     });
     const table = drive(start(game, sixStacks, manualDealing));
-    while (table.can({ type: "dealHole" })) table.act({ type: "dealHole" });
+    while (table.can({ type: "dealHole" })) {
+      table.act({ type: "dealHole" });
+    }
     play(table, [fold, fold, fold, fold, call, call]);
     expect(dealable(table)).toEqual([true, false, false]);
     expect(actor(table.hand)).toBeNull();
@@ -1177,7 +1185,9 @@ unitTest(
 
 function callAmount(hand: Hand): number | null {
   const decision = auditor(hand).decision;
-  if (decision.kind !== "betting" || decision.checkOrCall === null) return null;
+  if (decision.kind !== "betting" || decision.checkOrCall === null) {
+    return null;
+  }
   return decision.checkOrCall.kind === "call" ? decision.checkOrCall.amount : 0;
 }
 
