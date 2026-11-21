@@ -31,7 +31,7 @@ function heldCards(
   let held: Array<HoleCard> = [];
   for (const { body } of events) {
     if (body.type === "holeDealt" && body.player === player) {
-      held = [...held, ...body.cards];
+      held.push(...body.cards);
     } else if (body.type === "drew" && body.player === player) {
       const discarded = [...body.discarded];
       held = held.filter(({ card }) => {
@@ -151,8 +151,9 @@ function apportion(
     const remainders = remaining.map((flow) => (flow * size) % left);
     let short = size - shares.reduce((total, share) => total + share, 0n);
     const order = remainders
-      .map((remainder, index) => ({ remainder, index }))
-      .filter(({ remainder }) => remainder > 0n)
+      .flatMap((remainder, index) =>
+        remainder > 0n ? [{ remainder, index }] : []
+      )
       .sort((a, b) =>
         a.remainder === b.remainder ? 0 : a.remainder > b.remainder ? -1 : 1
       );

@@ -888,9 +888,9 @@ describe("random sessions", () => {
           }
           learned = count;
           seen.push(...cardsIn(viewTable(table, audience)));
-          return seen
-            .filter((card) => !known.has(card))
-            .map((card) => ({ seed, audience, card }));
+          return seen.flatMap((card) =>
+            known.has(card) ? [] : [{ seed, audience, card }]
+          );
         });
       });
     });
