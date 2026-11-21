@@ -200,8 +200,8 @@ describe("parsePhhs", () => {
     if (!parsed.ok) throw new Error(JSON.stringify(parsed.error));
     expect(parsed.value).toHaveLength(30);
     expect(parsed.value.map((item) => item.hand).slice(0, 2)).toEqual([
-      { kind: "integer", value: 59937794410 },
-      { kind: "integer", value: 59937793662 },
+      { kind: "integer", value: 59_937_794_410 },
+      { kind: "integer", value: 59_937_793_662 },
     ]);
     const written = formatPhhs(parsed.value);
     expect(parsePhhs(written)).toEqual(parsed);

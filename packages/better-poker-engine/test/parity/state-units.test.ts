@@ -830,13 +830,13 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
   expect(
     pushed(
       raked,
-      [100, 10, 10000, 1000],
+      [100, 10, 10_000, 1000],
       [
         deal("2c3c"),
         deal("2d3d"),
         deal("2h3h"),
         deal("2s3s"),
-        raiseTo(10000),
+        raiseTo(10_000),
         call,
         call,
         call,
@@ -850,14 +850,14 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
   expect(
     pushed(
       raked,
-      [100, 10, 100000, 10000, 1000],
+      [100, 10, 100_000, 10_000, 1000],
       [
         deal("2c3c"),
         deal("2d3d"),
         deal("2h3h"),
         deal("2s3s"),
         deal("4c5c"),
-        raiseTo(100000),
+        raiseTo(100_000),
         call,
         call,
         call,
@@ -869,7 +869,7 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_chips_pushing", () => {
         push,
       ]
     )
-  ).toEqual([90, 9, 99000, 9000, 900]);
+  ).toEqual([90, 9, 99_000, 9000, 900]);
   const reraised = [
     deal("????"),
     deal("????"),

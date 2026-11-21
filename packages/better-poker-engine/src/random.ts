@@ -39,21 +39,21 @@ export type Seed = readonly [number, number, number, number];
 
 /** cyrb128 from the same page. */
 export function seedFrom(text: string): Seed {
-  let h1 = 1779033703;
-  let h2 = 3144134277;
-  let h3 = 1013904242;
-  let h4 = 2773480762;
+  let h1 = 1_779_033_703;
+  let h2 = 3_144_134_277;
+  let h3 = 1_013_904_242;
+  let h4 = 2_773_480_762;
   for (let index = 0; index < text.length; index += 1) {
     const code = text.charCodeAt(index);
-    h1 = h2 ^ Math.imul(h1 ^ code, 597399067);
-    h2 = h3 ^ Math.imul(h2 ^ code, 2869860233);
-    h3 = h4 ^ Math.imul(h3 ^ code, 951274213);
-    h4 = h1 ^ Math.imul(h4 ^ code, 2716044179);
+    h1 = h2 ^ Math.imul(h1 ^ code, 597_399_067);
+    h2 = h3 ^ Math.imul(h2 ^ code, 2_869_860_233);
+    h3 = h4 ^ Math.imul(h3 ^ code, 951_274_213);
+    h4 = h1 ^ Math.imul(h4 ^ code, 2_716_044_179);
   }
-  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
-  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
-  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
-  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597_399_067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2_869_860_233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951_274_213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2_716_044_179);
   h1 ^= h2 ^ h3 ^ h4;
   h2 ^= h1;
   h3 ^= h1;
@@ -78,9 +78,9 @@ export function sfc32(seed: Seed): RandomSource {
 function splitmix32(seed: number): () => number {
   let state = seed >>> 0;
   return () => {
-    state = (state + 0x9e3779b9) | 0;
-    let mixed = Math.imul(state ^ (state >>> 16), 0x21f0aaad);
-    mixed = Math.imul(mixed ^ (mixed >>> 15), 0x735a2d97);
+    state = (state + 0x9e_37_79_b9) | 0;
+    let mixed = Math.imul(state ^ (state >>> 16), 0x21_f0_aa_ad);
+    mixed = Math.imul(mixed ^ (mixed >>> 15), 0x73_5a_2d_97);
     return (mixed ^ (mixed >>> 15)) >>> 0;
   };
 }

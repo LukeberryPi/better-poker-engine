@@ -344,7 +344,7 @@ export function evaluateStrength(
   for (let suit = 0; suit < 4; suit += 1) {
     if (((counts >> (suit * 3)) & 7) >= 5) {
       const suits = suit < 2 ? lowSuits : highSuits;
-      return tables.flushes[(suits >> ((suit % 2) * 13)) & 0x1fff] ?? null;
+      return tables.flushes[(suits >> ((suit % 2) * 13)) & 0x1f_ff] ?? null;
     }
   }
   return tables.others.get(product) ?? null;

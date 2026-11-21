@@ -24,7 +24,7 @@ unitTest(
       anteTrimming: true,
     });
     const shortAllIn = drive(
-      start(noLimit, [650, 20000, 20000], automation.all)
+      start(noLimit, [650, 20_000, 20_000], automation.all)
     );
     play(shortAllIn, [raiseTo(600), raiseTo(650), call]);
     expect(shortAllIn.can(minimumRaise(shortAllIn))).toBe(false);
@@ -60,7 +60,7 @@ unitTest(
       anteTrimming: true,
     });
     const table = drive(
-      start(game, [20001, 20001, 20001, 1301, 1701], automation.all)
+      start(game, [20_001, 20_001, 20_001, 1301, 1701], automation.all)
     );
     play(table, [
       raiseTo(500),
@@ -70,7 +70,11 @@ unitTest(
       raiseTo(1700),
     ]);
     const reopenedFor: Hand = table.hand;
-    const range = { kind: "raise", min: 2200, max: 20000 } satisfies RaiseRange;
+    const range = {
+      kind: "raise",
+      min: 2200,
+      max: 20_000,
+    } satisfies RaiseRange;
 
     const afterCall = drive(reopenedFor);
     call(afterCall);

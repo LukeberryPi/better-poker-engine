@@ -115,7 +115,7 @@ describe("bigBlindIsFullBet, player by player", () => {
   test("on, judges each player by what they faced when they last acted", () => {
     const table = played(
       noLimit(conventions.tda2024),
-      [10000, 250, 10000, 300],
+      [10_000, 250, 10_000, 300],
       [...limpedThrough, raiseTo(100), raiseTo(150), call, raiseTo(200)]
     );
     expect(auditor(table.hand).decision).toMatchObject({
@@ -133,7 +133,7 @@ describe("bigBlindIsFullBet, player by player", () => {
   test("on, reopens for a player whom three short all-ins have raised a full raise", () => {
     const table = played(
       noLimit(conventions.tda2024),
-      [10000, 10000, 10000, 150, 200, 240],
+      [10_000, 10_000, 10_000, 150, 200, 240],
       [call, raiseTo(150), raiseTo(200), raiseTo(240), call, fold]
     );
     expect(auditor(table.hand).decision).toMatchObject({

@@ -34,7 +34,7 @@ export function rakePot(
   const quotient = product / 10_000n;
   const remainder = product % 10_000n;
   const roundsUp =
-    remainder > 5_000n || (remainder === 5_000n && quotient % 2n === 1n);
+    remainder > 5000n || (remainder === 5000n && quotient % 2n === 1n);
   const cap = rake.cap?.per === "pot" ? rake.cap.amount : capLeft;
   const raked = Math.min(Number(quotient) + (roundsUp ? 1 : 0), cap);
   return { raked, unraked: amount - raked };

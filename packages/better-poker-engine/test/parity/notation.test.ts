@@ -84,7 +84,7 @@ unitTest(
 unitTest(
   "pokerkit.tests.test_notation.HandHistoryTestCase.test_to_acpc_protocol_full",
   () => {
-    let table = drive(start(fixedLimit, [20000, 20000], automate));
+    let table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("TdAs"),
       deal("????"),
@@ -136,7 +136,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("????"),
       deal("Qd7c"),
@@ -174,7 +174,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("9d7s"),
       deal("????"),
@@ -212,7 +212,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(noLimit, [20000, 20000], automate));
+    table = drive(start(noLimit, [20_000, 20_000], automate));
     play(table, [
       deal("9s8h"),
       deal("????"),
@@ -280,7 +280,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(noLimit, [20000, 20000], automate));
+    table = drive(start(noLimit, [20_000, 20_000], automate));
     play(table, [
       deal("????"),
       deal("JdTc"),
@@ -295,7 +295,7 @@ unitTest(
       call,
       burn,
       board("Kh"),
-      raiseTo(11000),
+      raiseTo(11_000),
       call,
       show("KsJs"),
       show("JdTc"),
@@ -375,7 +375,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000, 20_000], automate));
     play(table, [
       deal("????"),
       deal("????"),
@@ -422,7 +422,7 @@ unitTest(
       ])
     );
 
-    table = drive(start(fixedLimit, [20000, 20000, 20000], automate));
+    table = drive(start(fixedLimit, [20_000, 20_000, 20_000], automate));
     play(table, [
       deal("Ad6h"),
       deal("????"),
@@ -504,7 +504,7 @@ unitTest(
       ["<-C", "MATCHSTATE:0:0:rrc/rc/crc/cr:TdAs|/2c8c3h/9c/Kh:c\r\n"],
       ["S->", "MATCHSTATE:0:0:rrc/rc/crc/crc:TdAs|8hTc/2c8c3h/9c/Kh\r\n"],
     ] satisfies AcpcMessage[];
-    const table = drive(start(fixedLimit, [20000, 20000], automate));
+    const table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("TdAs"),
       deal("????"),
@@ -566,7 +566,7 @@ unitTest(
       ...automate,
       "holeCardsShowingOrMucking",
     ] as const satisfies Automation;
-    let table = drive(start(noLimit, repeat(10000, 6), shownAutomatically));
+    let table = drive(start(noLimit, repeat(10_000, 6), shownAutomatically));
     play(table, [
       deal("8d5h"),
       deal("6sTs"),
@@ -616,7 +616,7 @@ unitTest(
       )
     );
 
-    table = drive(start(noLimit, repeat(10000, 6), shownAutomatically));
+    table = drive(start(noLimit, repeat(10_000, 6), shownAutomatically));
     play(table, [
       deal("4sAd"),
       deal("3h6d"),

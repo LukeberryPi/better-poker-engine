@@ -62,7 +62,7 @@ describe("shuffle", () => {
   });
 
   test("draws each next card from the cards still unplaced", () => {
-    const random = scripted([0xffffffff, 4, 1, 0]);
+    const random = scripted([0xff_ff_ff_ff, 4, 1, 0]);
     expect(shuffle(known("AcAdAh"), random)).toEqual(known("AdAhAc"));
   });
 
