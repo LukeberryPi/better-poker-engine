@@ -73,7 +73,7 @@ function parseJson<Stored>(
   schema: z.ZodMiniType<Stored>,
   text: string
 ): Result<Stored, FormatError> {
-  let json: z.core.util.JSONType;
+  let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
