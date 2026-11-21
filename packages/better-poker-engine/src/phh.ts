@@ -222,7 +222,7 @@ function integerFrom(minimum: bigint, maximum: bigint) {
   const range = expected(`an integer from ${minimum} to ${maximum}`);
   return z.pipe(
     z.bigint(range).check(z.minimum(minimum, range), z.maximum(maximum, range)),
-    z.transform((value) => Number(value))
+    z.transform(Number)
   );
 }
 
@@ -665,11 +665,7 @@ export function formatPhh(history: Phh): string {
     ...line("year", history.year, String),
     ...line("hand", history.hand, labelText),
     ...line("level", history.level, String),
-    ...line(
-      "seats",
-      history.seats,
-      listOf((seat: number) => String(seat))
-    ),
+    ...line("seats", history.seats, listOf(String)),
     ...line("seat_count", history.seatCount, String),
     ...line("table", history.table, labelText),
     ...line("players", history.players, listOf(tomlString)),
