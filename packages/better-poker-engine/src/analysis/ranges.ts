@@ -105,7 +105,7 @@ function plus(
   order: string
 ): Combos | null {
   if (r0 === r1) {
-    const top = order.charAt(order.length - 1);
+    const top = order.slice(-1);
     return interval([r0, r1, top, top], suffix, order);
   }
   const i0 = order.indexOf(r0);
