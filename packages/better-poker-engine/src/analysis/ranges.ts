@@ -155,7 +155,7 @@ export function parseRange(
 ): Result<Range, RangeParseError> {
   const order = rankOrders[rankOrder].join("");
   const combos = new Map<string, ReadonlyArray<KnownCard>>();
-  for (const word of wordsOf(text.replace(/[,;]/gu, " "))) {
+  for (const word of wordsOf(text.replaceAll(/[,;]/gu, " "))) {
     const parsed = combosOf(word.text, order);
     if (parsed === null) {
       return err({ code: "invalid_range", at: word.at, text: word.text });

@@ -33,7 +33,7 @@ function history(text: string): Phh {
 }
 
 function withoutTrailingZeros(text: string): string {
-  return text.replace(
+  return text.replaceAll(
     /(\d+)\.(\d*?)0+(?=\D|$)/gu,
     (_match, whole: string, fraction: string) =>
       fraction === "" ? whole : `${whole}.${fraction}`
