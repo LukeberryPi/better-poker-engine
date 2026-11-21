@@ -6,7 +6,8 @@ import type {
   PlayerId,
   Violation,
 } from "../hand.ts";
-import { err, ok, type Result } from "../result.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Pot } from "../views.ts";
 import {
   beginBetting,
@@ -65,11 +66,13 @@ import {
   isLastStreet,
   playerAt,
   positionsOf,
-  type Betting,
-  type Dealing,
-  type HandState,
-  type Position,
-  type PotState,
+} from "./state.ts";
+import type {
+  Betting,
+  Dealing,
+  HandState,
+  Position,
+  PotState,
 } from "./state.ts";
 
 function phaseOver(state: HandState): boolean {

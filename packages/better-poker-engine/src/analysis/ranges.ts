@@ -4,12 +4,10 @@ import {
   parseCards,
   rankOrders,
   suits,
-  type KnownCard,
-  type Rank,
-  type RankOrder,
-  type Suit,
 } from "../cards.ts";
-import { err, ok, type Result } from "../result.ts";
+import type { KnownCard, Rank, RankOrder, Suit } from "../cards.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import { wordsOf } from "../words.ts";
 
 /** Hole-card combinations of distinct cards, none repeated: pokerkit's set of frozensets. */

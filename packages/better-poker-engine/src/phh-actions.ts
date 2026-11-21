@@ -1,5 +1,7 @@
-import { parseCards, type Card } from "./cards.ts";
-import { canonicalDecimal, type PhhDecimal } from "./phh-amounts.ts";
+import { parseCards } from "./cards.ts";
+import type { Card } from "./cards.ts";
+import { canonicalDecimal } from "./phh-amounts.ts";
+import type { PhhDecimal } from "./phh-amounts.ts";
 import { wordsOf } from "./words.ts";
 
 type Cards = readonly [Card, ...Array<Card>];

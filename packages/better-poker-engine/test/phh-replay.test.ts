@@ -2,12 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 
 import type { EventBody } from "../src/events.ts";
-import {
-  parsePhhs,
-  replayHistory,
-  type HistoryReplay,
-  type Phh,
-} from "../src/phh.ts";
+import { parsePhhs, replayHistory } from "../src/phh.ts";
+import type { HistoryReplay, Phh } from "../src/phh.ts";
 import { err } from "../src/result.ts";
 import { boardDealt, burned, checked, inProgress, stacks } from "./driver.ts";
 import { parsed, replayed } from "./phh-support.ts";

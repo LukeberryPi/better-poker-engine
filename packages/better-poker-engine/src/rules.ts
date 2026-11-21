@@ -1,5 +1,6 @@
 import type { DeckName } from "./cards.ts";
-import { isChips, type Chips } from "./chips.ts";
+import { isChips } from "./chips.ts";
+import type { Chips } from "./chips.ts";
 import type { HandType } from "./evaluation.ts";
 import type { VariantCode } from "./variants.ts";
 

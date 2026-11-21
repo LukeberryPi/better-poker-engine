@@ -1,13 +1,9 @@
-import {
-  parse,
-  TomlDate,
-  TomlError,
-  type TomlTable,
-  type TomlValue,
-} from "smol-toml";
+import { parse, TomlDate, TomlError } from "smol-toml";
+import type { TomlTable, TomlValue } from "smol-toml";
 import * as z from "zod/mini";
 
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 
 /** A user-defined value and its TOML type. A float holds JavaScript's shortest
  * digits (`"3"` is 3.0); a datetime holds TOML text such as `1979-05-27`. */

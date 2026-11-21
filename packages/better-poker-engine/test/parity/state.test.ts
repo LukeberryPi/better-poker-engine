@@ -2,16 +2,10 @@ import { expect } from "bun:test";
 
 import { doctest } from "../../../../parity/harness.ts";
 import { suitOf } from "../../src/cards.ts";
-import { automation, startHand, type Hand } from "../../src/hand.ts";
-import {
-  conventions,
-  draw,
-  holdem,
-  omaha,
-  stud,
-  type Game,
-  type Street,
-} from "../../src/rules.ts";
+import { automation, startHand } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
+import { conventions, draw, holdem, omaha, stud } from "../../src/rules.ts";
+import type { Game, Street } from "../../src/rules.ts";
 import {
   auditor,
   bets,
@@ -22,8 +16,8 @@ import {
   stacks,
   start,
   totalPot,
-  type Driver,
 } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 const noLimit = holdem.noLimit({
   antes: { kind: "byPosition", amounts: [0, 2] },

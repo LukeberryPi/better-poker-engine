@@ -4,20 +4,14 @@ import { describe, expect, test } from "bun:test";
 import { decks, shuffle } from "../src/cards.ts";
 import { insecureSeededRandom } from "../src/random.ts";
 import { holdem } from "../src/rules.ts";
-import {
-  sqliteStore,
-  type SqlRow,
-  type SqliteDriver,
-  type SqlValue,
-} from "../src/sqlite.ts";
-import {
-  actAtTable,
-  createTable,
-  viewTable,
-  type Table,
-  type TableCommand,
-  type TableEvent,
-  type TableTransition,
+import { sqliteStore } from "../src/sqlite.ts";
+import type { SqlRow, SqliteDriver, SqlValue } from "../src/sqlite.ts";
+import { actAtTable, createTable, viewTable } from "../src/table.ts";
+import type {
+  Table,
+  TableCommand,
+  TableEvent,
+  TableTransition,
 } from "../src/table.ts";
 import { okValue } from "./support.ts";
 

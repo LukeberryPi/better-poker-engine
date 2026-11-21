@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { decks, shuffle, type Card } from "../src/cards.ts";
+import { decks, shuffle } from "../src/cards.ts";
+import type { Card } from "../src/cards.ts";
 import type { PlayerAction, PlayerId } from "../src/hand.ts";
-import {
-  randomBelow,
-  insecureSeededRandom,
-  type RandomSource,
-} from "../src/random.ts";
-import { draw, holdem, stud, type Game } from "../src/rules.ts";
+import { randomBelow, insecureSeededRandom } from "../src/random.ts";
+import type { RandomSource } from "../src/random.ts";
+import { draw, holdem, stud } from "../src/rules.ts";
+import type { Game } from "../src/rules.ts";
 import { parseTable, serializeTable } from "../src/storage.ts";
 import {
   actAtTable,
@@ -16,13 +15,15 @@ import {
   tableEventsFor,
   tableStateOf,
   viewTable,
-  type Table,
-  type TableCommand,
-  type TableEvent,
-  type TableEventBody,
-  type TableEventView,
-  type TableView,
-  type TableViolation,
+} from "../src/table.ts";
+import type {
+  Table,
+  TableCommand,
+  TableEvent,
+  TableEventBody,
+  TableEventView,
+  TableView,
+  TableViolation,
 } from "../src/table.ts";
 import type { Audience, HandView } from "../src/views.ts";
 import { cards, okValue } from "./support.ts";

@@ -1,11 +1,14 @@
-import { isKnownCard, type Card } from "../cards.ts";
+import { isKnownCard } from "../cards.ts";
+import type { Card } from "../cards.ts";
 import type { EventBody } from "../events.ts";
 import type { HoleCard } from "../hand.ts";
-import { err, ok, type Result } from "../result.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Face } from "../rules.ts";
 import { returnToDeck, takeCards } from "./dealing.ts";
 import { contestPots, potsOf } from "./pots.ts";
-import { notEligible, pendingPlayer, type Refusal } from "./refusal.ts";
+import { notEligible, pendingPlayer } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
 import {
   activeCount,
   allFaceUp,
@@ -21,9 +24,8 @@ import {
   rotatedFrom,
   sum,
   upHandOf,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { HandState, Position } from "./state.ts";
 
 /** Whether some pot is still winnable with every known card the player holds. */
 export function canWinNow(state: HandState, position: Position): boolean {

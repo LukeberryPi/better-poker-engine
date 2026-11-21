@@ -1,14 +1,14 @@
-import { TomlDate, type TomlTable, type TomlValue } from "smol-toml";
+import { TomlDate } from "smol-toml";
+import type { TomlTable, TomlValue } from "smol-toml";
 import * as z from "zod/mini";
 
 import type { Unbounded } from "./chips.ts";
-import {
-  formatPhhAction,
-  parsePhhAction,
-  type PhhAction,
-} from "./phh-actions.ts";
-import { canonicalDecimal, type PhhDecimal } from "./phh-amounts.ts";
-import { err, ok, type Result } from "./result.ts";
+import { formatPhhAction, parsePhhAction } from "./phh-actions.ts";
+import type { PhhAction } from "./phh-actions.ts";
+import { canonicalDecimal } from "./phh-amounts.ts";
+import type { PhhDecimal } from "./phh-amounts.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import {
   isTable,
   readToml,
@@ -17,10 +17,10 @@ import {
   tomlString,
   tomlValue,
   userValueOf,
-  type PhhValue,
-  type TomlSyntaxError,
 } from "./toml.ts";
-import { variantCodes, type VariantCode } from "./variants.ts";
+import type { PhhValue, TomlSyntaxError } from "./toml.ts";
+import { variantCodes } from "./variants.ts";
+import type { VariantCode } from "./variants.ts";
 
 export type { PhhAction } from "./phh-actions.ts";
 export {

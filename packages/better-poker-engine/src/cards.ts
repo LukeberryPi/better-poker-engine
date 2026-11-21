@@ -1,5 +1,7 @@
-import { randomBelow, type RandomSource } from "./random.ts";
-import { err, ok, type Result } from "./result.ts";
+import { randomBelow } from "./random.ts";
+import type { RandomSource } from "./random.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import { isWhitespace } from "./words.ts";
 
 const ranks = [

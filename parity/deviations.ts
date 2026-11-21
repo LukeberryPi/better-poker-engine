@@ -1,4 +1,5 @@
-import { doctests, type DoctestId } from "./manifest.ts";
+import { doctests } from "./manifest.ts";
+import type { DoctestId } from "./manifest.ts";
 
 /** `differs` examples run and assert our result; the other kinds do not run. */
 export type DeviationKind = "differs" | "dropped" | "builtin";

@@ -5,10 +5,8 @@ import {
   insecureSeededRandom,
   tableEventsFor,
   viewTable,
-  type Audience,
-  type PlayerId,
-  type Table,
 } from "better-poker-engine";
+import type { Audience, PlayerId, Table } from "better-poker-engine";
 import { sqliteStore } from "better-poker-engine/sqlite";
 
 import { createApp } from "../src/app.ts";

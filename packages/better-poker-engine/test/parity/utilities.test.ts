@@ -19,11 +19,13 @@ import {
   suitNames,
   suitOf,
   suitSymbols,
-  type Card,
-  type CardParseError,
-  type KnownCard,
-  type RankSymbol,
-  type SuitSymbol,
+} from "../../src/cards.ts";
+import type {
+  Card,
+  CardParseError,
+  KnownCard,
+  RankSymbol,
+  SuitSymbol,
 } from "../../src/cards.ts";
 import { rakePot, splitChips } from "../../src/hand/pots.ts";
 import { anteVector, perPosition } from "../../src/hand/setup.ts";
@@ -31,7 +33,8 @@ import { maxOrNull, minOrNull } from "../../src/hand/state.ts";
 import { parseAmount } from "../../src/phh-actions.ts";
 import { parsePhh } from "../../src/phh.ts";
 import { insecureSeededRandom } from "../../src/random.ts";
-import { err, ok, type Result } from "../../src/result.ts";
+import { err, ok } from "../../src/result.ts";
+import type { Result } from "../../src/result.ts";
 import { cards, known } from "../support.ts";
 
 function expectSameCards(deck: ReadonlyArray<KnownCard>, text: string): void {

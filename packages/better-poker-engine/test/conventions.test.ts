@@ -1,21 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  actAs,
-  automation,
-  startHand,
-  summarizeHand,
-  type Action,
-  type Automation,
-} from "../src/hand.ts";
-import {
-  conventions,
-  holdem,
-  type Conventions,
-  type Game,
-  type RakeCap,
-} from "../src/rules.ts";
-import { auditor, drive, start, type Driver } from "./driver.ts";
+import { actAs, automation, startHand, summarizeHand } from "../src/hand.ts";
+import type { Action, Automation } from "../src/hand.ts";
+import { conventions, holdem } from "../src/rules.ts";
+import type { Conventions, Game, RakeCap } from "../src/rules.ts";
+import { auditor, drive, start } from "./driver.ts";
+import type { Driver } from "./driver.ts";
 import { cards } from "./support.ts";
 
 const call: Action = { type: "checkOrCall" };

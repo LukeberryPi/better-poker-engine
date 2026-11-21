@@ -2,20 +2,15 @@ import { expect } from "bun:test";
 
 import { doctest } from "../../../../parity/harness.ts";
 import type { DoctestId } from "../../../../parity/manifest.ts";
-import { rankOrders, type Rank } from "../../src/cards.ts";
+import { rankOrders } from "../../src/cards.ts";
+import type { Rank } from "../../src/cards.ts";
 import { handRules } from "../../src/evaluation.ts";
 import type { EventBody } from "../../src/events.ts";
-import { summarizeHand, type Action, type PlayerId } from "../../src/hand.ts";
+import { summarizeHand } from "../../src/hand.ts";
+import type { Action, PlayerId } from "../../src/hand.ts";
 import { definitions } from "../../src/lookups.ts";
-import {
-  draw,
-  holdem,
-  omaha,
-  shortDeck,
-  stud,
-  type Game,
-  type Street,
-} from "../../src/rules.ts";
+import { draw, holdem, omaha, shortDeck, stud } from "../../src/rules.ts";
+import type { Game, Street } from "../../src/rules.ts";
 import {
   allBut,
   boardDealt,
@@ -32,9 +27,8 @@ import {
   stacks,
   start,
   steps,
-  type Driver,
-  type Step,
 } from "../driver.ts";
+import type { Driver, Step } from "../driver.ts";
 import { cards } from "../support.ts";
 
 /** pokerkit's examples deal, burn and select runouts by hand and automate the rest. */

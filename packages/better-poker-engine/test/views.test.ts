@@ -1,22 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import type { HandEvent, HandRecord } from "../src/events.ts";
-import {
-  automation,
-  summarizeHand,
-  type HoleCard,
-  type PlayerId,
-  type Transition,
-} from "../src/hand.ts";
+import { automation, summarizeHand } from "../src/hand.ts";
+import type { HoleCard, PlayerId, Transition } from "../src/hand.ts";
 import { draw, holdem, stud } from "../src/rules.ts";
-import {
-  eventsFor,
-  viewHand,
-  viewRecord,
-  type Audience,
-  type HandEventView,
-  type HandRecordView,
-  type HandView,
+import { eventsFor, viewHand, viewRecord } from "../src/views.ts";
+import type {
+  Audience,
+  HandEventView,
+  HandRecordView,
+  HandView,
 } from "../src/views.ts";
 import {
   allBut,
@@ -28,7 +21,8 @@ import {
   spectator,
   start,
 } from "./driver.ts";
-import { randomWalk, type Walk } from "./random-hands.ts";
+import { randomWalk } from "./random-hands.ts";
+import type { Walk } from "./random-hands.ts";
 import { cards } from "./support.ts";
 
 const { call } = moves;

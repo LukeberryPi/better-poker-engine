@@ -1,9 +1,12 @@
-import { addToStack, type Chips } from "../chips.ts";
+import { addToStack } from "../chips.ts";
+import type { Chips } from "../chips.ts";
 import type { EventBody, PlayerAmount } from "../events.ts";
-import { err, ok, type Result } from "../result.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Conventions, Rake } from "../rules.ts";
 import { effectiveAnte } from "./forced.ts";
-import { pendingPlayer, type Refusal } from "./refusal.ts";
+import { pendingPlayer } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
 import {
   activeCount,
   at,
@@ -13,11 +16,8 @@ import {
   positionsOf,
   sum,
   upHandOf,
-  type HandState,
-  type Position,
-  type PotState,
-  type SubPot,
 } from "./state.ts";
+import type { HandState, Position, PotState, SubPot } from "./state.ts";
 
 /** pokerkit's `rake`, exactly: basis points of the pot, rounded half to even. `capLeft`
  * is what a per-hand cap still allows. */

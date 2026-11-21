@@ -1,38 +1,32 @@
 import type { Brandable, Opaque } from "./brand.ts";
-import { decks, type Deck } from "./cards.ts";
-import { isChips, type Chips } from "./chips.ts";
+import { decks } from "./cards.ts";
+import type { Deck } from "./cards.ts";
+import { isChips } from "./chips.ts";
+import type { Chips } from "./chips.ts";
 import type { HandEvent, HandRecord } from "./events.ts";
-import {
-  act,
-  automation,
-  startHand,
-  summarizeHand,
-  type Hand,
-  type PlayerAction,
-  type PlayerId,
-  type SetupError,
-  type Violation,
+import { act, automation, startHand, summarizeHand } from "./hand.ts";
+import type {
+  Hand,
+  PlayerAction,
+  PlayerId,
+  SetupError,
+  Violation,
 } from "./hand.ts";
 import { copyGame } from "./hand/setup.ts";
 import { at, deepFreeze, sealed } from "./hand/state.ts";
-import { err, ok, type Result } from "./result.ts";
-import { validateGame, type Game, type GameError } from "./rules.ts";
-import {
-  planHand,
-  type ButtonRule,
-  type Owed,
-  type Rotation,
-  type SeatState,
-} from "./seating.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
+import { validateGame } from "./rules.ts";
+import type { Game, GameError } from "./rules.ts";
+import { planHand } from "./seating.ts";
+import type { ButtonRule, Owed, Rotation, SeatState } from "./seating.ts";
 import { engineVersion } from "./version.ts";
-import {
-  eventsFor,
-  viewHand,
-  viewRecord,
-  type Audience,
-  type HandEventView,
-  type HandRecordView,
-  type HandView,
+import { eventsFor, viewHand, viewRecord } from "./views.ts";
+import type {
+  Audience,
+  HandEventView,
+  HandRecordView,
+  HandView,
 } from "./views.ts";
 
 /** Seated players, the running hand and the session so far. Read it through `viewTable`. */

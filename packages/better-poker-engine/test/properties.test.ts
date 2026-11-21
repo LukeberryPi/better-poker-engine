@@ -3,24 +3,21 @@ import { describe, expect, test } from "bun:test";
 import packageJson from "../package.json" with { type: "json" };
 import type { Stack } from "../src/chips.ts";
 import type { HandEvent } from "../src/events.ts";
-import {
-  act,
-  replayHand,
-  summarizeHand,
-  type Action,
-  type Transition,
-} from "../src/hand.ts";
+import { act, replayHand, summarizeHand } from "../src/hand.ts";
+import type { Action, Transition } from "../src/hand.ts";
 import {
   formatPhh,
   historyFromHand,
   parsePhh,
   replayHistory,
-  type HistoryExportError,
 } from "../src/phh.ts";
+import type { HistoryExportError } from "../src/phh.ts";
 import { err } from "../src/result.ts";
-import { conventions, holdem, type Conventions } from "../src/rules.ts";
+import { conventions, holdem } from "../src/rules.ts";
+import type { Conventions } from "../src/rules.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
-import { randomWalk, type Walk } from "./random-hands.ts";
+import { randomWalk } from "./random-hands.ts";
+import type { Walk } from "./random-hands.ts";
 import { rawJson, sameTransition } from "./support.ts";
 
 const walks = Array.from({ length: 150 }, (_, seed) => randomWalk(seed));

@@ -1,5 +1,6 @@
 import type { Chips } from "../chips.ts";
-import { err, ok, type Result } from "../result.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 
 /** `no_chips_left`: no player has chips, or float arithmetic leaves exactly none in
  * play while a place is still to be paid. pokerkit divides by zero in both. */

@@ -1,5 +1,6 @@
 import type { Chips } from "./chips.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 
 /** An amount as a decimal numeral, e.g. `"0.25"`. `parsePhh` returns the
  * canonical form: no trailing zeros, and no sign except on a post bet. */

@@ -12,8 +12,8 @@ import {
   repeat,
   start,
   steps,
-  type Driver,
 } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 const automate = allBut("runoutCountSelection");
 

@@ -4,8 +4,8 @@ import {
   randomBelow,
   secureRandom,
   insecureSeededRandom,
-  type RandomSource,
 } from "../src/random.ts";
+import type { RandomSource } from "../src/random.ts";
 import { scripted } from "./support.ts";
 
 const seed42 = [

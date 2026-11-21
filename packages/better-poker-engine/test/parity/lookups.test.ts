@@ -2,21 +2,14 @@ import { expect } from "bun:test";
 
 import { doctest, unitTest } from "../../../../parity/harness.ts";
 import type { DoctestId } from "../../../../parity/manifest.ts";
-import {
-  arePaired,
-  areRainbow,
-  areSuited,
-  decks,
-  type KnownCard,
-} from "../../src/cards.ts";
-import {
-  categoryLabels,
-  entryOf,
-  lookup,
-  type Entry,
-  type HandCategory,
-  type Lookup,
-  type LookupName,
+import { arePaired, areRainbow, areSuited, decks } from "../../src/cards.ts";
+import type { KnownCard } from "../../src/cards.ts";
+import { categoryLabels, entryOf, lookup } from "../../src/lookups.ts";
+import type {
+  Entry,
+  HandCategory,
+  Lookup,
+  LookupName,
 } from "../../src/lookups.ts";
 import { cards, digestSortedByEntry, forEachCombination } from "../support.ts";
 

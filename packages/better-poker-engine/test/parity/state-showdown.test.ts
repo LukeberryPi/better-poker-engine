@@ -1,6 +1,7 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { PlayerId } from "../../src/hand.ts";
 import { draw, holdem } from "../../src/rules.ts";
 import {
@@ -19,9 +20,8 @@ import {
   pending,
   start,
   steps,
-  type Driver,
-  type Step,
 } from "../driver.ts";
+import type { Driver, Step } from "../driver.ts";
 
 const threeHanded = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
 const forcedOnly = ["antePosting", "betCollection", "blindPosting"] as const;

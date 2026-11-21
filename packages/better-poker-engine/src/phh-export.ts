@@ -1,11 +1,15 @@
 import type { Card } from "./cards.ts";
 import type { EventBody, HandEvent } from "./events.ts";
-import { eventsOf, type Hand, type PlayerId } from "./hand.ts";
-import { stateOf, type HandState } from "./hand/state.ts";
+import { eventsOf } from "./hand.ts";
+import type { Hand, PlayerId } from "./hand.ts";
+import { stateOf } from "./hand/state.ts";
+import type { HandState } from "./hand/state.ts";
 import type { PhhAction } from "./phh-actions.ts";
-import { fromChips, type AmountScale } from "./phh-amounts.ts";
+import { fromChips } from "./phh-amounts.ts";
+import type { AmountScale } from "./phh-amounts.ts";
 import type { Phh } from "./phh.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import type { Conventions } from "./rules.ts";
 
 /** PHH names pokerkit's games only, deals one board, runs it once and has no

@@ -1,7 +1,9 @@
-import { decks, isKnownCard, type KnownCard } from "../cards.ts";
+import { decks, isKnownCard } from "../cards.ts";
+import type { KnownCard } from "../cards.ts";
 import type { HandSetup, SetupError } from "../hand.ts";
 import { seedFrom } from "../random.ts";
-import { validateGame, type Antes, type Game, type Street } from "../rules.ts";
+import { validateGame } from "../rules.ts";
+import type { Antes, Game, Street } from "../rules.ts";
 import { beginAntePosting } from "./forced.ts";
 import type { HandState, Position } from "./state.ts";
 

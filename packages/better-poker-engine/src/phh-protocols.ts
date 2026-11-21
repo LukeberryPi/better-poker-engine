@@ -3,15 +3,13 @@ import type { HandEvent } from "./events.ts";
 import type { Hand, PlayerId } from "./hand.ts";
 import { decisionOf } from "./hand/flow.ts";
 import { stateOf } from "./hand/state.ts";
-import { fromChips, type AmountScale } from "./phh-amounts.ts";
-import {
-  replayHistory,
-  stacksAt,
-  type HistoryReplay,
-  type HistoryReplayError,
-} from "./phh-replay.ts";
+import { fromChips } from "./phh-amounts.ts";
+import type { AmountScale } from "./phh-amounts.ts";
+import { replayHistory, stacksAt } from "./phh-replay.ts";
+import type { HistoryReplay, HistoryReplayError } from "./phh-replay.ts";
 import type { Phh } from "./phh.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import type { VariantCode } from "./variants.ts";
 
 export type ProtocolOptions = {

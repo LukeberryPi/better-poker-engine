@@ -1,9 +1,12 @@
 import { expect } from "bun:test";
 
 import { doctest } from "../../../../parity/harness.ts";
-import { automation, type Hand, type PlayerId } from "../../src/hand.ts";
-import { holdem, type Antes } from "../../src/rules.ts";
-import { drive, pending, start, steps, type Driver } from "../driver.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand, PlayerId } from "../../src/hand.ts";
+import { holdem } from "../../src/rules.ts";
+import type { Antes } from "../../src/rules.ts";
+import { drive, pending, start, steps } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 function noLimit(antes: Antes, players: number): Hand {
   const game = holdem.noLimit({ antes, blinds: [1, 2], minBet: 2 });

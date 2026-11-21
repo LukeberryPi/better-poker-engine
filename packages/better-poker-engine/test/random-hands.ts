@@ -1,21 +1,17 @@
-import { decks, shuffle, type Card } from "../src/cards.ts";
-import {
-  act,
-  automation,
-  startHand,
-  type Action,
-  type Automation,
-  type DealerDecision,
-  type Hand,
-  type HandSetup,
-  type Transition,
-  type Violation,
+import { decks, shuffle } from "../src/cards.ts";
+import type { Card } from "../src/cards.ts";
+import { act, automation, startHand } from "../src/hand.ts";
+import type {
+  Action,
+  Automation,
+  DealerDecision,
+  Hand,
+  HandSetup,
+  Transition,
+  Violation,
 } from "../src/hand.ts";
-import {
-  randomBelow,
-  insecureSeededRandom,
-  type RandomSource,
-} from "../src/random.ts";
+import { randomBelow, insecureSeededRandom } from "../src/random.ts";
+import type { RandomSource } from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import {
   conventions,
@@ -29,12 +25,10 @@ import {
   royal,
   shortDeck,
   stud,
-  type Antes,
-  type Game,
-  type Rake,
-  type RakeCap,
 } from "../src/rules.ts";
-import { viewHand, type HandView } from "../src/views.ts";
+import type { Antes, Game, Rake, RakeCap } from "../src/rules.ts";
+import { viewHand } from "../src/views.ts";
+import type { HandView } from "../src/views.ts";
 import { rawJson } from "./support.ts";
 
 function pick<T>(items: ReadonlyArray<T>, random: RandomSource): T {

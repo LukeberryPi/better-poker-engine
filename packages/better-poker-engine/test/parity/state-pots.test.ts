@@ -1,6 +1,7 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { EventBody } from "../../src/events.ts";
 import { automation } from "../../src/hand.ts";
 import { holdem } from "../../src/rules.ts";
@@ -22,8 +23,8 @@ import {
   start,
   steps,
   totalPot,
-  type Driver,
 } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 const sixHanded = holdem.noLimit({
   blinds: [1, 2],

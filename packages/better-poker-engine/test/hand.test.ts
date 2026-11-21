@@ -1,27 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
-import { decks, type Card } from "../src/cards.ts";
+import { decks } from "../src/cards.ts";
+import type { Card } from "../src/cards.ts";
 import {
   act,
   automation,
   replayHand,
   startHand,
   summarizeHand,
-  type Action,
-  type Automation,
-  type HandSetup,
 } from "../src/hand.ts";
-import {
-  draw,
-  holdem,
-  kuhn,
-  leduc,
-  omaha,
-  royal,
-  stud,
-  type Game,
-  type Street,
-} from "../src/rules.ts";
+import type { Action, Automation, HandSetup } from "../src/hand.ts";
+import { draw, holdem, kuhn, leduc, omaha, royal, stud } from "../src/rules.ts";
+import type { Game, Street } from "../src/rules.ts";
 import { stateOf } from "../src/hand/state.ts";
 import { viewHand } from "../src/views.ts";
 import {
@@ -37,8 +27,8 @@ import {
   spectator,
   stacks,
   start,
-  type Move,
 } from "./driver.ts";
+import type { Move } from "./driver.ts";
 import { cards } from "./support.ts";
 
 const { board, burn, call, deal, fold, raiseTo } = moves;

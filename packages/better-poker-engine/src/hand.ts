@@ -6,7 +6,8 @@ import { apply, automate, settle } from "./hand/flow.ts";
 import { summarize } from "./hand/record.ts";
 import { initialState, validateSetup } from "./hand/setup.ts";
 import { cloneState, handFrom, stateOf } from "./hand/state.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import type { Face, GameError, Game } from "./rules.ts";
 
 /** Names a player for the whole hand. Defaults to "p1".."pN" in position order, as in PHH. */

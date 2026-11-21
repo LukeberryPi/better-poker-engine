@@ -1,14 +1,12 @@
 import { expect } from "bun:test";
 
 import { doctest, unitTest } from "../../../../parity/harness.ts";
-import { equities, handStrength, icm, type Range } from "../../src/analysis.ts";
-import { decks, type KnownCard } from "../../src/cards.ts";
-import {
-  compareHands,
-  evaluate,
-  type HandType,
-  type HandValue,
-} from "../../src/evaluation.ts";
+import { equities, handStrength, icm } from "../../src/analysis.ts";
+import type { Range } from "../../src/analysis.ts";
+import { decks } from "../../src/cards.ts";
+import type { KnownCard } from "../../src/cards.ts";
+import { compareHands, evaluate } from "../../src/evaluation.ts";
+import type { HandType, HandValue } from "../../src/evaluation.ts";
 import { insecureSeededRandom } from "../../src/random.ts";
 import { ok } from "../../src/result.ts";
 import { known, okValue, range, sortedCombos } from "../support.ts";

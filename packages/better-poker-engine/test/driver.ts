@@ -1,22 +1,22 @@
 import { expect } from "bun:test";
 
 import type { Example } from "../../../parity/harness.ts";
-import { decks, type Card, type Deck } from "../src/cards.ts";
+import { decks } from "../src/cards.ts";
+import type { Card, Deck } from "../src/cards.ts";
 import type { Stack } from "../src/chips.ts";
 import type { EventBody, HandEvent } from "../src/events.ts";
-import {
-  act,
-  automation,
-  startHand,
-  type Action,
-  type AutomatedStep,
-  type Automation,
-  type Hand,
-  type PlayerId,
-  type Violation,
+import { act, automation, startHand } from "../src/hand.ts";
+import type {
+  Action,
+  AutomatedStep,
+  Automation,
+  Hand,
+  PlayerId,
+  Violation,
 } from "../src/hand.ts";
 import type { Game } from "../src/rules.ts";
-import { viewHand, type HandView } from "../src/views.ts";
+import { viewHand } from "../src/views.ts";
+import type { HandView } from "../src/views.ts";
 import { cards } from "./support.ts";
 
 export function allBut(...manual: ReadonlyArray<AutomatedStep>): Automation {

@@ -1,15 +1,7 @@
-import {
-  examplesToRun,
-  type Deviation,
-  type Deviations,
-} from "./deviations.ts";
-import {
-  doctests,
-  unitTests,
-  type DoctestId,
-  type SourceFile,
-  type UnitTestId,
-} from "./manifest.ts";
+import { examplesToRun } from "./deviations.ts";
+import type { Deviation, Deviations } from "./deviations.ts";
+import { doctests, unitTests } from "./manifest.ts";
+import type { DoctestId, SourceFile, UnitTestId } from "./manifest.ts";
 
 export type Outcome = "passed" | "failed" | "skipped";
 

@@ -1,15 +1,16 @@
 import * as z from "zod/mini";
 
 import type { HandRecord } from "./events.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import { handRecordSchema, tableEventSchema } from "./schemas.ts";
 import { parseTable, serializeTable } from "./storage.ts";
-import {
-  tableStateOf,
-  type Table,
-  type TableEvent,
-  type TableRejection,
-  type TableTransition,
+import { tableStateOf } from "./table.ts";
+import type {
+  Table,
+  TableEvent,
+  TableRejection,
+  TableTransition,
 } from "./table.ts";
 
 export type SqlValue = string | number | null;

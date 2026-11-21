@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { examplesToRun, type Deviations } from "./deviations.ts";
+import { examplesToRun } from "./deviations.ts";
+import type { Deviations } from "./deviations.ts";
 
 test("dropped and builtin examples are not run; differing ones are", () => {
   const declared: Deviations = {

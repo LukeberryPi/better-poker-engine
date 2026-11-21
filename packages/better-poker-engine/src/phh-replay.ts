@@ -1,39 +1,28 @@
 import { decks } from "./cards.ts";
 import type { Stack } from "./chips.ts";
 import type { HandEvent } from "./events.ts";
-import {
-  act,
-  startHand,
-  type Action,
-  type Automation,
-  type Hand,
-  type HandSetup,
-  type PlayerId,
-  type SetupError,
-  type Transition,
-  type Violation,
+import { act, startHand } from "./hand.ts";
+import type {
+  Action,
+  Automation,
+  Hand,
+  HandSetup,
+  PlayerId,
+  SetupError,
+  Transition,
+  Violation,
 } from "./hand.ts";
 import { decisionOf } from "./hand/flow.ts";
 import { stateOf } from "./hand/state.ts";
-import { formatPhhAction, type PhhAction } from "./phh-actions.ts";
-import {
-  toBlindChips,
-  toChips,
-  type AmountScale,
-  type ChipsError,
-  type PhhDecimal,
-} from "./phh-amounts.ts";
+import { formatPhhAction } from "./phh-actions.ts";
+import type { PhhAction } from "./phh-actions.ts";
+import { toBlindChips, toChips } from "./phh-amounts.ts";
+import type { AmountScale, ChipsError, PhhDecimal } from "./phh-amounts.ts";
 import type { Phh, PhhStack } from "./phh.ts";
-import { err, ok, type Result } from "./result.ts";
-import {
-  conventions,
-  draw,
-  holdem,
-  omaha,
-  shortDeck,
-  stud,
-  type Game,
-} from "./rules.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
+import { conventions, draw, holdem, omaha, shortDeck, stud } from "./rules.ts";
+import type { Game } from "./rules.ts";
 
 export type ReplayStep = Transition & {
   /** The history's action as `formatPhhAction` writes it, or null for a step

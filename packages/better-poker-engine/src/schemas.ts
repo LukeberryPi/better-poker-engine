@@ -3,13 +3,8 @@ import * as z from "zod/mini";
 import { allCards, decks } from "./cards.ts";
 import { handRules } from "./evaluation.ts";
 import type { HandEvent, HandRecord } from "./events.ts";
-import {
-  automation,
-  type Action,
-  type Decision,
-  type HandSetup,
-  type PlayerAction,
-} from "./hand.ts";
+import { automation } from "./hand.ts";
+import type { Action, Decision, HandSetup, PlayerAction } from "./hand.ts";
 import type {
   BettingStructure,
   Conventions,

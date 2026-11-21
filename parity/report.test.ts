@@ -2,13 +2,8 @@ import { expect, test } from "bun:test";
 
 import type { Deviations } from "./deviations.ts";
 import { doctests, unitTests } from "./manifest.ts";
-import {
-  outcomesFromJunit,
-  parityReport,
-  type FileProgress,
-  type Outcome,
-  type ParityReport,
-} from "./report.ts";
+import { outcomesFromJunit, parityReport } from "./report.ts";
+import type { FileProgress, Outcome, ParityReport } from "./report.ts";
 
 const rulesFile = "pokerkit/tests/test_rules.py";
 const rulesIds = Object.entries(unitTests)

@@ -2,13 +2,8 @@ import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
 import type { Automation } from "../../src/hand.ts";
-import {
-  formatPhh,
-  toAcpc,
-  toPluribus,
-  type AcpcMessage,
-  type Phh,
-} from "../../src/phh.ts";
+import { formatPhh, toAcpc, toPluribus } from "../../src/phh.ts";
+import type { AcpcMessage, Phh } from "../../src/phh.ts";
 import { ok } from "../../src/result.ts";
 import { holdem } from "../../src/rules.ts";
 import { readToml } from "../../src/toml.ts";

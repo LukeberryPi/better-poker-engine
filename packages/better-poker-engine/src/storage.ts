@@ -1,15 +1,10 @@
 import * as z from "zod/mini";
 
-import {
-  act,
-  eventsOf,
-  startHand,
-  type Hand,
-  type SetupError,
-  type Violation,
-} from "./hand.ts";
+import { act, eventsOf, startHand } from "./hand.ts";
+import type { Hand, SetupError, Violation } from "./hand.ts";
 import { stateOf } from "./hand/state.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import {
   handEventSchema,
   handRecordSchema,
@@ -24,10 +19,8 @@ import {
   createTable,
   resumeTable,
   tableStateOf,
-  type Table,
-  type TableSetupError,
-  type TableViolation,
 } from "./table.ts";
+import type { Table, TableSetupError, TableViolation } from "./table.ts";
 
 const storedHandSchema = z.object({
   format: z.literal(1),

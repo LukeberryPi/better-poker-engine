@@ -1,11 +1,8 @@
 import type { Violation } from "../hand.ts";
-import { err, ok, type Result } from "../result.ts";
-import {
-  playerAt,
-  positionsOf,
-  type HandState,
-  type Position,
-} from "./state.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
+import { playerAt, positionsOf } from "./state.ts";
+import type { HandState, Position } from "./state.ts";
 
 /** A violation before `act` knows which action and decision to name in `not_now`. */
 export type Refusal =

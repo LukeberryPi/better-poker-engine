@@ -1,17 +1,11 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { automation, type Hand, type RaiseRange } from "../../src/hand.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand, RaiseRange } from "../../src/hand.ts";
 import { holdem, omaha } from "../../src/rules.ts";
-import {
-  auditor,
-  drive,
-  minimumRaise,
-  moves,
-  play,
-  start,
-  type Driver,
-} from "../driver.ts";
+import { auditor, drive, minimumRaise, moves, play, start } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 
 const { call, fold, raiseTo } = moves;
 

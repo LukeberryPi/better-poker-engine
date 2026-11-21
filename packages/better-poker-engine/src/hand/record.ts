@@ -18,10 +18,8 @@ import {
   positionsOf,
   sum,
   upHandOf,
-  type ContestedPot,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { ContestedPot, HandState, Position } from "./state.ts";
 
 /** Hole cards as dealt, minus discards, face up once shown; a show keeps no card back. */
 function heldCards(

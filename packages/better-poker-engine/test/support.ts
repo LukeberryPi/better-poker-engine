@@ -1,15 +1,13 @@
 import { createHash } from "node:crypto";
 
-import { parseRange, type Range } from "../src/analysis.ts";
-import {
-  isKnownCard,
-  parseCards,
-  type Card,
-  type KnownCard,
-} from "../src/cards.ts";
+import { parseRange } from "../src/analysis.ts";
+import type { Range } from "../src/analysis.ts";
+import { isKnownCard, parseCards } from "../src/cards.ts";
+import type { Card, KnownCard } from "../src/cards.ts";
 import type { Hand, Transition, Violation } from "../src/hand.ts";
 import { stateOf } from "../src/hand/state.ts";
-import { entryOf, type Lookup } from "../src/lookups.ts";
+import { entryOf } from "../src/lookups.ts";
+import type { Lookup } from "../src/lookups.ts";
 import type { RandomSource } from "../src/random.ts";
 import type { Result } from "../src/result.ts";
 import { serializeHand } from "../src/storage.ts";

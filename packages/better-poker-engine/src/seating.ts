@@ -1,7 +1,8 @@
 import type { Chips } from "./chips.ts";
 import type { PlayerId } from "./hand.ts";
 import { perPosition } from "./hand/setup.ts";
-import { err, ok, type Result } from "./result.ts";
+import { err, ok } from "./result.ts";
+import type { Result } from "./result.ts";
 import type { Antes, Game } from "./rules.ts";
 
 /** "moving": the button moves to the next player dealt in and nobody owes a blind, as in

@@ -4,13 +4,13 @@ import { decks } from "../src/cards.ts";
 import { automation, startHand } from "../src/hand.ts";
 import { insecureSeededRandom, randomBelow } from "../src/random.ts";
 import { holdem } from "../src/rules.ts";
-import {
-  planHand,
-  type ButtonRule,
-  type Owed,
-  type Rotation,
-  type SeatState,
-  type SeatingPlan,
+import { planHand } from "../src/seating.ts";
+import type {
+  ButtonRule,
+  Owed,
+  Rotation,
+  SeatState,
+  SeatingPlan,
 } from "../src/seating.ts";
 import { okValue } from "./support.ts";
 

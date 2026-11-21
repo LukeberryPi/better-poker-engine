@@ -1,7 +1,9 @@
 import type { Brandable } from "../brand.ts";
-import { isKnownCard, type Card, type Deck, type KnownCard } from "../cards.ts";
+import { isKnownCard } from "../cards.ts";
+import type { Card, Deck, KnownCard } from "../cards.ts";
 import type { Chips, Stack } from "../chips.ts";
-import { evaluate, type HandValue } from "../evaluation.ts";
+import { evaluate } from "../evaluation.ts";
+import type { HandValue } from "../evaluation.ts";
 import type {
   Action,
   AutomatedStep,

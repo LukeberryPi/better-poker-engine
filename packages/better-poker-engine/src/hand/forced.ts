@@ -1,15 +1,12 @@
-import { addToStack, capAt, takeFromStack, type Chips } from "../chips.ts";
+import { addToStack, capAt, takeFromStack } from "../chips.ts";
+import type { Chips } from "../chips.ts";
 import type { EventBody, PlayerAmount } from "../events.ts";
-import { err, ok, type Result } from "../result.ts";
-import { pendingPlayer, type Refusal } from "./refusal.ts";
-import {
-  activeCount,
-  at,
-  playerAt,
-  positionsOf,
-  type HandState,
-  type Position,
-} from "./state.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
+import { pendingPlayer } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
+import { activeCount, at, playerAt, positionsOf } from "./state.ts";
+import type { HandState, Position } from "./state.ts";
 
 /** pokerkit swaps forced bets heads-up, so position 0 posts the big blind. */
 function headsUpSwapped(state: HandState, position: Position): Position {

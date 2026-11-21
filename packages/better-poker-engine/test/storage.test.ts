@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { inspect } from "node:util";
 
 import { decks, shuffle } from "../src/cards.ts";
-import { act, automation, type Hand } from "../src/hand.ts";
+import { act, automation } from "../src/hand.ts";
+import type { Hand } from "../src/hand.ts";
 import { insecureSeededRandom } from "../src/random.ts";
 import { holdem, kuhn } from "../src/rules.ts";
-import { actAtTable, createTable, type Table } from "../src/table.ts";
+import { actAtTable, createTable } from "../src/table.ts";
+import type { Table } from "../src/table.ts";
 import { parseHand, serializeHand } from "../src/storage.ts";
 import { auditor, start } from "./driver.ts";
 import { randomWalk } from "./random-hands.ts";

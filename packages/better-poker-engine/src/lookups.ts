@@ -1,14 +1,5 @@
-import {
-  areRainbow,
-  areSuited,
-  rankOf,
-  rankOrders,
-  suitOf,
-  type Card,
-  type KnownCard,
-  type Rank,
-  type Suit,
-} from "./cards.ts";
+import { areRainbow, areSuited, rankOf, rankOrders, suitOf } from "./cards.ts";
+import type { Card, KnownCard, Rank, Suit } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 
 export type HandCategory =

@@ -2,15 +2,16 @@ import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
 import { decks } from "../../src/cards.ts";
-import { automation, type Hand } from "../../src/hand.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
 import {
   conventions,
   kuhn,
   omaha,
   rhodeIsland,
   royal,
-  type Game,
 } from "../../src/rules.ts";
+import type { Game } from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -23,8 +24,8 @@ import {
   repeat,
   stacks,
   start,
-  type Driver,
 } from "../driver.ts";
+import type { Driver } from "../driver.ts";
 import { cards } from "../support.ts";
 
 const { board, burn, call, deal, raise, raiseTo } = moves;

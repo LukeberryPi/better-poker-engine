@@ -1,8 +1,10 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { Card } from "../../src/cards.ts";
-import { describeHand, type HandValue } from "../../src/evaluation.ts";
+import { describeHand } from "../../src/evaluation.ts";
+import type { HandValue } from "../../src/evaluation.ts";
 import type { Hand } from "../../src/hand.ts";
 import { holdem, stud } from "../../src/rules.ts";
 import {
@@ -22,9 +24,8 @@ import {
   spectator,
   start,
   steps,
-  type Driver,
-  type Step,
 } from "../driver.ts";
+import type { Driver, Step } from "../driver.ts";
 
 const studAutomation = allBut("holeDealing", "runoutCountSelection");
 const studStakes = { bringIn: 1, smallBet: 2, bigBet: 4, anteTrimming: true };

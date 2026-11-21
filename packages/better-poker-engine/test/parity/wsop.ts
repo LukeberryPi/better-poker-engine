@@ -2,9 +2,11 @@ import { expect } from "bun:test";
 
 import type { Card } from "../../src/cards.ts";
 import type { EventBody, HandEvent } from "../../src/events.ts";
-import { eventsOf, type Hand } from "../../src/hand.ts";
+import { eventsOf } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
 import { formatPhh } from "../../src/phh.ts";
-import { accept, type Move } from "../driver.ts";
+import { accept } from "../driver.ts";
+import type { Move } from "../driver.ts";
 import { exported, parsed, replayed } from "../phh-support.ts";
 import { cards } from "../support.ts";
 

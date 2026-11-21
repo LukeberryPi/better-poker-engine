@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { toAcpc, toPluribus, type Phh } from "../src/phh.ts";
+import { toAcpc, toPluribus } from "../src/phh.ts";
+import type { Phh } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
 import { parsed } from "./phh-support.ts";
 

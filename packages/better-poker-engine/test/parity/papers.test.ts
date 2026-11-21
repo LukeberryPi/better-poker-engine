@@ -4,26 +4,19 @@ import { unitTest } from "../../../../parity/harness.ts";
 import { decks } from "../../src/cards.ts";
 import type { Stack } from "../../src/chips.ts";
 import { compareHands, evaluate, handValue } from "../../src/evaluation.ts";
-import {
-  startHand,
-  summarizeHand,
-  type Automation,
-  type Hand,
-} from "../../src/hand.ts";
+import { startHand, summarizeHand } from "../../src/hand.ts";
+import type { Automation, Hand } from "../../src/hand.ts";
 import { formatPhhAction } from "../../src/phh-actions.ts";
-import {
-  formatPhh,
-  type AmountScale,
-  type HistoryReplay,
-} from "../../src/phh.ts";
+import { formatPhh } from "../../src/phh.ts";
+import type { AmountScale, HistoryReplay } from "../../src/phh.ts";
 import {
   conventions,
   draw,
   holdem,
   omaha,
   shortDeck,
-  type Game,
 } from "../../src/rules.ts";
+import type { Game } from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -34,8 +27,8 @@ import {
   repeat,
   stacks,
   start,
-  type Move,
 } from "../driver.ts";
+import type { Move } from "../driver.ts";
 import { parsed, replayed } from "../phh-support.ts";
 import { cards, known } from "../support.ts";
 

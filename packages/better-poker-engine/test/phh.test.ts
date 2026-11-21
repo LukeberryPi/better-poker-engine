@@ -2,13 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 
 import { formatPhhAction } from "../src/phh-actions.ts";
-import {
-  formatPhh,
-  formatPhhs,
-  parsePhh,
-  parsePhhs,
-  type Phh,
-} from "../src/phh.ts";
+import { formatPhh, formatPhhs, parsePhh, parsePhhs } from "../src/phh.ts";
+import type { Phh } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
 import { variantCodes } from "../src/variants.ts";
 

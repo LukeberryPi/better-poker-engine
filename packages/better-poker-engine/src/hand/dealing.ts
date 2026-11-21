@@ -1,9 +1,12 @@
-import { isKnownCard, shuffle, type Card, type KnownCard } from "../cards.ts";
+import { isKnownCard, shuffle } from "../cards.ts";
+import type { Card, KnownCard } from "../cards.ts";
 import type { EventBody } from "../events.ts";
 import type { HoleCard } from "../hand.ts";
 import { seedFrom, sfc32 } from "../random.ts";
-import { err, ok, type Result } from "../result.ts";
-import { notEligible, type Refusal } from "./refusal.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
+import { notEligible } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
 import {
   at,
   currentStreet,
@@ -11,10 +14,8 @@ import {
   positionsOf,
   streetAt,
   sum,
-  type Dealing,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { Dealing, HandState, Position } from "./state.ts";
 
 /** Burned, mucked and discarded cards, dealt again once the deck runs out. */
 function reserve(state: HandState): Array<KnownCard> {

@@ -1,7 +1,10 @@
 import type { KnownCard } from "../cards.ts";
-import { evaluateStrength, type HandType } from "../evaluation.ts";
-import { randomBelow, type RandomSource } from "../random.ts";
-import { err, ok, type Result } from "../result.ts";
+import { evaluateStrength } from "../evaluation.ts";
+import type { HandType } from "../evaluation.ts";
+import { randomBelow } from "../random.ts";
+import type { RandomSource } from "../random.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Range } from "./ranges.ts";
 
 /** What pokerkit's `calculate_equities` takes besides the ranges. */

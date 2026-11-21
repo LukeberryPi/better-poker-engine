@@ -4,9 +4,8 @@ import {
   rankOrders,
   suitOf,
   suitSymbols,
-  type Card,
-  type KnownCard,
 } from "../cards.ts";
+import type { Card, KnownCard } from "../cards.ts";
 import {
   addToStack,
   capAt,
@@ -14,16 +13,18 @@ import {
   exceeds,
   minStack,
   takeFromStack,
-  type Chips,
-  type Stack,
 } from "../chips.ts";
+import type { Chips, Stack } from "../chips.ts";
 import type { EventBody } from "../events.ts";
 import type { RaiseRange } from "../hand.ts";
-import { entryOf, lookup, type Entry } from "../lookups.ts";
-import { err, ok, type Result } from "../result.ts";
+import { entryOf, lookup } from "../lookups.ts";
+import type { Entry } from "../lookups.ts";
+import { err, ok } from "../result.ts";
+import type { Result } from "../result.ts";
 import type { Opening } from "../rules.ts";
 import { placeBet } from "./forced.ts";
-import { notEligible, type Refusal } from "./refusal.ts";
+import { notEligible } from "./refusal.ts";
+import type { Refusal } from "./refusal.ts";
 import {
   activeCount,
   at,
@@ -39,10 +40,8 @@ import {
   rotatedFrom,
   sum,
   upCards,
-  type Betting,
-  type HandState,
-  type Position,
 } from "./state.ts";
+import type { Betting, HandState, Position } from "./state.ts";
 import { totalPot } from "./pots.ts";
 
 /** What the player can lose: capped by the second-largest active stack. */

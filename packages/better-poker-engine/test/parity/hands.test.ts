@@ -1,15 +1,15 @@
 import { expect } from "bun:test";
 
-import { doctest, type Example } from "../../../../parity/harness.ts";
+import { doctest } from "../../../../parity/harness.ts";
+import type { Example } from "../../../../parity/harness.ts";
 import type { Card } from "../../src/cards.ts";
 import {
   compareHands,
   describeHand,
   evaluate,
   handValue,
-  type HandType,
-  type HandValue,
 } from "../../src/evaluation.ts";
+import type { HandType, HandValue } from "../../src/evaluation.ts";
 import { cards, known } from "../support.ts";
 
 function hand<T extends HandType>(type: T, text: string): HandValue<T> {

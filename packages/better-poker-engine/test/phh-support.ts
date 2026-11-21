@@ -1,12 +1,6 @@
 import type { Hand } from "../src/hand.ts";
-import {
-  historyFromHand,
-  parsePhh,
-  replayHistory,
-  type HistoryReplay,
-  type Phh,
-  type ReplayOptions,
-} from "../src/phh.ts";
+import { historyFromHand, parsePhh, replayHistory } from "../src/phh.ts";
+import type { HistoryReplay, Phh, ReplayOptions } from "../src/phh.ts";
 
 export function parsed(text: string): Phh {
   const history = parsePhh(text);

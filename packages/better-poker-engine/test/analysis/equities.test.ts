@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { equities, handStrength, type Range } from "../../src/analysis.ts";
+import { equities, handStrength } from "../../src/analysis.ts";
+import type { Range } from "../../src/analysis.ts";
 import { decks } from "../../src/cards.ts";
 import { insecureSeededRandom } from "../../src/random.ts";
 import { err, ok } from "../../src/result.ts";

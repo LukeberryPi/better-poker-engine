@@ -1,19 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Card } from "../src/cards.ts";
-import { act, type Action, type Hand } from "../src/hand.ts";
+import { act } from "../src/hand.ts";
+import type { Action, Hand } from "../src/hand.ts";
 import { formatPhh, historyFromHand } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
 import { holdem, stud } from "../src/rules.ts";
-import {
-  accept,
-  allBut,
-  drive,
-  moves,
-  play,
-  start,
-  type Move,
-} from "./driver.ts";
+import { accept, allBut, drive, moves, play, start } from "./driver.ts";
+import type { Move } from "./driver.ts";
 import { exported, parsed, replayed } from "./phh-support.ts";
 
 const { burn, board, call, fold, raiseTo } = moves;

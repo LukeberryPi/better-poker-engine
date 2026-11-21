@@ -1,7 +1,8 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { automation, type Hand } from "../../src/hand.ts";
+import { automation } from "../../src/hand.ts";
+import type { Hand } from "../../src/hand.ts";
 import { holdem, stud } from "../../src/rules.ts";
 import {
   drive,

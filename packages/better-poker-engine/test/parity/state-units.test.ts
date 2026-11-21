@@ -1,18 +1,12 @@
 import { expect } from "bun:test";
 
 import { unitTest } from "../../../../parity/harness.ts";
-import { decks, type Card } from "../../src/cards.ts";
+import { decks } from "../../src/cards.ts";
+import type { Card } from "../../src/cards.ts";
 import type { Stack } from "../../src/chips.ts";
 import type { HandEvent } from "../../src/events.ts";
-import {
-  automation,
-  startHand,
-  summarizeHand,
-  type Automation,
-  type Decision,
-  type Hand,
-  type PlayerId,
-} from "../../src/hand.ts";
+import { automation, startHand, summarizeHand } from "../../src/hand.ts";
+import type { Automation, Decision, Hand, PlayerId } from "../../src/hand.ts";
 import { lookup } from "../../src/lookups.ts";
 import {
   conventions,
@@ -24,9 +18,8 @@ import {
   rhodeIsland,
   shortDeck,
   stud,
-  type Game,
-  type Street,
 } from "../../src/rules.ts";
+import type { Game, Street } from "../../src/rules.ts";
 import {
   accept,
   allBut,
@@ -44,9 +37,8 @@ import {
   repeat,
   stacks,
   start,
-  type Driver,
-  type Move,
 } from "../driver.ts";
+import type { Driver, Move } from "../driver.ts";
 import { cards, digestSortedByEntry, forEachCombination } from "../support.ts";
 
 const {

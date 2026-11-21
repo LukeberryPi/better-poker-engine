@@ -1,11 +1,5 @@
-import {
-  cardOf,
-  isKnownCard,
-  rankOrders,
-  suits,
-  type Card,
-  type KnownCard,
-} from "./cards.ts";
+import { cardOf, isKnownCard, rankOrders, suits } from "./cards.ts";
+import type { Card, KnownCard } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 import {
   cardKeyOf,
@@ -13,11 +7,8 @@ import {
   entryAt,
   entryOf,
   lookup,
-  type Entry,
-  type HandCategory,
-  type Lookup,
-  type LookupName,
 } from "./lookups.ts";
+import type { Entry, HandCategory, Lookup, LookupName } from "./lookups.ts";
 
 export type HandType =
   | "standardHigh"
