@@ -171,8 +171,13 @@ export function evaluate<T extends HandType>(
   }
   return {
     type,
-    // SAFETY: candidate positions index `cards`, whose counts built them.
-    cards: best.positions.map((position) => cards[position] as KnownCard),
+    cards: best.positions.map((position) => {
+      const card = cards[position];
+      if (card === undefined) {
+        throw new Error(`No card at ${position}`);
+      }
+      return card;
+    }),
     category: best.entry.category,
     strength: best.strength,
   };

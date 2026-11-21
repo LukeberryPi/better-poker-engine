@@ -1,6 +1,7 @@
 import type { KnownCard } from "../cards.ts";
 import { evaluateStrength } from "../evaluation.ts";
 import type { HandType } from "../evaluation.ts";
+import { at } from "../hand/state.ts";
 import { randomBelow } from "../random.ts";
 import type { RandomSource } from "../random.ts";
 import { err, ok } from "../result.ts";
@@ -210,8 +211,7 @@ export function equities(
   let totals: ReadonlyArray<number> = ranges.map(() => 0);
   for (let sample = 0; sample < samples; sample += 1) {
     const chosen = randomBelow(selections.length, random);
-    // SAFETY: randomBelow returns an index below the number of selections.
-    const deal = dealOf(selections[chosen] as Selection, input, deck);
+    const deal = dealOf(at(selections, chosen), input, deck);
     if (!deal.ok) {
       return deal;
     }
@@ -238,6 +238,5 @@ export function handStrength(
   if (!shares.ok) {
     return shares;
   }
-  // SAFETY: equities returns one share per range, and `range` is the last.
-  return ok(shares.value[players - 1] as number);
+  return ok(at(shares.value, players - 1));
 }

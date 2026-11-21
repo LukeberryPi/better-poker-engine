@@ -1,4 +1,12 @@
-import { areRainbow, areSuited, rankOf, rankOrders, suitOf } from "./cards.ts";
+import {
+  areRainbow,
+  areSuited,
+  cardOf,
+  rankOf,
+  rankOrders,
+  ranks,
+  suits,
+} from "./cards.ts";
 import type { Card, KnownCard, Rank, Suit } from "./cards.ts";
 import { combinations } from "./combinations.ts";
 
@@ -356,12 +364,21 @@ export type CardKey = { readonly prime: number; readonly suit: number };
 
 const suitBits = { c: 1, d: 2, h: 4, s: 8 } satisfies Record<Suit, number>;
 
+const cardKeys = new Map(
+  ranks.flatMap((rank) =>
+    suits.map((suit): [KnownCard, CardKey] => [
+      cardOf(rank, suit),
+      { prime: primes[rank], suit: suitBits[suit] },
+    ])
+  )
+);
+
 export function cardKeyOf(card: KnownCard): CardKey {
-  // SAFETY: a known card's rank and suit are both known.
-  return {
-    prime: primes[rankOf(card) as Rank],
-    suit: suitBits[suitOf(card) as Suit],
-  };
+  const key = cardKeys.get(card);
+  if (key === undefined) {
+    throw new Error(`Not a known card: ${card}`);
+  }
+  return key;
 }
 
 /** `entryOf` for the known cards at `positions` of `keys`, without building card sets. */
@@ -375,8 +392,11 @@ export function entryAt(
   let suited = true;
   let rainbow = true;
   for (const position of positions) {
-    // SAFETY: callers pass positions of the cards these keys were made from.
-    const { prime, suit } = keys[position] as CardKey;
+    const key = keys[position];
+    if (key === undefined) {
+      throw new Error(`No card key at ${position}`);
+    }
+    const { prime, suit } = key;
     product *= prime;
     suited &&= seen === 0 || seen === suit;
     rainbow &&= (seen & suit) === 0;

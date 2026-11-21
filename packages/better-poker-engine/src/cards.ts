@@ -4,7 +4,7 @@ import { err, ok } from "./result.ts";
 import type { Result } from "./result.ts";
 import { isWhitespace } from "./words.ts";
 
-const ranks = [
+export const ranks = [
   "A",
   "2",
   "3",
