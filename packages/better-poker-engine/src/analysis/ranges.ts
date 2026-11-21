@@ -136,8 +136,7 @@ function combosOf(notation: string, order: string): Combos | null {
     return explicitCards(notation);
   }
   const [, r0 = "", r1 = "", third = "", tail = "", r2 = "", r3 = ""] = match;
-  // SAFETY: the pattern's third group is empty, `s` or `o`.
-  const suffix = third as Suffix;
+  const suffix = third === "s" || third === "o" ? third : "";
   if (tail === "") {
     return rankPair(r0, r1, suffix);
   }
