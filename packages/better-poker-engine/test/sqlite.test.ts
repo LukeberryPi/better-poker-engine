@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
+import type { z } from "zod/mini";
 
 import { decks, shuffle } from "../src/cards.ts";
 import { insecureSeededRandom } from "../src/random.ts";
@@ -174,7 +175,10 @@ describe("sqliteStore", () => {
       )
       .all();
     expect(
-      rows.map(({ version, rejection }) => [version, JSON.parse(rejection)])
+      rows.map(({ version, rejection }) => {
+        const stored: z.core.util.JSONType = JSON.parse(rejection);
+        return [version, stored];
+      })
     ).toEqual([
       [2, { attempt, violation: { code: "not_seated", player: "z" } }],
     ]);
@@ -184,6 +188,7 @@ describe("sqliteStore", () => {
     const { db, store } = await openStore();
     expect(await store.loadTable("t1")).toBeNull();
     db.query("INSERT INTO poker_tables VALUES ('t1', 0, '{}')").run();
+    // oxlint-disable-next-line typescript/await-thenable -- bun types `rejects` as void; it is a promise.
     await expect(store.loadTable("t1")).rejects.toThrow("Stored table t1");
   });
 });

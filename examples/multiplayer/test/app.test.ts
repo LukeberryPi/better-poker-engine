@@ -58,7 +58,9 @@ async function dealtTable() {
 }
 
 function wire<T>(value: T): Json {
-  return JSON.parse(JSON.stringify(value));
+  // oxlint-disable-next-line unicorn/prefer-structured-clone -- the round trip is the wire format.
+  const json: Json = JSON.parse(JSON.stringify(value));
+  return json;
 }
 
 test("sends each audience the view of the table redacted for it", async () => {
@@ -101,7 +103,10 @@ test("refuses a second click on the same version and keeps the attempt", async (
   const attempts = db
     .query<{ rejection: string }, []>("SELECT rejection FROM poker_rejections")
     .all()
-    .map(({ rejection }) => JSON.parse(rejection).attempt);
+    .map(({ rejection }) => {
+      const stored: { attempt: Json } = JSON.parse(rejection);
+      return stored.attempt;
+    });
   expect(attempts).toEqual([{ type: "act", player: "a", ...click }]);
 });
 

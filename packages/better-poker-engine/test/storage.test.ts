@@ -32,7 +32,8 @@ type Stored = {
 };
 
 function stored(hand: Hand): Stored {
-  return JSON.parse(serializeHand(hand));
+  const data: Stored = JSON.parse(serializeHand(hand));
+  return data;
 }
 
 function tampered(hand: Hand, edit: (data: Stored) => void): string {

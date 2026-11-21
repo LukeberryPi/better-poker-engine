@@ -792,23 +792,25 @@ describe("a dead-button table", () => {
     ]).table;
     const stored = JSON.parse(serializeTable(table));
     const { rotation, seats, ...checkpoint } = stored.checkpoint;
+    const storedSeats: Array<{
+      player: string;
+      stack: number;
+      sittingOut: boolean;
+    } | null> = seats;
     const legacy = JSON.stringify({
       ...stored,
       format: 2,
       checkpoint: {
         ...checkpoint,
         button: rotation === null ? null : rotation.button,
-        seats: seats.map(
-          (
-            seat: { player: string; stack: number; sittingOut: boolean } | null
-          ) =>
-            seat === null
-              ? null
-              : {
-                  player: seat.player,
-                  stack: seat.stack,
-                  sittingOut: seat.sittingOut,
-                }
+        seats: storedSeats.map((seat) =>
+          seat === null
+            ? null
+            : {
+                player: seat.player,
+                stack: seat.stack,
+                sittingOut: seat.sittingOut,
+              }
         ),
       },
     });
