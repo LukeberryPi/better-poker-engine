@@ -53,17 +53,23 @@ type ManifestEntry = {
   readonly notRun: number;
 };
 
+function idsOf<Id extends string, Value>(
+  manifest: Readonly<Record<Id, Value>>
+): Array<Id> {
+  // SAFETY: a const manifest has exactly the keys Id.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys returns strings.
+  return Object.keys(manifest) as Array<Id>;
+}
+
 function entries(declared: Deviations): ReadonlyArray<ManifestEntry> {
-  const unit = Object.entries(unitTests).map(([id, file]) => ({
-    // SAFETY: Object.entries over the const manifest yields its own keys.
-    id: id as UnitTestId,
-    file,
+  const unit = idsOf(unitTests).map((id) => ({
+    id,
+    file: unitTests[id],
     cases: 1,
     notRun: 0,
   }));
-  const doc = Object.entries(doctests).map(([key, entry]) => {
-    // SAFETY: Object.entries over the const manifest yields its own keys.
-    const id = key as DoctestId;
+  const doc = idsOf(doctests).map((id) => {
+    const entry = doctests[id];
     const notRun = entry.examples - examplesToRun(id, declared).length;
     return { id, file: entry.file, cases: entry.examples, notRun };
   });
@@ -71,9 +77,8 @@ function entries(declared: Deviations): ReadonlyArray<ManifestEntry> {
 }
 
 function deviationErrors(declared: Deviations): Array<string> {
-  return Object.entries(doctests).flatMap(([key, entry]) => {
-    // SAFETY: Object.entries over the const manifest yields its own keys.
-    const id = key as DoctestId;
+  return idsOf(doctests).flatMap((id) => {
+    const entry = doctests[id];
     const indexes = (declared[id] ?? []).flatMap((item) => item.examples);
     const outOfRange = indexes.filter(
       (index) => !Number.isInteger(index) || index < 1 || index > entry.examples
@@ -123,10 +128,8 @@ export function parityReport(
     required: required.has(file),
     ...counts,
   }));
-  const listed = Object.keys(doctests).flatMap((key) => {
-    // SAFETY: Object.keys over the const manifest yields its own keys.
-    const id = key as DoctestId;
-    return (declared[id] ?? []).map((deviation) => ({ id, deviation }));
-  });
+  const listed = idsOf(doctests).flatMap((id) =>
+    (declared[id] ?? []).map((deviation) => ({ id, deviation }))
+  );
   return { files, deviations: listed, errors };
 }
