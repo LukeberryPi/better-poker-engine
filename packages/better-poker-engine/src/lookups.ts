@@ -376,11 +376,11 @@ export function entryAt(
   let rainbow = true;
   for (const position of positions) {
     // SAFETY: callers pass positions of the cards these keys were made from.
-    const key = keys[position] as CardKey;
-    product *= key.prime;
-    suited &&= seen === 0 || seen === key.suit;
-    rainbow &&= (seen & key.suit) === 0;
-    seen |= key.suit;
+    const { prime, suit } = keys[position] as CardKey;
+    product *= prime;
+    suited &&= seen === 0 || seen === suit;
+    rainbow &&= (seen & suit) === 0;
+    seen |= suit;
   }
   if (table.badugi && !rainbow) {
     return null;
