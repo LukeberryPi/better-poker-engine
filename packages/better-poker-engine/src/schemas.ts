@@ -1,4 +1,4 @@
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 import { allCards, decks } from "./cards.ts";
 import { handRules } from "./evaluation.ts";

@@ -18,7 +18,7 @@ import type {
 import type { TableStore } from "better-poker-engine/sqlite";
 import { Hono } from "hono";
 import type { Context } from "hono";
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
 

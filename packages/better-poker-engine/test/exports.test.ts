@@ -1,8 +1,6 @@
 import { expect, test } from "bun:test";
 import path from "node:path";
 
-import * as analysis from "better-poker-engine/analysis";
-
 const sources = path.resolve(import.meta.dir, "../src");
 
 async function modulesLoadedBy(specifier: string): Promise<Array<string>> {
@@ -22,7 +20,8 @@ function isAnalysisModule(file: string): boolean {
   );
 }
 
-test("the analysis subpath exports the analysis functions", () => {
+test("the analysis subpath exports the analysis functions", async () => {
+  const analysis = await import("better-poker-engine/analysis");
   expect(Object.keys(analysis).toSorted()).toEqual([
     "equities",
     "handStrength",

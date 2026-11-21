@@ -1,6 +1,6 @@
 import { parse, TomlDate, TomlError } from "smol-toml";
 import type { TomlTable, TomlValue } from "smol-toml";
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 import { err, ok } from "./result.ts";
 import type { Result } from "./result.ts";

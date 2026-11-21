@@ -1,4 +1,4 @@
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 import type { HandRecord } from "./events.ts";
 import { err, ok } from "./result.ts";

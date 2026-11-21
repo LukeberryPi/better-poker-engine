@@ -1,6 +1,6 @@
 import { TomlDate } from "smol-toml";
 import type { TomlTable, TomlValue } from "smol-toml";
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 import type { Unbounded } from "./chips.ts";
 import { formatPhhAction, parsePhhAction } from "./phh-actions.ts";

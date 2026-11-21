@@ -1,4 +1,4 @@
-import * as z from "zod/mini";
+import { z } from "zod/mini";
 
 import { act, eventsOf, startHand } from "./hand.ts";
 import type { Hand, SetupError, Violation } from "./hand.ts";
