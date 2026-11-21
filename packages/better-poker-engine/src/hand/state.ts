@@ -137,7 +137,7 @@ export function stateOf(hand: Hand): HandState {
 }
 
 /** Skips frozen objects: everything a hand holds was frozen whole when first reached. */
-export function deepFreeze<T extends {}>(value: T): T {
+export function deepFreeze<T extends NonNullable<unknown>>(value: T): T {
   if (Object.isFrozen(value)) {
     return value;
   }
@@ -154,7 +154,10 @@ const nodeInspect = Symbol.for("nodejs.util.inspect.custom");
 
 /** Hands and tables hold the deck and every hole card, so `JSON.stringify` throws and
  * Node's inspector prints nothing: a stray log line or `res.json` can't leak them. */
-export function sealed<T extends {}>(value: T, kind: "Hand" | "Table"): T {
+export function sealed<T extends NonNullable<unknown>>(
+  value: T,
+  kind: "Hand" | "Table"
+): T {
   Object.defineProperties(value, {
     toJSON: {
       value: () => {

@@ -42,7 +42,7 @@ function transitions(walk: Walk): Array<Transition> {
   ];
 }
 
-function deeplyFrozen<T extends {}>(value: T): boolean {
+function deeplyFrozen<T extends NonNullable<unknown>>(value: T): boolean {
   if (Object(value) !== value) {
     return true;
   }
