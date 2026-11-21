@@ -285,7 +285,7 @@ describe("act", () => {
       attempted: 101,
       maximum: 100,
     });
-    for (const amount of [10.5, NaN]) {
+    for (const amount of [10.5, Number.NaN]) {
       expect(table.reject({ type: "betOrRaiseTo", amount })).toEqual({
         code: "invalid_amount",
         attempted: amount,
