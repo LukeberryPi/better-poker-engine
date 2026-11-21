@@ -57,7 +57,7 @@ export function known(text: string): Array<KnownCard> {
 export function range(...texts: ReadonlyArray<string>): Range {
   const parsed = parseRange(texts.join(" "));
   if (!parsed.ok) {
-    throw new Error(`Test range does not parse: ${texts}`);
+    throw new Error(`Test range does not parse: ${texts.join(",")}`);
   }
   return parsed.value;
 }

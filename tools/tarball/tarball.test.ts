@@ -26,7 +26,7 @@ function run(command: Array<string>, cwd: string): string {
   });
   if (exitCode !== 0) {
     throw new Error(
-      `${command.join(" ")} exited ${exitCode}\n${stdout}${stderr}`
+      `${command.join(" ")} exited ${exitCode}\n${stdout.toString()}${stderr.toString()}`
     );
   }
   return stdout.toString();

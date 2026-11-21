@@ -40,7 +40,9 @@ function fromGame<T extends HandType>(
 ): HandValue<T> {
   const value = evaluate(type, hole, board);
   if (value === null) {
-    throw new Error(`${hole} ${board} make no ${type} hand`);
+    throw new Error(
+      `${hole.join(",")} ${board.join(",")} make no ${type} hand`
+    );
   }
   return value;
 }
