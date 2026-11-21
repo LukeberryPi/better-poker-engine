@@ -52,6 +52,7 @@ export function isTable(value: TomlValue): value is TomlTable {
   return (
     Object(value) === value &&
     !Array.isArray(value) &&
+    // oxlint-disable-next-line @nkzw/no-instanceof -- a TomlDate's class is its only tag.
     !(value instanceof TomlDate)
   );
 }
