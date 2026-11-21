@@ -75,7 +75,7 @@ const studVariants = ["F7S", "F7S/8", "FR"] as const;
 type ForcedBets =
   | {
       readonly variant: (typeof fixedLimitBlindVariants)[number];
-      readonly blinds: readonly PhhDecimal[];
+      readonly blinds: ReadonlyArray<PhhDecimal>;
       readonly bringIn: null;
       readonly smallBet: PhhDecimal;
       readonly bigBet: PhhDecimal;
@@ -83,7 +83,7 @@ type ForcedBets =
     }
   | {
       readonly variant: (typeof noOrPotLimitBlindVariants)[number];
-      readonly blinds: readonly PhhDecimal[];
+      readonly blinds: ReadonlyArray<PhhDecimal>;
       readonly bringIn: null;
       readonly smallBet: null;
       readonly bigBet: null;
@@ -103,9 +103,9 @@ type ForcedBets =
  * pokerkit, a negative entry in `blinds` is a post bet. */
 export type Phh = ForcedBets & {
   readonly anteTrimming: boolean | null;
-  readonly antes: readonly PhhDecimal[];
-  readonly startingStacks: readonly PhhStack[];
-  readonly actions: readonly PhhAction[];
+  readonly antes: ReadonlyArray<PhhDecimal>;
+  readonly startingStacks: ReadonlyArray<PhhStack>;
+  readonly actions: ReadonlyArray<PhhAction>;
   readonly author: string | null;
   readonly event: string | null;
   readonly url: string | null;
@@ -123,16 +123,16 @@ export type Phh = ForcedBets & {
   readonly year: number | null;
   readonly hand: PhhLabel | null;
   readonly level: number | null;
-  readonly seats: readonly number[] | null;
+  readonly seats: ReadonlyArray<number> | null;
   readonly seatCount: number | null;
   readonly table: PhhLabel | null;
-  readonly players: readonly string[] | null;
-  readonly finishingStacks: readonly PhhStack[] | null;
-  readonly winnings: readonly PhhDecimal[] | null;
+  readonly players: ReadonlyArray<string> | null;
+  readonly finishingStacks: ReadonlyArray<PhhStack> | null;
+  readonly winnings: ReadonlyArray<PhhDecimal> | null;
   readonly currency: string | null;
   readonly currencySymbol: string | null;
   readonly timeLimit: PhhStack | null;
-  readonly timeBanks: readonly PhhDecimal[] | null;
+  readonly timeBanks: ReadonlyArray<PhhDecimal> | null;
   /** Fields the spec does not define, by key; the spec asks them to start with `_`. */
   readonly extra: Readonly<Record<string, PhhValue>>;
 };
@@ -141,7 +141,7 @@ export type Phh = ForcedBets & {
 export type PhhIssue = { readonly path: string; readonly message: string };
 
 type DocumentError =
-  | { readonly code: "schema"; readonly issues: readonly PhhIssue[] }
+  | { readonly code: "schema"; readonly issues: ReadonlyArray<PhhIssue> }
   | { readonly code: "unknown_variant"; readonly variant: string }
   | {
       readonly code: "action_syntax";
@@ -323,14 +323,14 @@ const standardFields = new Set([
 ]);
 
 type PlayerArrays = {
-  readonly antes: readonly PhhDecimal[];
-  readonly blinds_or_straddles?: readonly PhhDecimal[];
-  readonly starting_stacks: readonly PhhStack[];
-  readonly seats?: readonly number[] | undefined;
-  readonly players?: readonly string[] | undefined;
-  readonly finishing_stacks?: readonly PhhStack[] | undefined;
-  readonly winnings?: readonly PhhDecimal[] | undefined;
-  readonly time_banks?: readonly PhhDecimal[] | undefined;
+  readonly antes: ReadonlyArray<PhhDecimal>;
+  readonly blinds_or_straddles?: ReadonlyArray<PhhDecimal>;
+  readonly starting_stacks: ReadonlyArray<PhhStack>;
+  readonly seats?: ReadonlyArray<number> | undefined;
+  readonly players?: ReadonlyArray<string> | undefined;
+  readonly finishing_stacks?: ReadonlyArray<PhhStack> | undefined;
+  readonly winnings?: ReadonlyArray<PhhDecimal> | undefined;
+  readonly time_banks?: ReadonlyArray<PhhDecimal> | undefined;
 };
 
 const onePerPlayer = z.superRefine((fields: PlayerArrays, context) => {
@@ -466,7 +466,7 @@ const historySchemas = {
   FB: fixedLimitBlinds,
 } satisfies Record<VariantCode, z.core.SomeType>;
 
-function pathOf(path: readonly PropertyKey[]): string {
+function pathOf(path: ReadonlyArray<PropertyKey>): string {
   return path
     .map((key, index) =>
       Number.isInteger(key)
@@ -477,7 +477,7 @@ function pathOf(path: readonly PropertyKey[]): string {
 }
 
 function schemaError(
-  issues: readonly z.core.$ZodIssue[],
+  issues: ReadonlyArray<z.core.$ZodIssue>,
   variant: VariantCode
 ): DocumentError {
   return {
@@ -508,10 +508,10 @@ function variantOf(
 }
 
 function actionsOf(
-  texts: readonly string[],
+  texts: ReadonlyArray<string>,
   players: number
-): Result<readonly PhhAction[], DocumentError> {
-  const actions: PhhAction[] = [];
+): Result<ReadonlyArray<PhhAction>, DocumentError> {
+  const actions: Array<PhhAction> = [];
   for (const [index, text] of texts.entries()) {
     const action = parsePhhAction(text);
     if (action === null) return err({ code: "action_syntax", index, text });
@@ -561,10 +561,10 @@ export function parsePhh(text: string): Result<Phh, PhhError> {
 }
 
 /** Reads a `.phhs` file: a table of histories such as `[1]`, `[2]`, in order. */
-export function parsePhhs(text: string): Result<readonly Phh[], PhhsError> {
+export function parsePhhs(text: string): Result<ReadonlyArray<Phh>, PhhsError> {
   const table = readToml(text);
   if (!table.ok) return table;
-  const histories: Phh[] = [];
+  const histories: Array<Phh> = [];
   for (const [document, value] of Object.entries(table.value)) {
     const history: Result<Phh, DocumentError> = isTable(value)
       ? historyFrom(value)
@@ -602,14 +602,14 @@ function timeText(time: PhhTime): string {
 }
 
 function listOf<Item>(write: (item: Item) => string) {
-  return (items: readonly Item[]) => tomlArray(items.map(write));
+  return (items: ReadonlyArray<Item>) => tomlArray(items.map(write));
 }
 
 function line<Value>(
   key: string,
   value: Value | null,
   write: (value: Value) => string
-): readonly string[] {
+): ReadonlyArray<string> {
   return value === null ? [] : [`${key} = ${write(value)}`];
 }
 
@@ -670,7 +670,7 @@ export function formatPhh(history: Phh): string {
 }
 
 /** Writes histories as pokerkit's `HandHistory.dumps_all` does: `[1]`, `[2]`, ... */
-export function formatPhhs(histories: readonly Phh[]): string {
+export function formatPhhs(histories: ReadonlyArray<Phh>): string {
   return histories
     .map((history, index) => `[${index + 1}]\n${formatPhh(history)}`)
     .join("\n\n");

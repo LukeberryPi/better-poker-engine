@@ -37,7 +37,7 @@ export type HandType =
 
 export type HandValue<T extends HandType = HandType> = {
   readonly type: T;
-  readonly cards: readonly KnownCard[];
+  readonly cards: ReadonlyArray<KnownCard>;
   readonly category: HandCategory;
   /** Higher is stronger; only comparable within one hand type. */
   readonly strength: number;
@@ -45,9 +45,9 @@ export type HandValue<T extends HandType = HandType> = {
 
 /** Positions in `[...hole, ...board]` of each card set that may form a hand. */
 type Candidates = (
-  hole: readonly number[],
-  board: readonly number[]
-) => (readonly number[])[];
+  hole: ReadonlyArray<number>,
+  board: ReadonlyArray<number>
+) => Array<ReadonlyArray<number>>;
 
 function anyCards(size: number): Candidates {
   return (hole, board) => combinations([...hole, ...board], size);
@@ -105,7 +105,7 @@ function strengthOf(rules: HandRules, table: Lookup, entry: Entry): number {
 /** These exact cards as a hand of `type`, as pokerkit's `Hand(cards)`. */
 export function handValue<T extends HandType>(
   type: T,
-  cards: readonly KnownCard[]
+  cards: ReadonlyArray<KnownCard>
 ): HandValue<T> | null {
   const rules = handRules[type];
   const table = lookup(rules.lookup);
@@ -115,14 +115,17 @@ export function handValue<T extends HandType>(
   return { type, cards, category: entry.category, strength };
 }
 
-const candidatesByCounts = new Map<string, readonly (readonly number[])[]>();
+const candidatesByCounts = new Map<
+  string,
+  ReadonlyArray<ReadonlyArray<number>>
+>();
 
 /** Built once per hand type and card counts; never modified. */
 function candidatesOf(
   type: HandType,
   holeCount: number,
   boardCount: number
-): readonly (readonly number[])[] {
+): ReadonlyArray<ReadonlyArray<number>> {
   const counts = `${type} ${holeCount} ${boardCount}`;
   const cached = candidatesByCounts.get(counts);
   if (cached !== undefined) return cached;
@@ -139,7 +142,7 @@ function candidatesOf(
 }
 
 type Best = {
-  readonly positions: readonly number[];
+  readonly positions: ReadonlyArray<number>;
   readonly entry: Entry;
   readonly strength: number;
 };
@@ -147,8 +150,8 @@ type Best = {
 /** The strongest hand of `type`; null if none forms or a card is not fully known. */
 export function evaluate<T extends HandType>(
   type: T,
-  hole: readonly Card[],
-  board: readonly Card[]
+  hole: ReadonlyArray<Card>,
+  board: ReadonlyArray<Card>
 ): HandValue<T> | null {
   if (!hole.every(isKnownCard) || !board.every(isKnownCard)) return null;
   const rules = handRules[type];
@@ -192,7 +195,7 @@ type SevenCardTables = {
   readonly ranks: Int8Array;
   /** By a card's character codes: its suit index, or -1. */
   readonly suits: Int8Array;
-  readonly primes: readonly number[];
+  readonly primes: ReadonlyArray<number>;
   /** By the 13-bit rank mask of a suit holding five cards or more. */
   readonly flushes: Uint16Array;
   /** By the product of the seven cards' rank primes, when no suit holds five. */
@@ -205,9 +208,9 @@ let sevenCardTables: SevenCardTables | null = null;
  * `visit` must not keep the array, which the walk reuses. */
 function forEachRankMultiset(
   size: number,
-  visit: (ranks: readonly number[]) => void
+  visit: (ranks: ReadonlyArray<number>) => void
 ): void {
-  const held: number[] = [];
+  const held: Array<number> = [];
   const walk = (from: number, left: number): void => {
     if (left === 0) {
       visit(held);
@@ -226,7 +229,7 @@ function forEachRankMultiset(
 /** Entry indices of five-card hands by their rank primes' product, suited or not. */
 function fiveCardIndices(
   table: Lookup,
-  primes: readonly number[],
+  primes: ReadonlyArray<number>,
   suited: boolean
 ): Map<number, number> {
   const indices = new Map<number, number>();
@@ -249,7 +252,7 @@ function fiveCardIndices(
 
 /** The best five of seven: each product less two of its primes is a five-card hand. */
 function bestOfSeven(
-  primes: readonly number[],
+  primes: ReadonlyArray<number>,
   fives: ReadonlyMap<number, number>
 ): number {
   const product = primes.reduce((total, prime) => total * prime, 1);
@@ -320,8 +323,8 @@ function tablesForSevenCards(): SevenCardTables {
  * standard high hands, which equity simulations need, take one table lookup. */
 export function evaluateStrength(
   type: HandType,
-  hole: readonly Card[],
-  board: readonly Card[]
+  hole: ReadonlyArray<Card>,
+  board: ReadonlyArray<Card>
 ): number | null {
   if (type !== "standardHigh" || hole.length + board.length !== 7) {
     return evaluate(type, hole, board)?.strength ?? null;

@@ -71,7 +71,7 @@ function withoutRunoutCounts(operations: ReturnType<typeof operationsOf>) {
  * replay counts in chips of 1 / `amountScale`. */
 function kim2024(
   text: string,
-  finalStacks: Stack[],
+  finalStacks: Array<Stack>,
   amountScale: AmountScale = 1
 ): void {
   const amounts = (hand: Hand) =>

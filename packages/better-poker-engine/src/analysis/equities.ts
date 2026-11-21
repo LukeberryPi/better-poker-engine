@@ -7,15 +7,15 @@ import type { Range } from "./ranges.ts";
 /** What pokerkit's `calculate_equities` takes besides the ranges. */
 export type Simulation = {
   /** Board cards already dealt, possibly none. */
-  readonly board: readonly KnownCard[];
+  readonly board: ReadonlyArray<KnownCard>;
   /** Hole cards each player ends with: 2 in hold'em. */
   readonly holeCount: number;
   /** Board cards at showdown: 5 in hold'em. */
   readonly boardCount: number;
   /** The cards still to come are drawn from this deck. */
-  readonly deck: readonly KnownCard[];
+  readonly deck: ReadonlyArray<KnownCard>;
   /** Each hand type wins an equal part of the pot, as high and low halves do. */
-  readonly handTypes: readonly HandType[];
+  readonly handTypes: ReadonlyArray<HandType>;
   readonly samples: number;
   readonly random: RandomSource;
 };
@@ -43,11 +43,11 @@ export type EquityError =
   | { readonly code: "no_hand" };
 
 /** One combination per player. */
-type Selection = readonly (readonly KnownCard[])[];
+type Selection = ReadonlyArray<ReadonlyArray<KnownCard>>;
 
 type Deal = {
-  readonly holes: readonly (readonly KnownCard[])[];
-  readonly board: readonly KnownCard[];
+  readonly holes: ReadonlyArray<ReadonlyArray<KnownCard>>;
+  readonly board: ReadonlyArray<KnownCard>;
 };
 
 function isCount(value: number, minimum: number): boolean {
@@ -68,16 +68,16 @@ function invalidCount(simulation: Simulation): EquityError | null {
 
 /** pokerkit's valid selections, in the order of the product of the ranges. */
 function selectionsOf(
-  ranges: readonly Range[],
-  board: readonly KnownCard[]
-): Selection[] {
-  const selections: Selection[] = [];
+  ranges: ReadonlyArray<Range>,
+  board: ReadonlyArray<KnownCard>
+): Array<Selection> {
+  const selections: Array<Selection> = [];
   const used = new Set(board);
   if (used.size < board.length) return selections;
   const playable = ranges.map((range) =>
     range.filter((combo) => new Set(combo).size === combo.length)
   );
-  const chosen: (readonly KnownCard[])[] = [];
+  const chosen: Array<ReadonlyArray<KnownCard>> = [];
   const choose = (player: number): void => {
     const range = playable[player];
     if (range === undefined) {
@@ -99,12 +99,12 @@ function selectionsOf(
 
 /** An ordered sample without replacement, as pokerkit's `random.sample`. */
 function draw(
-  pool: readonly KnownCard[],
+  pool: ReadonlyArray<KnownCard>,
   count: number,
   random: RandomSource
-): KnownCard[] {
+): Array<KnownCard> {
   const remaining = [...pool];
-  const drawn: KnownCard[] = [];
+  const drawn: Array<KnownCard> = [];
   while (drawn.length < count) {
     drawn.push(...remaining.splice(randomBelow(remaining.length, random), 1));
   }
@@ -115,7 +115,7 @@ function draw(
 function dealOf(
   selection: Selection,
   simulation: Simulation,
-  deck: readonly KnownCard[]
+  deck: ReadonlyArray<KnownCard>
 ): Result<Deal, EquityError> {
   const { board, holeCount, boardCount, random } = simulation;
   const used = new Set([...board, ...selection.flat()]);
@@ -138,10 +138,10 @@ function dealOf(
 /** Each hand type splits its part among its best hands; null if players hold
  * cards but no hand type forms a hand. Adds in pokerkit's order. */
 function withShares(
-  totals: readonly number[],
+  totals: ReadonlyArray<number>,
   deal: Deal,
-  handTypes: readonly HandType[]
-): readonly number[] | null {
+  handTypes: ReadonlyArray<HandType>
+): ReadonlyArray<number> | null {
   const outcomes = handTypes.flatMap((type) => {
     const strengths = deal.holes.map((hole) =>
       evaluateStrength(type, hole, deal.board)
@@ -165,8 +165,8 @@ function withShares(
 
 /** pokerkit's `calculate_equities`: each player's share of the pot by Monte Carlo. */
 export function equities(
-  input: Simulation & { readonly ranges: readonly Range[] }
-): Result<readonly number[], EquityError> {
+  input: Simulation & { readonly ranges: ReadonlyArray<Range> }
+): Result<ReadonlyArray<number>, EquityError> {
   const { ranges, board, holeCount, boardCount, samples, random } = input;
   const invalid = invalidCount(input);
   if (invalid !== null) return err(invalid);
@@ -186,7 +186,7 @@ export function equities(
   const selections = selectionsOf(ranges, board);
   if (selections.length === 0) return err({ code: "no_deal" });
   const deck = [...new Set(input.deck)];
-  let totals: readonly number[] = ranges.map(() => 0);
+  let totals: ReadonlyArray<number> = ranges.map(() => 0);
   for (let sample = 0; sample < samples; sample += 1) {
     const chosen = randomBelow(selections.length, random);
     // SAFETY: randomBelow returns an index below the number of selections.

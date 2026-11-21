@@ -28,16 +28,16 @@ export type DeclaredDeviation = {
 };
 
 export type ParityReport = {
-  readonly files: readonly FileProgress[];
-  readonly deviations: readonly DeclaredDeviation[];
-  readonly errors: readonly string[];
+  readonly files: ReadonlyArray<FileProgress>;
+  readonly deviations: ReadonlyArray<DeclaredDeviation>;
+  readonly errors: ReadonlyArray<string>;
 };
 
 const testCase =
   /<testcase\b[^>]*?\bname="([^"]*)"[^>]*?(?:\/>|>([\s\S]*?)<\/testcase>)/g;
 
-export function outcomesFromJunit(xml: string): Map<string, Outcome[]> {
-  const outcomes = new Map<string, Outcome[]>();
+export function outcomesFromJunit(xml: string): Map<string, Array<Outcome>> {
+  const outcomes = new Map<string, Array<Outcome>>();
   for (const match of xml.matchAll(testCase)) {
     const name = match[1];
     if (name === undefined) continue;
@@ -59,7 +59,7 @@ type ManifestEntry = {
   readonly notRun: number;
 };
 
-function entries(declared: Deviations): readonly ManifestEntry[] {
+function entries(declared: Deviations): ReadonlyArray<ManifestEntry> {
   const unit = Object.entries(unitTests).map(([id, file]) => ({
     // SAFETY: Object.entries over the const manifest yields its own keys.
     id: id as UnitTestId,
@@ -76,7 +76,7 @@ function entries(declared: Deviations): readonly ManifestEntry[] {
   return [...unit, ...doc];
 }
 
-function deviationErrors(declared: Deviations): string[] {
+function deviationErrors(declared: Deviations): Array<string> {
   return Object.entries(doctests).flatMap(([key, entry]) => {
     // SAFETY: Object.entries over the const manifest yields its own keys.
     const id = key as DoctestId;
@@ -100,7 +100,7 @@ function deviationErrors(declared: Deviations): string[] {
 }
 
 export function parityReport(
-  outcomes: ReadonlyMap<string, readonly Outcome[]>,
+  outcomes: ReadonlyMap<string, ReadonlyArray<Outcome>>,
   required: ReadonlySet<SourceFile>,
   declared: Deviations
 ): ParityReport {

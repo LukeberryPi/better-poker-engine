@@ -25,9 +25,9 @@ export type ExportOptions = {
   readonly amountScale?: AmountScale;
 };
 
-type Cards = readonly [Card, ...Card[]];
+type Cards = readonly [Card, ...Array<Card>];
 
-function cardsOf(cards: readonly Card[]): Cards | null {
+function cardsOf(cards: ReadonlyArray<Card>): Cards | null {
   const [first, ...rest] = cards;
   return first === undefined ? null : [first, ...rest];
 }
@@ -97,13 +97,13 @@ function playerAction(
  * commentary is written alone, so the commentary stays with its cards. */
 function actionsOf(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   scale: AmountScale
-): PhhAction[] {
+): Array<PhhAction> {
   const seat: Seat = (player) => state.players.indexOf(player) + 1;
-  const actions: PhhAction[] = [];
-  const hole = new Map<number, Card[]>();
-  const board: Card[] = [];
+  const actions: Array<PhhAction> = [];
+  const hole = new Map<number, Array<Card>>();
+  const board: Array<Card> = [];
   const flush = (): void => {
     for (const [player, held] of [...hole].sort(([a], [b]) => a - b)) {
       const cards = cardsOf(held);

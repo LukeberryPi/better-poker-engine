@@ -85,7 +85,7 @@ function dealsBoards(example: Example, table: () => Driver): void {
 
 doctest("pokerkit.state.State.pot_amounts", (example) => {
   let table: Driver;
-  let amounts: number[];
+  let amounts: Array<number>;
   example(1, () => {});
   example(2, () => {
     table = sixHandedHand();
@@ -259,7 +259,7 @@ doctest("pokerkit.state.State.total_pot_amount", (example) => {
 
 doctest("pokerkit.state.State.pots", (example) => {
   let table: Driver;
-  let pots: readonly Pot[];
+  let pots: ReadonlyArray<Pot>;
   const potsOf = () => auditor(table.hand).pots;
   example(1, () => {});
   example(2, () => {

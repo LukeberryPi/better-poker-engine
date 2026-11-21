@@ -12,7 +12,7 @@ const seed42 = [
   0xde_5d_75_55, 0x6a_7c_09_29, 0x56_72_67_34, 0x82_a3_3e_12, 0xe1_9a_bb_75,
 ];
 
-function draws(random: RandomSource, count: number): number[] {
+function draws(random: RandomSource, count: number): Array<number> {
   return Array.from({ length: count }, () => random.nextUint32());
 }
 

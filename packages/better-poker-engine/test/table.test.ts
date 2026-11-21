@@ -44,15 +44,15 @@ function emptyTable(seats = 6, played: Game = game): Table {
 }
 
 /** The game's whole deck, `front` first in dealing order. */
-function deckStarting(front: string): Card[] {
+function deckStarting(front: string): Array<Card> {
   const first = cards(front);
   return [...first, ...decks.standard.filter((card) => !first.includes(card))];
 }
 
-type Run = { readonly table: Table; readonly events: TableEvent[] };
+type Run = { readonly table: Table; readonly events: Array<TableEvent> };
 
-function run(table: Table, commands: readonly TableCommand[]): Run {
-  const events: TableEvent[] = [];
+function run(table: Table, commands: ReadonlyArray<TableCommand>): Run {
+  const events: Array<TableEvent> = [];
   let current = table;
   for (const command of commands) {
     const next = actAtTable(current, command);
@@ -82,7 +82,7 @@ function actAs(
 }
 
 function joinAll(
-  seats: readonly (readonly [PlayerId, number, number])[]
+  seats: ReadonlyArray<readonly [PlayerId, number, number]>
 ): Table {
   return run(
     emptyTable(),
@@ -95,17 +95,17 @@ function joinAll(
   ).table;
 }
 
-function handBodies(events: readonly TableEvent[]) {
+function handBodies(events: ReadonlyArray<TableEvent>) {
   return events.flatMap(({ body }) =>
     body.type === "handEvent" ? [body.event.body] : []
   );
 }
 
-function stacksOf(table: Table): (number | null)[] {
+function stacksOf(table: Table): Array<number | null> {
   return viewTable(table, auditor).seats.map((seat) => seat?.stack ?? null);
 }
 
-function startedSeats(events: readonly TableEvent[]): number[][] {
+function startedSeats(events: ReadonlyArray<TableEvent>): Array<Array<number>> {
   return events.flatMap(({ body }) =>
     body.type === "handStarted" ? [[body.button, ...body.seats]] : []
   );
@@ -139,7 +139,7 @@ describe("a table", () => {
 
   test("seats the player after the button first and moves the button each hand", () => {
     let table = threeSeated;
-    const events: TableEvent[] = [];
+    const events: Array<TableEvent> = [];
     for (let hand = 0; hand < 4; hand += 1) {
       const round = foldRound(table);
       table = round.table;
@@ -390,7 +390,7 @@ describe("a table", () => {
   test("deals only the game's whole deck, one hand at a time", () => {
     const whole = shuffle(decks.standard, insecureSeededRandom(8));
     const doubled = whole.with(1, whole[0] ?? "As");
-    const start = (deck: readonly Card[]) =>
+    const start = (deck: ReadonlyArray<Card>) =>
       refusal(threeSeated, { type: "startHand", deck });
     expect([
       start(whole.slice(1)),
@@ -487,7 +487,7 @@ describe("a table", () => {
   });
 });
 
-function pick<T>(items: readonly T[], random: RandomSource): T {
+function pick<T>(items: ReadonlyArray<T>, random: RandomSource): T {
   const item = items[randomBelow(items.length, random)];
   if (item === undefined) throw new Error("Picked from an empty list");
   return item;
@@ -497,7 +497,7 @@ function chance(percent: number, random: RandomSource): boolean {
   return randomBelow(100, random) < percent;
 }
 
-const sessionGames: readonly Game[] = [
+const sessionGames: ReadonlyArray<Game> = [
   game,
   stud.fixedLimit({ bringIn: 1, smallBet: 2, bigBet: 4 }),
   draw.badugi({ blinds: [1, 2], smallBet: 2, bigBet: 4 }),
@@ -510,7 +510,7 @@ function chooseAction(hand: HandView, random: RandomSource): Choice {
   const { decision } = hand;
   switch (decision.kind) {
     case "betting": {
-      const options: PlayerAction[] = [];
+      const options: Array<PlayerAction> = [];
       if (decision.checkOrCall !== null) options.push({ type: "checkOrCall" });
       if (decision.fold === "standard") options.push({ type: "fold" });
       if (decision.betOrRaiseTo !== null) {
@@ -541,10 +541,10 @@ type Checkpoint = { readonly table: Table; readonly events: number };
 
 type Session = {
   readonly seed: number;
-  readonly checkpoints: readonly Checkpoint[];
-  readonly commands: readonly TableCommand[];
-  readonly events: readonly TableEvent[];
-  readonly players: readonly PlayerId[];
+  readonly checkpoints: ReadonlyArray<Checkpoint>;
+  readonly commands: ReadonlyArray<TableCommand>;
+  readonly events: ReadonlyArray<TableEvent>;
+  readonly players: ReadonlyArray<PlayerId>;
 };
 
 function randomSession(seed: number): Session {
@@ -555,10 +555,10 @@ function randomSession(seed: number): Session {
       ? "dead"
       : "moving";
   let table = okValue(createTable({ game: played, seats: 6, button }));
-  const checkpoints: Checkpoint[] = [{ table, events: 0 }];
-  const commands: TableCommand[] = [];
-  const events: TableEvent[] = [];
-  const players: PlayerId[] = [];
+  const checkpoints: Array<Checkpoint> = [{ table, events: 0 }];
+  const commands: Array<TableCommand> = [];
+  const events: Array<TableEvent> = [];
+  const players: Array<PlayerId> = [];
   const send = (command: TableCommand) => {
     const next = actAtTable(table, command);
     if (!next.ok)
@@ -645,7 +645,9 @@ function learn(known: Set<string>, audience: Audience, body: TableEventBody) {
 
 const knownCard = /"([2-9TJQKA][cdhs])"/g;
 
-function cardsIn(value: TableView | readonly TableEventView[]): string[] {
+function cardsIn(
+  value: TableView | ReadonlyArray<TableEventView>
+): Array<string> {
   return [...JSON.stringify(value).matchAll(knownCard)].map(
     ([, card]) => card ?? ""
   );
@@ -654,7 +656,7 @@ function cardsIn(value: TableView | readonly TableEventView[]): string[] {
 describe("a dead-button table", () => {
   const deadButton = () =>
     okValue(createTable({ game, seats: 6, button: "dead" }));
-  const seatedAt = (players: readonly string[]) =>
+  const seatedAt = (players: ReadonlyArray<string>) =>
     players.map((player, seat): TableCommand => ({
       type: "join",
       player,
@@ -833,7 +835,7 @@ describe("random sessions", () => {
 
   test("show each audience only cards it may know, in views and events", () => {
     const leaks = sessions.flatMap(({ seed, checkpoints, events, players }) => {
-      const audiences: Audience[] = [
+      const audiences: Array<Audience> = [
         { kind: "spectator" },
         ...players.map((player) => ({ kind: "player" as const, player })),
       ];
@@ -841,7 +843,7 @@ describe("random sessions", () => {
         const known = new Set<string>();
         let learned = 0;
         return checkpoints.flatMap(({ table, events: count }) => {
-          const seen: string[] = [];
+          const seen: Array<string> = [];
           for (const event of events.slice(learned, count)) {
             learn(known, audience, event.body);
             seen.push(...cardsIn(tableEventsFor([event], audience)));
@@ -914,7 +916,7 @@ describe("serializeTable and parseTable", () => {
       }
     }
     expect(JSON.parse(serializeTable(current)).commands).toEqual([]);
-    const sinceStart: TableCommand[] = [
+    const sinceStart: Array<TableCommand> = [
       { type: "startHand", deck: shuffle(decks.standard, random) },
       { type: "join", player: "d", seat: 3, stack: 50 },
     ];

@@ -52,7 +52,7 @@ type Step =
       readonly kind: "multisets";
       readonly category: HandCategory;
       /** Sizes of the groups of equal ranks, e.g. `[2, 2, 1]` for two pair. */
-      readonly pattern: readonly number[];
+      readonly pattern: ReadonlyArray<number>;
       readonly suitedness: Suitedness;
     }
   | {
@@ -65,16 +65,16 @@ type Step =
     };
 
 type LookupDefinition = {
-  readonly rankOrder: readonly Rank[];
+  readonly rankOrder: ReadonlyArray<Rank>;
   /** Each step adds hand classes after the previous ones, as pokerkit's `_add_entries`. */
-  readonly steps: readonly Step[];
+  readonly steps: ReadonlyArray<Step>;
   /** Badugi hands need distinct ranks and distinct suits. */
   readonly badugi: boolean;
 };
 
 function multisets(
   category: HandCategory,
-  pattern: readonly number[],
+  pattern: ReadonlyArray<number>,
   suitedness: Suitedness
 ): Step {
   return { kind: "multisets", category, pattern, suitedness };
@@ -89,7 +89,7 @@ function straights(
   return { kind: "straights", category, length, suitedness, wrap };
 }
 
-function standardSteps(wrap: boolean): Step[] {
+function standardSteps(wrap: boolean): Array<Step> {
   return [
     multisets("highCard", [1, 1, 1, 1, 1], "unsuited"),
     multisets("onePair", [2, 1, 1, 1], "unsuited"),
@@ -245,20 +245,20 @@ const suitednessFlags = {
   suited: [true],
   unsuited: [false],
   either: [false, true],
-} satisfies Record<Suitedness, readonly boolean[]>;
+} satisfies Record<Suitedness, ReadonlyArray<boolean>>;
 
 /** Two hands share a key when their ranks form the same multiset and suitedness. */
 function keyOf(rankProduct: number, suited: boolean): number {
   return rankProduct * 2 + (suited ? 1 : 0);
 }
 
-function productOf(ranks: readonly Rank[]): number {
+function productOf(ranks: ReadonlyArray<Rank>): number {
   return ranks.reduce((product, rank) => product * primes[rank], 1);
 }
 
 type Group = { readonly multiplicity: number; readonly count: number };
 
-function groupsOf(pattern: readonly number[]): Group[] {
+function groupsOf(pattern: ReadonlyArray<number>): Array<Group> {
   return [...new Set(pattern)]
     .sort((a, b) => b - a)
     .map((multiplicity) => ({
@@ -269,9 +269,9 @@ function groupsOf(pattern: readonly number[]): Group[] {
 
 /** pokerkit's `__hash_multisets`: highest groups first, top ranks first. */
 function multisetProducts(
-  ranks: readonly Rank[],
-  groups: readonly Group[]
-): number[] {
+  ranks: ReadonlyArray<Rank>,
+  groups: ReadonlyArray<Group>
+): Array<number> {
   const [group, ...rest] = groups;
   if (group === undefined) return [1];
   return combinations(ranks.toReversed(), group.count).flatMap((sample) => {
@@ -283,7 +283,10 @@ function multisetProducts(
   });
 }
 
-function rankProducts(step: Step, rankOrder: readonly Rank[]): number[] {
+function rankProducts(
+  step: Step,
+  rankOrder: ReadonlyArray<Rank>
+): Array<number> {
   if (step.kind === "multisets") {
     return multisetProducts(rankOrder, groupsOf(step.pattern)).toReversed();
   }
@@ -335,7 +338,10 @@ export function lookup(name: LookupName): Lookup {
 }
 
 /** pokerkit's `Lookup.get_entry_or_none`: null when the cards form no hand. */
-export function entryOf(table: Lookup, cards: readonly Card[]): Entry | null {
+export function entryOf(
+  table: Lookup,
+  cards: ReadonlyArray<Card>
+): Entry | null {
   if (table.badugi && !areRainbow(cards)) return null;
   let product = 1;
   for (const card of cards) {
@@ -362,8 +368,8 @@ export function cardKeyOf(card: KnownCard): CardKey {
 /** `entryOf` for the known cards at `positions` of `keys`, without building card sets. */
 export function entryAt(
   table: Lookup,
-  keys: readonly CardKey[],
-  positions: readonly number[]
+  keys: ReadonlyArray<CardKey>,
+  positions: ReadonlyArray<number>
 ): Entry | null {
   let product = 1;
   let seen = 0;

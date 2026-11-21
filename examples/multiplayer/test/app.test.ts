@@ -19,7 +19,7 @@ type Json =
   | number
   | boolean
   | null
-  | readonly Json[]
+  | ReadonlyArray<Json>
   | { readonly [key: string]: Json };
 
 const auditor = { kind: "auditor" } as const;
@@ -61,7 +61,7 @@ function wire<T>(value: T): Json {
 
 test("sends each audience the view of the table redacted for it", async () => {
   const { request, stored } = await dealtTable();
-  const audiences: readonly [PlayerId | null, Audience][] = [
+  const audiences: ReadonlyArray<[PlayerId | null, Audience]> = [
     ["a", { kind: "player", player: "a" }],
     ["b", { kind: "player", player: "b" }],
     [null, { kind: "spectator" }],

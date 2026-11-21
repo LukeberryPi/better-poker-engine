@@ -145,7 +145,10 @@ export function settle(state: HandState): void {
   while (phaseOver(state)) finishPhase(state);
 }
 
-function idsOf(state: HandState, pending: readonly boolean[]): PlayerId[] {
+function idsOf(
+  state: HandState,
+  pending: ReadonlyArray<boolean>
+): Array<PlayerId> {
   return positionsOf(state)
     .filter((position) => pending[position])
     .map((position) => playerAt(state, position));
@@ -291,7 +294,7 @@ function snapshotOf(state: HandState): Snapshot {
 
 function record(
   state: HandState,
-  events: HandEvent[],
+  events: Array<HandEvent>,
   cause: Cause,
   street: number | null,
   body: EventBody,
@@ -309,7 +312,7 @@ function record(
   });
 }
 
-function automatedSteps(state: HandState): readonly AutomatedStep[] {
+function automatedSteps(state: HandState): ReadonlyArray<AutomatedStep> {
   switch (state.phase.kind) {
     case "antePosting":
     case "betCollection":
@@ -359,7 +362,7 @@ function performStep(
 }
 
 /** Runs automated steps until a decision nobody automated, as pokerkit does. */
-export function automate(state: HandState, events: HandEvent[]): void {
+export function automate(state: HandState, events: Array<HandEvent>): void {
   for (;;) {
     const steps = automatedSteps(state).filter((step) =>
       state.automate.includes(step)
@@ -484,7 +487,7 @@ export function apply(
   state: HandState,
   action: Action,
   commentary: string | null
-): Result<readonly HandEvent[], Violation> {
+): Result<ReadonlyArray<HandEvent>, Violation> {
   const player = positionOf(state, action);
   if (!player.ok) return player;
   const street = state.street;
@@ -498,7 +501,7 @@ export function apply(
         : refusal
     );
   }
-  const events: HandEvent[] = [];
+  const events: Array<HandEvent> = [];
   record(
     state,
     events,

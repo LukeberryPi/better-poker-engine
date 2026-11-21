@@ -318,7 +318,7 @@ doctest("pokerkit.state.State.hand_type_indices", (example) => {
 
 doctest("pokerkit.state.State.draw_statuses", (example) => {
   let game: Game;
-  let statuses: boolean[];
+  let statuses: Array<boolean>;
   example(1, () => {});
   example(2, () => {
     game = noLimit;

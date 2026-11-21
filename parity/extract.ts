@@ -79,10 +79,10 @@ function startsStatement(end: LineEnd, trimmed: string): boolean {
 }
 
 /** Names follow `doctest.DocTestFinder`: module path, then the qualified name. */
-export function doctestsIn(file: string, source: string): DoctestEntry[] {
+export function doctestsIn(file: string, source: string): Array<DoctestEntry> {
   const module = moduleName(file);
   const counts = new Map<string, number>();
-  let scopes: Scope[] = [];
+  let scopes: Array<Scope> = [];
   let previous = statementStart;
   for (const line of source.split("\n")) {
     const trimmed = line.trim();
@@ -109,9 +109,12 @@ export function doctestsIn(file: string, source: string): DoctestEntry[] {
 }
 
 /** Names follow `unittest`: module path, `TestCase` class, method. */
-export function unitTestsIn(file: string, source: string): UnitTestEntry[] {
+export function unitTestsIn(
+  file: string,
+  source: string
+): Array<UnitTestEntry> {
   const module = moduleName(file);
-  const tests: UnitTestEntry[] = [];
+  const tests: Array<UnitTestEntry> = [];
   let testCase: string | undefined;
   for (const line of source.split("\n")) {
     const caseName = testCaseClass.exec(line)?.[1];
@@ -127,7 +130,10 @@ export function unitTestsIn(file: string, source: string): UnitTestEntry[] {
   return tests;
 }
 
-async function pythonFiles(root: string, directory: string): Promise<string[]> {
+async function pythonFiles(
+  root: string,
+  directory: string
+): Promise<Array<string>> {
   const entries = await readdir(path.join(root, directory), {
     withFileTypes: true,
   });
@@ -143,8 +149,8 @@ async function pythonFiles(root: string, directory: string): Promise<string[]> {
 
 function manifestSource(
   commit: string,
-  unitTests: readonly UnitTestEntry[],
-  doctests: readonly DoctestEntry[]
+  unitTests: ReadonlyArray<UnitTestEntry>,
+  doctests: ReadonlyArray<DoctestEntry>
 ): string {
   const unitLines = unitTests.map(
     (entry) => `  ${JSON.stringify(entry.id)}: ${JSON.stringify(entry.file)},`
@@ -181,8 +187,8 @@ async function main(root: string): Promise<void> {
     throw new Error(`expected pokerkit ${pinnedCommit}, found "${commit}"`);
   }
   const files = await pythonFiles(root, "pokerkit");
-  const unitTests: UnitTestEntry[] = [];
-  const doctests: DoctestEntry[] = [];
+  const unitTests: Array<UnitTestEntry> = [];
+  const doctests: Array<DoctestEntry> = [];
   for (const file of files) {
     const source = await readFile(path.join(root, file), "utf8");
     if (file.startsWith("pokerkit/tests/")) {

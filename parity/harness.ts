@@ -23,7 +23,7 @@ export function doctest(
   test(
     id,
     () => {
-      const ran: number[] = [];
+      const ran: Array<number> = [];
       run((index, body) => {
         ran.push(index);
         body();

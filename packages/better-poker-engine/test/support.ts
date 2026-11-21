@@ -37,13 +37,13 @@ export function okValue<T, E>(result: Result<T, E>): T {
   return result.value;
 }
 
-export function cards(text: string): Card[] {
+export function cards(text: string): Array<Card> {
   const parsed = parseCards(text);
   if (!parsed.ok) throw new Error(`Test cards do not parse: ${text}`);
   return [...parsed.value];
 }
 
-export function known(text: string): KnownCard[] {
+export function known(text: string): Array<KnownCard> {
   const parsed = cards(text);
   if (!parsed.every(isKnownCard)) {
     throw new Error(`Test cards are not all known: ${text}`);
@@ -52,7 +52,7 @@ export function known(text: string): KnownCard[] {
 }
 
 /** pokerkit's `parse_range(*texts)`, which joins its arguments with a space. */
-export function range(...texts: readonly string[]): Range {
+export function range(...texts: ReadonlyArray<string>): Range {
   const parsed = parseRange(texts.join(" "));
   if (!parsed.ok) throw new Error(`Test range does not parse: ${texts}`);
   return parsed.value;
@@ -60,12 +60,12 @@ export function range(...texts: readonly string[]): Range {
 
 /** Sorted cards of sorted combinations: equal for the same set, unequal on repeats. */
 export function sortedCombos(
-  combos: readonly (readonly KnownCard[])[]
-): string[] {
+  combos: ReadonlyArray<ReadonlyArray<KnownCard>>
+): Array<string> {
   return combos.map((combo) => combo.toSorted().join("")).toSorted();
 }
 
-export function scripted(values: readonly number[]): RandomSource {
+export function scripted(values: ReadonlyArray<number>): RandomSource {
   const remaining = [...values];
   return {
     nextUint32: () => {
@@ -76,7 +76,7 @@ export function scripted(values: readonly number[]): RandomSource {
   };
 }
 
-type Cards = readonly KnownCard[];
+type Cards = ReadonlyArray<KnownCard>;
 
 /** Each `size`-card combination of `deck`, in `itertools.combinations` order. */
 export function forEachCombination(
@@ -103,7 +103,7 @@ export function digestSortedByEntry(
   table: Lookup,
   combinations: (visit: (cards: Cards) => void) => void
 ): string {
-  const lines = Array.from({ length: table.size }, (): string[] => []);
+  const lines = Array.from({ length: table.size }, (): Array<string> => []);
   combinations((hand) => {
     const entry = entryOf(table, hand);
     if (entry === null) throw new Error(`${hand.join("")} has no entry`);

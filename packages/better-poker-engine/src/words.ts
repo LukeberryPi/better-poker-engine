@@ -11,7 +11,7 @@ export function isWhitespace(symbol: string): boolean {
 }
 
 /** The words pokerkit's `str.split()` finds in `text`. */
-export function wordsOf(text: string): readonly Word[] {
+export function wordsOf(text: string): ReadonlyArray<Word> {
   const spaced = Array.from(text, (symbol) =>
     isWhitespace(symbol) ? " " : symbol
   ).join("");

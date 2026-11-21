@@ -62,13 +62,13 @@ export function effectiveStack(state: HandState, position: Position): Stack {
 }
 
 /** pokerkit's `card_key`: rank in `order`, then suit, clubs lowest. */
-function cardKey(order: readonly string[]): (card: KnownCard) => number {
+function cardKey(order: ReadonlyArray<string>): (card: KnownCard) => number {
   return (card) =>
     order.indexOf(rankOf(card)) * suitSymbols.length +
     suitSymbols.indexOf(suitOf(card));
 }
 
-function knownUpCards(state: HandState, position: Position): KnownCard[] {
+function knownUpCards(state: HandState, position: Position): Array<KnownCard> {
   return upCards(state, position).filter(isKnownCard);
 }
 
@@ -78,7 +78,7 @@ function openingEntry(
   low: boolean
 ): Entry | null {
   const table = lookup(low ? "lowHandOpening" : "highHandOpening");
-  const cards: readonly Card[] = upCards(state, position);
+  const cards: ReadonlyArray<Card> = upCards(state, position);
   return entryOf(table, cards);
 }
 

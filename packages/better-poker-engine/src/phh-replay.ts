@@ -45,7 +45,7 @@ export type HistoryReplay = {
   /** Players are "p1".."pN", as in PHH actions; names stay in `history.players`. */
   readonly setup: HandSetup;
   /** The hand as it starts, then one step per action or filled-in step. */
-  readonly steps: readonly ReplayStep[];
+  readonly steps: ReadonlyArray<ReplayStep>;
   readonly final: Hand;
 };
 
@@ -97,11 +97,11 @@ function amountAt(
 
 function amountsAt(
   field: string,
-  amounts: readonly PhhDecimal[],
+  amounts: ReadonlyArray<PhhDecimal>,
   scale: AmountScale,
   convert: ToChips = toChips
-): Result<number[], HistoryReplayError> {
-  const values: number[] = [];
+): Result<Array<number>, HistoryReplayError> {
+  const values: Array<number> = [];
   for (const [index, amount] of amounts.entries()) {
     const value = amountAt(`${field}[${index}]`, amount, scale, convert);
     if (!value.ok) return value;
@@ -112,10 +112,10 @@ function amountsAt(
 
 export function stacksAt(
   field: string,
-  stacks: readonly PhhStack[],
+  stacks: ReadonlyArray<PhhStack>,
   scale: AmountScale
-): Result<Stack[], HistoryReplayError> {
-  const values: Stack[] = [];
+): Result<Array<Stack>, HistoryReplayError> {
+  const values: Array<Stack> = [];
   for (const [index, stack] of stacks.entries()) {
     if (stack === "unbounded") {
       values.push(stack);
@@ -285,10 +285,10 @@ function engineAction(
 }
 
 function pendingActions(
-  actions: readonly PhhAction[],
+  actions: ReadonlyArray<PhhAction>,
   scale: AmountScale
-): Result<Pending[], HistoryReplayError> {
-  const pending: Pending[] = [];
+): Result<Array<Pending>, HistoryReplayError> {
+  const pending: Array<Pending> = [];
   for (const [index, action] of actions.entries()) {
     const converted = engineAction(action, index, scale);
     if (!converted.ok) return converted;
@@ -320,7 +320,7 @@ function always(action: Action): Repair {
 }
 
 /** What pokerkit's `state_actions` tries, in order, when no history action applies. */
-const repairs: readonly Repair[] = [
+const repairs: ReadonlyArray<Repair> = [
   always({ type: "postAnte" }),
   always({ type: "collectBets" }),
   always({ type: "postBlind" }),
@@ -363,12 +363,12 @@ function applyPending(
  * it fills in joins the next step instead of being one, as pokerkit does. */
 function replaySteps(
   start: Transition,
-  pending: readonly Pending[],
+  pending: ReadonlyArray<Pending>,
   burnsJoinNextStep: boolean
-): Result<readonly ReplayStep[], HistoryReplayError> {
-  const steps: ReplayStep[] = [{ ...start, action: null }];
+): Result<ReadonlyArray<ReplayStep>, HistoryReplayError> {
+  const steps: Array<ReplayStep> = [{ ...start, action: null }];
   let hand = start.hand;
-  let carried: readonly HandEvent[] = [];
+  let carried: ReadonlyArray<HandEvent> = [];
   const record = (transition: Transition, action: string | null): void => {
     hand = transition.hand;
     steps.push({

@@ -31,8 +31,8 @@ function noLimit(rules: Conventions): Game {
 
 function played(
   game: Game,
-  stacks: readonly number[],
-  actions: readonly Action[],
+  stacks: ReadonlyArray<number>,
+  actions: ReadonlyArray<Action>,
   automate: Automation = automation.all
 ): Driver {
   const table = drive(start(game, stacks, automate));

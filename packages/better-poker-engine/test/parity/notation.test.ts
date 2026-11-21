@@ -503,7 +503,7 @@ unitTest(
       ["S->", "MATCHSTATE:0:0:rrc/rc/crc/cr:TdAs|/2c8c3h/9c/Kh\r\n"],
       ["<-C", "MATCHSTATE:0:0:rrc/rc/crc/cr:TdAs|/2c8c3h/9c/Kh:c\r\n"],
       ["S->", "MATCHSTATE:0:0:rrc/rc/crc/crc:TdAs|8hTc/2c8c3h/9c/Kh\r\n"],
-    ] satisfies AcpcMessage[];
+    ] satisfies Array<AcpcMessage>;
     const table = drive(start(fixedLimit, [20_000, 20_000], automate));
     play(table, [
       deal("TdAs"),

@@ -19,7 +19,7 @@ const utilitiesIds = Object.entries(doctests)
   .filter(([, entry]) => entry.file === utilitiesFile)
   .map(([id]) => id);
 
-function passing(ids: readonly string[]): Map<string, Outcome[]> {
+function passing(ids: ReadonlyArray<string>): Map<string, Array<Outcome>> {
   return new Map(ids.map((id) => [id, ["passed"]]));
 }
 

@@ -2,7 +2,7 @@ import { parseCards, type Card } from "./cards.ts";
 import { canonicalDecimal, type PhhDecimal } from "./phh-amounts.ts";
 import { wordsOf } from "./words.ts";
 
-type Cards = readonly [Card, ...Card[]];
+type Cards = readonly [Card, ...Array<Card>];
 
 type ActionBody =
   | {
@@ -14,7 +14,7 @@ type ActionBody =
   | {
       readonly type: "draw";
       readonly player: number;
-      readonly discard: readonly Card[];
+      readonly discard: ReadonlyArray<Card>;
     }
   | { readonly type: "postBringIn"; readonly player: number }
   | { readonly type: "fold"; readonly player: number }
@@ -56,7 +56,7 @@ export function parseAmount(text: string): PhhDecimal | null {
   return amount === "0" ? null : amount;
 }
 
-function dealing(words: readonly string[]): ActionBody | null {
+function dealing(words: ReadonlyArray<string>): ActionBody | null {
   const [code, first, second, ...rest] = words;
   if (first === undefined || rest.length > 0) return null;
   if (code === "db" && second === undefined) {
@@ -106,7 +106,7 @@ function withArgument(
   return code === "sm" ? { type: "show", player, cards } : null;
 }
 
-function bodyOf(words: readonly string[]): ActionBody | null {
+function bodyOf(words: ReadonlyArray<string>): ActionBody | null {
   const [actor, code, argument, ...rest] = words;
   if (actor === undefined) return { type: "noOp" };
   if (actor === "d") return dealing(words.slice(1));

@@ -30,7 +30,7 @@ export type EventBody =
       readonly type: "betsCollected";
       readonly collected: Chips;
       /** Uncalled parts of bets, back to their owners. */
-      readonly returned: readonly PlayerAmount[];
+      readonly returned: ReadonlyArray<PlayerAmount>;
     }
   | {
       readonly type: "blindPosted";
@@ -41,17 +41,17 @@ export type EventBody =
   | {
       readonly type: "holeDealt";
       readonly player: PlayerId;
-      readonly cards: readonly HoleCard[];
+      readonly cards: ReadonlyArray<HoleCard>;
     }
   | {
       readonly type: "boardDealt";
       readonly board: number;
-      readonly cards: readonly Card[];
+      readonly cards: ReadonlyArray<Card>;
     }
   | {
       readonly type: "drew";
       readonly player: PlayerId;
-      readonly discarded: readonly Card[];
+      readonly discarded: ReadonlyArray<Card>;
     }
   | {
       readonly type: "folded";
@@ -86,7 +86,7 @@ export type EventBody =
       readonly type: "shown";
       readonly player: PlayerId;
       /** "??" pads a partial show. */
-      readonly cards: readonly Card[];
+      readonly cards: ReadonlyArray<Card>;
     }
   | { readonly type: "mucked"; readonly player: PlayerId }
   | { readonly type: "handKilled"; readonly player: PlayerId }
@@ -95,7 +95,7 @@ export type EventBody =
       readonly pot: number;
       readonly board: number | null;
       readonly handType: number | null;
-      readonly awards: readonly PlayerAmount[];
+      readonly awards: ReadonlyArray<PlayerAmount>;
       /** Chips no eligible player could claim; they stay in the pot. */
       readonly unclaimed: Chips;
     }
@@ -107,9 +107,9 @@ export type EventBody =
 
 /** Arrays are in position order. */
 export type Snapshot = {
-  readonly stacks: readonly Stack[];
-  readonly bets: readonly Chips[];
-  readonly pots: readonly Pot[];
+  readonly stacks: ReadonlyArray<Stack>;
+  readonly bets: ReadonlyArray<Chips>;
+  readonly pots: ReadonlyArray<Pot>;
   readonly waitingFor: Decision["kind"];
 };
 
@@ -131,7 +131,7 @@ export type PlayerRecord = {
   /** Chips won less chips put in, known even when a stack is unbounded. */
   readonly net: number;
   /** What the player held last, folded or not; face "up" once shown. */
-  readonly holeCards: readonly HoleCard[];
+  readonly holeCards: ReadonlyArray<HoleCard>;
   readonly foldedOnStreet: number | null;
   readonly allInOnStreet: number | null;
 };
@@ -139,13 +139,13 @@ export type PlayerRecord = {
 export type PotRecord = {
   readonly amount: Chips;
   readonly raked: Chips;
-  readonly eligible: readonly PlayerId[];
-  readonly winners: readonly {
+  readonly eligible: ReadonlyArray<PlayerId>;
+  readonly winners: ReadonlyArray<{
     readonly player: PlayerId;
     readonly amount: Chips;
     /** Null when the pot went uncontested to a winner who didn't show. */
     readonly hand: string | null;
-  }[];
+  }>;
 };
 
 /** The wide record of one hand. Stores add where and when (session, hand number, times). */
@@ -153,9 +153,9 @@ export type HandRecord = {
   readonly engineVersion: string;
   readonly variant: VariantCode | "custom";
   readonly conventions: Conventions;
-  readonly players: readonly PlayerRecord[];
-  readonly boards: readonly (readonly Card[])[];
-  readonly pots: readonly PotRecord[];
+  readonly players: ReadonlyArray<PlayerRecord>;
+  readonly boards: ReadonlyArray<ReadonlyArray<Card>>;
+  readonly pots: ReadonlyArray<PotRecord>;
   readonly rake: Chips;
   readonly unclaimed: Chips;
   readonly runouts: number;

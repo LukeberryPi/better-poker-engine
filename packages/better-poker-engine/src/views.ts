@@ -27,7 +27,7 @@ export type Pot = {
   readonly amount: Chips;
   readonly raked: Chips;
   /** Empty when nobody can claim it. */
-  readonly eligible: readonly PlayerId[];
+  readonly eligible: ReadonlyArray<PlayerId>;
 };
 
 export type PlayerView = {
@@ -39,10 +39,10 @@ export type PlayerView = {
   /** Out of the hand: folded, mucked, or killed. */
   readonly folded: boolean;
   /** Cards this audience may not see read "??". */
-  readonly holeCards: readonly HoleCard[];
+  readonly holeCards: ReadonlyArray<HoleCard>;
   readonly effectiveStack: Stack;
   /** By board, then hand type: the best hand from the cards this audience sees. */
-  readonly hands: readonly (readonly (HandValue | null)[])[];
+  readonly hands: ReadonlyArray<ReadonlyArray<HandValue | null>>;
   /** pokerkit's `can_win_now`: a pot share is winnable against the cards shown. False
    * until bets reach a pot; null when this audience cannot see the hole cards. */
   readonly canWinNow: boolean | null;
@@ -50,8 +50,8 @@ export type PlayerView = {
 
 export type DealerView = {
   readonly deck: Deck;
-  readonly burned: readonly Card[];
-  readonly mucked: readonly Card[];
+  readonly burned: ReadonlyArray<Card>;
+  readonly mucked: ReadonlyArray<Card>;
 };
 
 export type HandView = {
@@ -59,9 +59,9 @@ export type HandView = {
   readonly version: number;
   readonly street: number | null;
   /** Position order. */
-  readonly players: readonly PlayerView[];
-  readonly boards: readonly (readonly Card[])[];
-  readonly pots: readonly Pot[];
+  readonly players: ReadonlyArray<PlayerView>;
+  readonly boards: ReadonlyArray<ReadonlyArray<Card>>;
+  readonly pots: ReadonlyArray<Pot>;
   /** Pots plus bets not yet collected. */
   readonly totalPot: Chips;
   readonly decision: Decision;
@@ -76,7 +76,7 @@ function seesHoleCards(audience: Audience, player: PlayerId): boolean {
   );
 }
 
-function hidden(cards: readonly HoleCard[]): HoleCard[] {
+function hidden(cards: ReadonlyArray<HoleCard>): Array<HoleCard> {
   return cards.map((hole) =>
     hole.face === "up" ? hole : { card: "??", face: hole.face }
   );
@@ -195,9 +195,9 @@ export function viewRecord(
 
 /** Replaces cards the audience may not see with "??". */
 export function eventsFor(
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   audience: Audience
-): readonly HandEventView[] {
+): ReadonlyArray<HandEventView> {
   return events.map((event) => {
     const body = redactBody(event.body, audience);
     const view = { ...event, body, cause: redactCause(event.cause, body) };

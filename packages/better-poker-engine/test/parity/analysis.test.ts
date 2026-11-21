@@ -21,7 +21,7 @@ const holdem = {
   handTypes: ["standardHigh"],
 } as const;
 
-function sum(values: readonly number[]): number {
+function sum(values: ReadonlyArray<number>): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
@@ -37,8 +37,8 @@ function expectLeading(
 
 function fromGame<T extends HandType>(
   type: T,
-  hole: readonly KnownCard[],
-  board: readonly KnownCard[]
+  hole: ReadonlyArray<KnownCard>,
+  board: ReadonlyArray<KnownCard>
 ): HandValue<T> {
   const value = evaluate(type, hole, board);
   if (value === null) throw new Error(`${hole} ${board} make no ${type} hand`);
@@ -52,7 +52,7 @@ function contains(rng: Range, text: string): boolean {
 }
 
 /** pokerkit's `assertSetEqual` on a range and its combinations. */
-function expectCombos(actual: Range, expected: readonly string[]): void {
+function expectCombos(actual: Range, expected: ReadonlyArray<string>): void {
   expect(sortedCombos(actual)).toEqual(sortedCombos(expected.map(known)));
 }
 
@@ -370,7 +370,7 @@ unitTest(
   "pokerkit.tests.test_analysis.HandHistoryTestCase.test_calculate_equities",
   () => {
     let seed = 0;
-    const calculate = (ranges: readonly Range[], board: string) => {
+    const calculate = (ranges: ReadonlyArray<Range>, board: string) => {
       seed += 1;
       return okValue(
         equities({

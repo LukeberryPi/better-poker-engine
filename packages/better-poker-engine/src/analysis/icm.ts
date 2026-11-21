@@ -19,9 +19,9 @@ type Finish = { readonly contender: Contender; readonly payout: number };
  * share of the chips still in play, in pokerkit's float operations and order. Players
  * without chips finish below them and share the places left evenly; pokerkit pays 0. */
 export function icm(
-  payouts: readonly number[],
-  stacks: readonly Chips[]
-): Result<readonly number[], IcmError> {
+  payouts: ReadonlyArray<number>,
+  stacks: ReadonlyArray<Chips>
+): Result<ReadonlyArray<number>, IcmError> {
   for (const [player, stack] of stacks.entries()) {
     if (!Number.isSafeInteger(stack) || stack < 0) {
       return err({ code: "invalid_stack", player, stack });
@@ -36,7 +36,7 @@ export function icm(
   }));
   const holders = stacks.filter((stack) => stack > 0).length;
   const contested = payouts.slice(0, holders);
-  const finishes: Finish[] = [];
+  const finishes: Array<Finish> = [];
   const place = (probability: number, remaining: number): boolean => {
     const payout = contested[finishes.length];
     if (payout === undefined) {

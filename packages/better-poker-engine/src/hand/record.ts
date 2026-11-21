@@ -26,11 +26,11 @@ import {
 /** Hole cards as dealt, minus discards, face up once shown; a show keeps no card back. */
 function heldCards(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   position: Position
-): HoleCard[] {
+): Array<HoleCard> {
   const player = playerAt(state, position);
-  let held: HoleCard[] = [];
+  let held: Array<HoleCard> = [];
   for (const { body } of events) {
     if (body.type === "holeDealt" && body.player === player) {
       held = [...held, ...body.cards];
@@ -55,7 +55,7 @@ function heldCards(
 }
 
 function streetOfFirst(
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   matches: (event: HandEvent) => boolean
 ): number | null {
   const event = events.find(matches);
@@ -64,7 +64,7 @@ function streetOfFirst(
 
 function playerRecord(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   position: Position
 ): PlayerRecord {
   const player = playerAt(state, position);
@@ -90,9 +90,9 @@ type Winner = PotRecord["winners"][number];
 
 function winnersOf(
   state: HandState,
-  events: readonly HandEvent[],
+  events: ReadonlyArray<HandEvent>,
   pot: number
-): Winner[] {
+): Array<Winner> {
   return events.flatMap(({ body }) => {
     if (body.type !== "chipsPushed" || body.pot !== pot) return [];
     const { board, handType } = body;
@@ -114,8 +114,11 @@ function winnersOf(
 }
 
 /** The contested pots that a pushed pot merged, main pot first. */
-function partsOf(contested: ContestedPot[], amount: Chips): ContestedPot[] {
-  const parts: ContestedPot[] = [];
+function partsOf(
+  contested: Array<ContestedPot>,
+  amount: Chips
+): Array<ContestedPot> {
+  const parts: Array<ContestedPot> = [];
   let covered = 0;
   while (covered < amount) {
     const part = contested.shift();
@@ -129,9 +132,9 @@ function partsOf(contested: ContestedPot[], amount: Chips): ContestedPot[] {
 
 /** Each row is a part's share of every flow, by largest remainder; rows and columns add up. */
 function apportion(
-  parts: readonly Chips[],
-  flows: readonly Chips[]
-): Chips[][] {
+  parts: ReadonlyArray<Chips>,
+  flows: ReadonlyArray<Chips>
+): Array<Array<Chips>> {
   const remaining = flows.map(BigInt);
   let left = BigInt(sum(parts));
   return parts.map((part) => {
@@ -160,8 +163,8 @@ function apportion(
 
 function potRecords(
   state: HandState,
-  events: readonly HandEvent[]
-): PotRecord[] {
+  events: ReadonlyArray<HandEvent>
+): Array<PotRecord> {
   const contested = [...(state.contestedPots ?? [])];
   return (state.pots ?? []).flatMap((pot, index) => {
     const winners = winnersOf(state, events, index);
@@ -189,7 +192,7 @@ function potRecords(
 /** `events` are every event of the complete hand. */
 export function summarize(
   state: HandState,
-  events: readonly HandEvent[]
+  events: ReadonlyArray<HandEvent>
 ): HandRecord {
   const players = positionsOf(state).map((position) =>
     playerRecord(state, events, position)

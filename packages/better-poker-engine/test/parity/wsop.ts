@@ -9,7 +9,7 @@ import { exported, parsed, replayed } from "../phh-support.ts";
 import { cards } from "../support.ts";
 
 /** pokerkit's `Card.parse(*rows)`, set as the deck the hand deals from. */
-export function deck(...rows: readonly string[]): Card[] {
+export function deck(...rows: ReadonlyArray<string>): Array<Card> {
   return cards(rows.join(" "));
 }
 
@@ -32,9 +32,9 @@ export const dealer = {
  * operations, as pokerkit compares them, except the `ignored` kinds. */
 export function replaysWithout(
   hand: Hand,
-  ignored: readonly EventBody["type"][]
+  ignored: ReadonlyArray<EventBody["type"]>
 ): void {
-  const operations = (events: readonly HandEvent[]) =>
+  const operations = (events: ReadonlyArray<HandEvent>) =>
     events.flatMap(({ body, commentary }) =>
       ignored.includes(body.type) ? [] : [{ body, commentary }]
     );

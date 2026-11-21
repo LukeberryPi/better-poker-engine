@@ -27,9 +27,9 @@ import { variantCodes } from "./variants.ts";
 
 function keysOf<Key extends string, Value>(
   record: Readonly<Record<Key, Value>>
-): Key[] {
+): Array<Key> {
   // SAFETY: a Record<Key, Value> literal has exactly the keys Key.
-  return Object.keys(record) as Key[];
+  return Object.keys(record) as Array<Key>;
 }
 
 const card = z.enum(allCards);

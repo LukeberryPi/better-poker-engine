@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import manifest from "../package.json" with { type: "json" };
 
-async function bundledModules(entry: string): Promise<readonly string[]> {
+async function bundledModules(entry: string): Promise<ReadonlyArray<string>> {
   const result = await Bun.build({
     entrypoints: [new URL(entry, new URL("../", import.meta.url)).pathname],
     metafile: true,

@@ -29,7 +29,7 @@ function best<T extends HandType>(
 }
 
 function expectAscending<T extends HandType>(
-  values: readonly HandValue<T>[]
+  values: ReadonlyArray<HandValue<T>>
 ): void {
   values.reduce((weaker, stronger) => {
     expect(compareHands(weaker, stronger)).toBe(-1);
@@ -42,9 +42,9 @@ function ascendingHands<T extends HandType>(
   example: Example,
   first: number,
   type: T,
-  texts: readonly string[]
-): readonly HandValue<T>[] {
-  const values: HandValue<T>[] = [];
+  texts: ReadonlyArray<string>
+): ReadonlyArray<HandValue<T>> {
+  const values: Array<HandValue<T>> = [];
   texts.forEach((text, offset) => {
     example(first + offset, () => {
       values.push(hand(type, text));
@@ -58,7 +58,7 @@ function invalidHands(
   example: Example,
   first: number,
   type: HandType,
-  texts: readonly string[]
+  texts: ReadonlyArray<string>
 ): void {
   texts.forEach((text, offset) => {
     example(first + offset, () => {
@@ -133,8 +133,8 @@ doctest("pokerkit.hands.Hand", (example) => {
 });
 
 doctest("pokerkit.hands.Hand.cards", (example) => {
-  let hole: Card[];
-  let board: Card[];
+  let hole: Array<Card>;
+  let board: Array<Card>;
   let value: HandValue<"standardHigh"> | null;
   example(1, () => {
     hole = cards("AsAc");
@@ -149,8 +149,8 @@ doctest("pokerkit.hands.Hand.cards", (example) => {
 });
 
 doctest("pokerkit.hands.Hand.entry", (example) => {
-  let hole: Card[];
-  let board: Card[];
+  let hole: Array<Card>;
+  let board: Array<Card>;
   let value: HandValue<"standardHigh"> | null;
   example(1, () => {
     hole = cards("AsAc");

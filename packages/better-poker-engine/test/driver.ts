@@ -19,13 +19,13 @@ import type { Game } from "../src/rules.ts";
 import { viewHand, type HandView } from "../src/views.ts";
 import { cards } from "./support.ts";
 
-export function allBut(...manual: readonly AutomatedStep[]): Automation {
+export function allBut(...manual: ReadonlyArray<AutomatedStep>): Automation {
   return automation.all.filter((step) => !manual.includes(step));
 }
 
 export function start(
   game: Game,
-  stacks: readonly Stack[],
+  stacks: ReadonlyArray<Stack>,
   automate: Automation,
   deck: Deck = decks[game.rules.deck]
 ): Hand {
@@ -46,11 +46,11 @@ export type Driver = {
   /** pokerkit's `can_*`: whether the action would be accepted. */
   readonly can: (action: Action) => boolean;
   /** Events after `act`, automation included. */
-  readonly events: () => readonly HandEvent[];
+  readonly events: () => ReadonlyArray<HandEvent>;
 };
 
 export function drive(hand: Hand): Driver {
-  let events: readonly HandEvent[] = [];
+  let events: ReadonlyArray<HandEvent> = [];
   const driver: Driver = {
     hand,
     act: (action) => {
@@ -111,7 +111,7 @@ export function dealHole(text: string): Action {
 export function holeDealt(
   player: PlayerId,
   text: string,
-  faces: readonly ("down" | "up")[] = []
+  faces: ReadonlyArray<"down" | "up"> = []
 ): EventBody {
   return {
     type: "holeDealt",
@@ -133,7 +133,7 @@ export type Step = readonly [
 export function steps(
   example: Example,
   table: () => Driver,
-  list: readonly Step[]
+  list: ReadonlyArray<Step>
 ): void {
   for (const [index, action, body] of list) {
     example(index, () => {
@@ -148,7 +148,7 @@ export function steps(
 /** One pokerkit call in a unit test script. */
 export type Move = (table: Driver) => void;
 
-export function play(table: Driver, moves: readonly Move[]): void {
+export function play(table: Driver, moves: ReadonlyArray<Move>): void {
   for (const move of moves) move(table);
 }
 
@@ -208,7 +208,7 @@ export function spectator(hand: Hand): HandView {
 export function pending(
   hand: Hand,
   step: "antePosting" | "blindPosting" | "handKilling" | "chipsPulling"
-): PlayerId[] {
+): Array<PlayerId> {
   const decision = auditor(hand).decision;
   if (decision.kind !== "dealer") return [];
   switch (decision.step) {
@@ -222,11 +222,11 @@ export function pending(
   }
 }
 
-export function stacks(hand: Hand): Stack[] {
+export function stacks(hand: Hand): Array<Stack> {
   return auditor(hand).players.map((player) => player.stack);
 }
 
-export function bets(hand: Hand): number[] {
+export function bets(hand: Hand): Array<number> {
   return auditor(hand).players.map((player) => player.bet);
 }
 
@@ -240,7 +240,7 @@ export function totalPot(hand: Hand): number {
 }
 
 /** pokerkit's `pot_amounts`: unraked, main pot first. */
-export function potAmounts(hand: Hand): number[] {
+export function potAmounts(hand: Hand): Array<number> {
   return auditor(hand).pots.map((pot) => pot.amount - pot.raked);
 }
 
@@ -248,7 +248,7 @@ export function holeCards(
   view: HandView,
   position: number,
   face: "down" | "up"
-): Card[] {
+): Array<Card> {
   const player = view.players[position];
   if (player === undefined) throw new Error(`No position ${position}`);
   return player.holeCards
@@ -256,7 +256,7 @@ export function holeCards(
     .map((hole) => hole.card);
 }
 
-export function repeat<T>(value: T, count: number): T[] {
+export function repeat<T>(value: T, count: number): Array<T> {
   return Array.from({ length: count }, () => value);
 }
 

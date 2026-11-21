@@ -18,7 +18,7 @@ const bigBlindAnte = { kind: "byPosition", amounts: [0, 2] } as const;
 
 doctest("pokerkit.state.State.ante_poster_indices", (example) => {
   let hand: Hand;
-  let anteHolders: PlayerId[];
+  let anteHolders: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     hand = noLimit(bigBlindAnte, 2);
@@ -79,7 +79,7 @@ doctest("pokerkit.state.State.can_collect_bets", (example) => {
 
 doctest("pokerkit.state.State.blind_or_straddle_poster_indices", (example) => {
   let table: Driver;
-  let blindHolders: PlayerId[];
+  let blindHolders: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     table = drive(noLimit(bigBlindAnte, 4));

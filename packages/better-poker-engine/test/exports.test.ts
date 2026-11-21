@@ -5,7 +5,7 @@ import * as analysis from "better-poker-engine/analysis";
 
 const sources = path.resolve(import.meta.dir, "../src");
 
-async function modulesLoadedBy(specifier: string): Promise<string[]> {
+async function modulesLoadedBy(specifier: string): Promise<Array<string>> {
   const build = await Bun.build({
     entrypoints: [Bun.resolveSync(specifier, import.meta.dir)],
     metafile: true,

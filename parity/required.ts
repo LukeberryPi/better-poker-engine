@@ -1,7 +1,7 @@
 import type { SourceFile } from "./manifest.ts";
 
 /** pokerkit files whose every test and example must pass; grows as ports land. */
-export const required: readonly SourceFile[] = [
+export const required: ReadonlyArray<SourceFile> = [
   "pokerkit/analysis.py",
   "pokerkit/games.py",
   "pokerkit/hands.py",

@@ -50,7 +50,10 @@ const cashGame = holdem.noLimit({
   mode: "cashGame",
 });
 
-function setup(game: Game, deck: readonly Card[] = decks.standard): HandSetup {
+function setup(
+  game: Game,
+  deck: ReadonlyArray<Card> = decks.standard
+): HandSetup {
   return { game, stacks: [100, 100], deck, automate: automation.all };
 }
 
@@ -124,7 +127,7 @@ describe("startHand", () => {
     ];
     const seats = games.map((game) => {
       const deck = decks[game.rules.deck];
-      const accepted: number[] = [];
+      const accepted: Array<number> = [];
       for (let players = 2; players <= 12; players += 1) {
         const started = startHand({
           game,
@@ -572,7 +575,7 @@ describe("reshuffling", () => {
     });
     const deck = decks.standard;
     let hand = start(game, repeat(200, 6), automation.all, deck);
-    const actions: Action[] = [];
+    const actions: Array<Action> = [];
     for (;;) {
       const view = auditor(hand);
       const { decision } = view;
@@ -638,7 +641,7 @@ describe("unbounded stacks", () => {
 describe("summarizeHand", () => {
   test("names a winning hand once shown, even after the losers' hands are killed", () => {
     const deck = cards("2cAc7dAd 3h 9sTsJh 4h 5c 6h Kd");
-    const winners = (moves: readonly Move[]) => {
+    const winners = (moves: ReadonlyArray<Move>) => {
       const table = drive(start(noLimit, [100, 100], automation.all, deck));
       play(table, moves);
       return summarizeHand(table.hand)?.pots.flatMap((pot) => pot.winners);
@@ -725,7 +728,7 @@ describe("summarizeHand", () => {
 });
 
 describe("replayHand", () => {
-  const actions: Action[] = [{ type: "checkOrCall" }, { type: "fold" }];
+  const actions: Array<Action> = [{ type: "checkOrCall" }, { type: "fold" }];
 
   test("names the setup error or the first refused action", () => {
     expect(replayHand({ ...setup(noLimit), stacks: [100] }, actions)).toEqual({

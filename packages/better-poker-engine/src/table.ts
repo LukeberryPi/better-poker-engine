@@ -51,7 +51,7 @@ export type TableSetupError =
   | { readonly code: "seat_count"; readonly seats: number }
   | {
       readonly code: "blinds_for_dead_button";
-      readonly blinds: readonly number[];
+      readonly blinds: ReadonlyArray<number>;
     };
 
 export type TableCommand =
@@ -152,7 +152,7 @@ export type TableEventBody =
       /** An empty seat when the button is dead. */
       readonly button: number;
       /** The seat at each position. */
-      readonly seats: readonly number[];
+      readonly seats: ReadonlyArray<number>;
       /** Null when the small blind is dead. */
       readonly smallBlind: number | null;
       readonly bigBlind: number;
@@ -179,7 +179,7 @@ export type TableEvent = {
 export type TableTransition = {
   readonly table: Table;
   /** Auditor data: pass them through `tableEventsFor` before sending them. */
-  readonly events: readonly TableEvent[];
+  readonly events: ReadonlyArray<TableEvent>;
 };
 
 type SeatedPlayer = SeatState;
@@ -188,10 +188,10 @@ type RunningHand = {
   readonly number: number;
   readonly hand: Hand;
   /** The seat at each position. */
-  readonly seats: readonly number[];
+  readonly seats: ReadonlyArray<number>;
   /** The table before this hand started, and every command since: what storage replays. */
   readonly from: TableCheckpoint;
-  readonly commands: readonly TableCommand[];
+  readonly commands: ReadonlyArray<TableCommand>;
 };
 
 type SessionEntry = {
@@ -205,12 +205,12 @@ type SessionEntry = {
 export type TableCheckpoint = {
   readonly version: number;
   readonly eventCount: number;
-  readonly seats: readonly (SeatedPlayer | null)[];
+  readonly seats: ReadonlyArray<SeatedPlayer | null>;
   /** Null until the first hand. */
   readonly rotation: Rotation | null;
   readonly hands: number;
   readonly lastHand: HandRecord | null;
-  readonly session: readonly SessionEntry[];
+  readonly session: ReadonlyArray<SessionEntry>;
 };
 
 export type TableState = Brandable<"Table"> &
@@ -271,7 +271,7 @@ export function resumeTable(empty: Table, checkpoint: TableCheckpoint): Table {
 
 type Change = {
   readonly state: TableState;
-  readonly bodies: readonly TableEventBody[];
+  readonly bodies: ReadonlyArray<TableEventBody>;
   readonly command: TableCommand;
 };
 
@@ -363,10 +363,10 @@ function occupant(state: TableState, seat: number): SeatedPlayer {
 }
 
 function updateSession(
-  session: readonly SessionEntry[],
+  session: ReadonlyArray<SessionEntry>,
   player: PlayerId,
   update: (entry: SessionEntry) => SessionEntry
-): SessionEntry[] {
+): Array<SessionEntry> {
   const found = session.some((entry) => entry.player === player);
   const entries = found
     ? session
@@ -582,15 +582,15 @@ function play(
 
 function handEvents(
   hand: number,
-  events: readonly HandEvent[]
-): TableEventBody[] {
+  events: ReadonlyArray<HandEvent>
+): Array<TableEventBody> {
   return events.map((event) => ({ type: "handEvent", hand, event }));
 }
 
 /** Ends the running hand once it is complete: stacks carry over and the record is kept. */
 function settle(
   state: TableState,
-  bodies: readonly TableEventBody[],
+  bodies: ReadonlyArray<TableEventBody>,
   command: TableCommand
 ): Change {
   const running = state.hand;
@@ -630,7 +630,7 @@ export type TableView = {
   readonly version: number;
   readonly game: Game;
   /** One per seat; null when empty. */
-  readonly seats: readonly (SeatView | null)[];
+  readonly seats: ReadonlyArray<SeatView | null>;
   readonly button: number | null;
   readonly hands: number;
   readonly hand: HandView | null;
@@ -697,9 +697,9 @@ function redactTableEvent(
 
 /** Replaces cards the audience may not see with "??", in hand events and records alike. */
 export function tableEventsFor(
-  events: readonly TableEvent[],
+  events: ReadonlyArray<TableEvent>,
   audience: Audience
-): readonly TableEventView[] {
+): ReadonlyArray<TableEventView> {
   return events.map((event) => redactTableEvent(event, audience));
 }
 
@@ -718,7 +718,7 @@ export type SessionPlayer = {
 export type SessionRecord = {
   readonly engineVersion: string;
   readonly hands: number;
-  readonly players: readonly SessionPlayer[];
+  readonly players: ReadonlyArray<SessionPlayer>;
 };
 
 export function summarizeSession(table: Table): SessionRecord {

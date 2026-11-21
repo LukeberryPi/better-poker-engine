@@ -13,7 +13,7 @@ import { err, ok, type Result } from "../result.ts";
 import { wordsOf } from "../words.ts";
 
 /** Hole-card combinations of distinct cards, none repeated: pokerkit's set of frozensets. */
-export type Range = readonly (readonly KnownCard[])[];
+export type Range = ReadonlyArray<ReadonlyArray<KnownCard>>;
 
 /** `at` is the offset of the invalid notation in the parsed text, `text` the notation as written. */
 export type RangeParseError = {
@@ -23,7 +23,7 @@ export type RangeParseError = {
 };
 
 /** Combinations as one notation yields them, possibly repeating another's. */
-type Combos = readonly (readonly KnownCard[])[];
+type Combos = ReadonlyArray<ReadonlyArray<KnownCard>>;
 type Suffix = "" | "s" | "o";
 type SuitPair = readonly [Suit, Suit];
 
@@ -37,7 +37,7 @@ const suitsBySuffix = {
   "": anySuits,
   s: suits.map((suit): SuitPair => [suit, suit]),
   o: anySuits.filter(([first, second]) => first !== second),
-} satisfies Record<Suffix, readonly SuitPair[]>;
+} satisfies Record<Suffix, ReadonlyArray<SuitPair>>;
 
 function rankFrom(symbol: string): Rank | null {
   return rankOrders.standard.find((rank) => rank === symbol) ?? null;
@@ -46,7 +46,7 @@ function rankFrom(symbol: string): Rank | null {
 function withSuits(
   first: string,
   second: string,
-  pairs: readonly SuitPair[]
+  pairs: ReadonlyArray<SuitPair>
 ): Combos | null {
   const high = rankFrom(first);
   const low = rankFrom(second);
@@ -65,7 +65,7 @@ function rankPair(
   return suffix === "s" ? null : withSuits(first, second, pairSuits);
 }
 
-function unionOf(parts: readonly (Combos | null)[]): Combos | null {
+function unionOf(parts: ReadonlyArray<Combos | null>): Combos | null {
   return parts.every((part) => part !== null) ? parts.flat() : null;
 }
 
@@ -140,7 +140,7 @@ export function parseRange(
   rankOrder: RankOrder = "standard"
 ): Result<Range, RangeParseError> {
   const order = rankOrders[rankOrder].join("");
-  const combos = new Map<string, readonly KnownCard[]>();
+  const combos = new Map<string, ReadonlyArray<KnownCard>>();
   for (const word of wordsOf(text.replace(/[,;]/gu, " "))) {
     const parsed = combosOf(word.text, order);
     if (parsed === null) {

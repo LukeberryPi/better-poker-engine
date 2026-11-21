@@ -129,20 +129,20 @@ export function selectRunoutCount(
 }
 
 export type ShowdownChoice =
-  | { readonly kind: "show"; readonly cards: readonly Card[] | undefined }
+  | { readonly kind: "show"; readonly cards: ReadonlyArray<Card> | undefined }
   | { readonly kind: "muck" }
   | { readonly kind: "default" };
 
 type Reveal = {
-  readonly cards: readonly Card[];
-  readonly hole: readonly HoleCard[];
+  readonly cards: ReadonlyArray<Card>;
+  readonly hole: ReadonlyArray<HoleCard>;
 };
 
 /** pokerkit pads a partial show with "??" and keeps the rest down mid-hand. */
 function reveal(
   state: HandState,
   position: Position,
-  shown: readonly Card[]
+  shown: ReadonlyArray<Card>
 ): Result<Reveal, Refusal> {
   const held = at(state.hole, position).map((hole) => hole.card);
   if (shown.length > held.length) {
@@ -156,8 +156,8 @@ function reveal(
     ...shown,
     ...Array.from({ length: held.length - shown.length }, (): Card => "??"),
   ];
-  const up: Card[] = cards.filter(isKnownCard);
-  const faces: Face[] = up.map(() => "up");
+  const up: Array<Card> = cards.filter(isKnownCard);
+  const faces: Array<Face> = up.map(() => "up");
   const kept = isLastStreet(state)
     ? []
     : held.filter((card) => isKnownCard(card) && !up.includes(card));

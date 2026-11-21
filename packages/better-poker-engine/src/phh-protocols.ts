@@ -53,8 +53,8 @@ function handNumberOf(
 
 /** What the logs show of the cards: two slots per seat, "" until known. */
 type Table = {
-  readonly holes: readonly string[][];
-  readonly dealt: number[];
+  readonly holes: ReadonlyArray<Array<string>>;
+  readonly dealt: Array<number>;
   board: string;
   boardStreet: number | null;
 };
@@ -154,7 +154,7 @@ export function toAcpc(
   history: Phh,
   position: number,
   options: ProtocolOptions = {}
-): Result<readonly AcpcMessage[], AcpcError> {
+): Result<ReadonlyArray<AcpcMessage>, AcpcError> {
   if (history.variant !== "FT" && history.variant !== "NT") {
     return err({ code: "unsupported_variant", variant: history.variant });
   }
@@ -167,7 +167,7 @@ export function toAcpc(
   const replay = replayHistory(history, { amountScale: scale });
   if (!replay.ok) return replay;
   const seat = seatsOf(replay.value);
-  const messages: AcpcMessage[] = [];
+  const messages: Array<AcpcMessage> = [];
   let actions = "";
   let matchState = "";
   for (const step of replay.value.steps) {
@@ -224,7 +224,7 @@ export function toPluribus(
       ? ok(stateOf(replay.value.final).stacks)
       : stacksAt("finishing_stacks", history.finishingStacks, scale);
   if (!finishing.ok) return finishing;
-  const payoffs: string[] = [];
+  const payoffs: Array<string> = [];
   for (const [position, start] of replay.value.setup.stacks.entries()) {
     const end = finishing.value[position];
     if (start === "unbounded" || end === "unbounded" || end === undefined) {

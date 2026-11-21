@@ -32,7 +32,7 @@ function checkedDown(): Driver {
 
 /** showdown_index and can_show_or_muck_hole_cards check down to the river's last check. */
 function toLastCheck(example: Example, table: () => Driver): void {
-  const list: Step[] = [
+  const list: Array<Step> = [
     [3, dealHole("JcJd"), holeDealt("p1", "JcJd")],
     [4, dealHole("KcKd"), holeDealt("p2", "KcKd")],
     [5, dealHole("QcQd"), holeDealt("p3", "QcQd")],
@@ -56,7 +56,7 @@ function toLastCheck(example: Example, table: () => Driver): void {
   steps(example, table, list);
 }
 
-const showdownSteps: readonly Step[] = [
+const showdownSteps: ReadonlyArray<Step> = [
   [
     26,
     { type: "timeout" },
@@ -150,7 +150,7 @@ function allInHand(): Driver {
 
 doctest("pokerkit.state.State.hand_killing_indices", (example) => {
   let table: Driver;
-  let killable: PlayerId[];
+  let killable: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     table = allInHand();
@@ -203,12 +203,12 @@ function tripleDraw(pushing: boolean): Driver {
   return drive(start(game, [200, 200, 200], allBut(...manual)));
 }
 
-const foldsToBigBlind: readonly Step[] = [
+const foldsToBigBlind: ReadonlyArray<Step> = [
   [0, { type: "fold" }, { type: "folded", player: "p3", needless: false }],
   [1, { type: "fold" }, { type: "folded", player: "p1", needless: false }],
 ];
 
-function numbered(from: number, list: readonly Step[]): Step[] {
+function numbered(from: number, list: ReadonlyArray<Step>): Array<Step> {
   return list.map(([offset, action, body]) => [from + offset, action, body]);
 }
 
@@ -225,7 +225,7 @@ doctest("pokerkit.state.State.can_push_chips", (example) => {
 
 doctest("pokerkit.state.State.chips_pulling_indices", (example) => {
   let table: Driver;
-  let pullers: PlayerId[];
+  let pullers: Array<PlayerId>;
   example(1, () => {});
   example(2, () => {
     table = tripleDraw(true);

@@ -3,7 +3,7 @@ import { isChips, type Chips } from "./chips.ts";
 import type { HandType } from "./evaluation.ts";
 import type { VariantCode } from "./variants.ts";
 
-export type NonEmpty<T> = readonly [T, ...T[]];
+export type NonEmpty<T> = readonly [T, ...Array<T>];
 
 export type Face = "up" | "down";
 
@@ -20,7 +20,7 @@ export type Opening =
 export type Street = {
   readonly burn: boolean;
   /** One entry per hole card each player receives on this street. */
-  readonly hole: readonly Face[];
+  readonly hole: ReadonlyArray<Face>;
   readonly board: number;
   readonly draw: boolean;
   readonly opening: Opening;
@@ -42,12 +42,12 @@ export type Antes =
   | { readonly kind: "everyone"; readonly amount: Chips }
   | { readonly kind: "button"; readonly amount: Chips }
   | { readonly kind: "bigBlind"; readonly amount: Chips }
-  | { readonly kind: "byPosition"; readonly amounts: readonly Chips[] };
+  | { readonly kind: "byPosition"; readonly amounts: ReadonlyArray<Chips> };
 
 export type ForcedBets = {
   readonly antes: Antes;
   /** By position: small blind, big blind, then straddles. Negative amounts post a bet. */
-  readonly blinds: readonly number[];
+  readonly blinds: ReadonlyArray<number>;
   readonly bringIn: Chips | null;
   /** Return the part of each ante nobody else matched before the first street. */
   readonly anteTrimming: boolean;
@@ -165,12 +165,12 @@ type Options = ConventionOptions & {
 };
 
 export type BlindStakes = Options & {
-  readonly blinds: readonly number[];
+  readonly blinds: ReadonlyArray<number>;
   readonly minBet: Chips;
 };
 
 export type FixedLimitStakes = Options & {
-  readonly blinds: readonly number[];
+  readonly blinds: ReadonlyArray<number>;
   readonly smallBet: Chips;
   readonly bigBet: Chips;
 };
@@ -206,7 +206,7 @@ function streetOf(
   };
 }
 
-function down(count: number): Face[] {
+function down(count: number): Array<Face> {
   return Array.from({ length: count }, () => "down");
 }
 
@@ -275,7 +275,7 @@ function studRules(
   low: boolean
 ): (bets: Bets) => Rules {
   const later = low ? "lowHand" : "highHand";
-  const street = (hole: readonly Face[], bet: Chips) =>
+  const street = (hole: ReadonlyArray<Face>, bet: Chips) =>
     streetOf(
       "fixedLimit",
       { burn: true, hole, board: 0, draw: false, opening: later },
@@ -535,7 +535,7 @@ export const royal = {
   rhodeIsland: rhodeIslandGame("royal"),
 };
 
-function anteAmounts(antes: Antes): readonly number[] {
+function anteAmounts(antes: Antes): ReadonlyArray<number> {
   switch (antes.kind) {
     case "none":
       return [];
@@ -554,7 +554,7 @@ function invalid(field: string, value: number): GameError {
 
 function firstInvalid(
   field: string,
-  values: readonly number[],
+  values: ReadonlyArray<number>,
   valid: (value: number) => boolean
 ): GameError | null {
   const value = values.find((candidate) => !valid(candidate));

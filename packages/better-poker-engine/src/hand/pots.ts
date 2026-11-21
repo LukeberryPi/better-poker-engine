@@ -60,12 +60,15 @@ export function shareOf(
   return quotient + (order === 0 ? remainder : 0);
 }
 
-function sameEligible(a: readonly Position[], b: readonly Position[]): boolean {
+function sameEligible(
+  a: ReadonlyArray<Position>,
+  b: ReadonlyArray<Position>
+): boolean {
   return a.length === b.length && a.every((position, i) => position === b[i]);
 }
 
 /** Main pot first; a level only folded players reached stays unclaimed. */
-export function potsOf(state: HandState): readonly PotState[] {
+export function potsOf(state: HandState): ReadonlyArray<PotState> {
   if (state.pots !== null) return state.pots;
   if (sum(state.payoffs) === -sum(state.bets)) return [];
   const positions = positionsOf(state);
@@ -88,7 +91,7 @@ export function potsOf(state: HandState): readonly PotState[] {
     rake.kind === "percentage" && rake.cap?.per === "hand"
       ? rake.cap.amount
       : Infinity;
-  const pots: PotState[] = [];
+  const pots: Array<PotState> = [];
   let previous = 0;
   for (const level of [...new Set(contributions)].sort((a, b) => a - b)) {
     for (const contribution of contributions) {
@@ -132,8 +135,8 @@ export function totalPot(state: HandState): Chips {
 function handTypesInPlay(
   state: HandState,
   board: number,
-  eligible: readonly Position[]
-): number[] {
+  eligible: ReadonlyArray<Position>
+): Array<number> {
   return state.game.rules.handTypes.flatMap((_, handType) =>
     eligible.some(
       (position) => upHandOf(state, position, board, handType) !== null
@@ -150,7 +153,7 @@ export function beginChipsPushing(state: HandState): void {
   contestPots(state);
   const pots = potsOf(state).map((pot) => ({ ...pot }));
   state.pots = pots;
-  const subPots: SubPot[] = [];
+  const subPots: Array<SubPot> = [];
   const active = activeCount(state);
   const { oddChips, strandedPots } = state.game.conventions;
   for (const [index, pot] of pots.entries()) {
@@ -196,7 +199,7 @@ function winnersOf(
   state: HandState,
   subPot: SubPot,
   pot: PotState
-): Position[] {
+): Array<Position> {
   if (subPot.board === null)
     return pot.eligible.length === 1 ? [...pot.eligible] : [];
   if (subPot.handType === null) return [];
@@ -216,7 +219,7 @@ export function pushChips(state: HandState): Result<EventBody, Refusal> {
   if (subPot === undefined) return err({ code: "not_now" });
   const pot = at(state.pots ?? [], subPot.pot);
   const winners = winnersOf(state, subPot, pot);
-  const awards: PlayerAmount[] = [];
+  const awards: Array<PlayerAmount> = [];
   if (winners.length > 0) {
     pot.unraked -= subPot.amount;
     const { oddChips } = state.game.conventions;

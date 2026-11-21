@@ -30,11 +30,11 @@ function chips(stack: Stack): number {
   return stack;
 }
 
-function total(values: readonly Stack[]): number {
+function total(values: ReadonlyArray<Stack>): number {
   return values.reduce<number>((sum, value) => sum + chips(value), 0);
 }
 
-function transitions(walk: Walk): Transition[] {
+function transitions(walk: Walk): Array<Transition> {
   return [
     walk.start,
     ...walk.steps.flatMap((step) =>
@@ -53,13 +53,13 @@ function deeplyFrozen<T extends {}>(value: T): boolean {
   );
 }
 
-function acceptedActions(walk: Walk): Action[] {
+function acceptedActions(walk: Walk): Array<Action> {
   return walk.steps.flatMap((step) => (step.result.ok ? [step.action] : []));
 }
 
 /** A history burns "??", leaves runout counts to the replay and deals each
  * player's cards at once, so hole cards are compared through the records. */
-function keptByHistory(events: readonly HandEvent[]) {
+function keptByHistory(events: ReadonlyArray<HandEvent>) {
   return events.flatMap(({ body, commentary, street }) => {
     if (body.type === "runoutCountSelected" || body.type === "holeDealt") {
       return [];
@@ -212,7 +212,7 @@ describe("random hands", () => {
 
   test("play the same hand again from the PHH history they write", () => {
     const refused = new Set<string>();
-    const played: number[] = [];
+    const played: Array<number> = [];
     const differing = walks.flatMap((walk) => {
       const history = historyFromHand(walk.hand);
       const refusal = refusalOf(walk);

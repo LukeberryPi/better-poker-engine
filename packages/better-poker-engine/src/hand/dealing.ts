@@ -17,14 +17,14 @@ import {
 } from "./state.ts";
 
 /** Burned, mucked and discarded cards, dealt again once the deck runs out. */
-function reserve(state: HandState): KnownCard[] {
+function reserve(state: HandState): Array<KnownCard> {
   return [state.burned, state.mucked, ...state.discarded]
     .flat()
     .filter(isKnownCard);
 }
 
 /** The reserve in the order it is dealt again; a replay deals it the same way. */
-function reshuffled(state: HandState): readonly KnownCard[] {
+function reshuffled(state: HandState): ReadonlyArray<KnownCard> {
   const cards = reserve(state);
   const key = [...state.reshuffleSeed, ...cards].join(" ");
   return shuffle(cards, sfc32(seedFrom(key)));
@@ -90,7 +90,10 @@ export function canDealBoard(phase: Dealing): boolean {
 }
 
 /** pokerkit's `get_dealable_cards`: the deck, then the reserve if it runs short. */
-function fromDeck(state: HandState, count: number): Result<Card[], Refusal> {
+function fromDeck(
+  state: HandState,
+  count: number
+): Result<Array<Card>, Refusal> {
   const dealable =
     count > state.deck.length
       ? [...state.deck, ...reshuffled(state)]
@@ -105,20 +108,23 @@ function fromDeck(state: HandState, count: number): Result<Card[], Refusal> {
   return ok(dealable.slice(0, count));
 }
 
-function removeFirst(cards: Card[], card: Card): void {
+function removeFirst(cards: Array<Card>, card: Card): void {
   const index = cards.indexOf(card);
   if (index !== -1) cards.splice(index, 1);
 }
 
 /** pokerkit's `_produce_cards`: known cards back into the deck, once each. */
-export function returnToDeck(state: HandState, cards: readonly Card[]): void {
+export function returnToDeck(
+  state: HandState,
+  cards: ReadonlyArray<Card>
+): void {
   for (const card of cards) {
     if (isKnownCard(card) && !state.deck.includes(card)) state.deck.push(card);
   }
 }
 
 /** pokerkit's `_consume_cards`: cards dealt from outside the deck are allowed. */
-export function takeCards(state: HandState, cards: readonly Card[]): void {
+export function takeCards(state: HandState, cards: ReadonlyArray<Card>): void {
   const deck = new Set(state.deck);
   const dealt = new Set(cards);
   if (dealt.size > deck.size && [...deck].every((card) => dealt.has(card))) {
@@ -170,7 +176,7 @@ export function holeDealee(state: HandState): Position | null {
 
 export function dealHole(
   state: HandState,
-  cards: readonly Card[] | undefined,
+  cards: ReadonlyArray<Card> | undefined,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);
@@ -198,7 +204,7 @@ export function dealHole(
     });
   }
   takeCards(state, dealt.value);
-  const holeCards: HoleCard[] = dealt.value.map((card) => ({
+  const holeCards: Array<HoleCard> = dealt.value.map((card) => ({
     card,
     face: owed.shift() ?? "down",
   }));
@@ -234,7 +240,7 @@ function firstSlot(state: HandState, owed: number): number {
 
 export function dealBoard(
   state: HandState,
-  cards: readonly Card[] | undefined
+  cards: ReadonlyArray<Card> | undefined
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);
   if (phase === null || !canDealBoard(phase)) return err({ code: "not_now" });
@@ -269,7 +275,7 @@ export function drawer(state: HandState): Position | null {
 
 export function draw(
   state: HandState,
-  discard: readonly Card[],
+  discard: ReadonlyArray<Card>,
   player: Position | undefined
 ): Result<EventBody, Refusal> {
   const phase = dealing(state);

@@ -20,7 +20,7 @@ export type PhhValue =
     }
   | { readonly type: "boolean"; readonly value: boolean }
   | { readonly type: "datetime"; readonly value: string }
-  | { readonly type: "array"; readonly value: readonly PhhValue[] }
+  | { readonly type: "array"; readonly value: ReadonlyArray<PhhValue> }
   | {
       readonly type: "table";
       readonly value: Readonly<Record<string, PhhValue>>;
@@ -151,7 +151,7 @@ export function tomlKey(key: string): string {
   return fitsLiteral(key) && !key.includes("'") ? `'${key}'` : basicString(key);
 }
 
-export function tomlArray(items: readonly string[]): string {
+export function tomlArray(items: ReadonlyArray<string>): string {
   return `[${items.join(", ")}]`;
 }
 

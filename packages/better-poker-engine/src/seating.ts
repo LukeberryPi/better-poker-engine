@@ -33,7 +33,7 @@ export type Rotation = {
 export type SeatingInput = {
   /** Blinds are `[small, big]` under a dead button. */
   readonly game: Game;
-  readonly seats: readonly (SeatState | null)[];
+  readonly seats: ReadonlyArray<SeatState | null>;
   readonly button: ButtonRule;
   /** The last hand's; null before the first hand. */
   readonly rotation: Rotation | null;
@@ -43,7 +43,7 @@ export type SeatingInput = {
 
 export type SeatingPlan = {
   /** The seat at each position, as `startHand` takes players: blinds first, button last. */
-  readonly positions: readonly number[];
+  readonly positions: ReadonlyArray<number>;
   /** `input.game` with this hand's blinds and antes on those positions. */
   readonly game: Game;
   readonly rotation: Rotation;
@@ -51,7 +51,7 @@ export type SeatingPlan = {
   readonly smallBlind: number | null;
   readonly bigBlind: number;
   /** Every seat after this hand starts: blinds missed, debts posted. */
-  readonly seats: readonly (SeatState | null)[];
+  readonly seats: ReadonlyArray<SeatState | null>;
 };
 
 export type SeatingError = {
@@ -60,7 +60,7 @@ export type SeatingError = {
 };
 
 /** Seats from `from`, exclusive, clockwise round to `from` itself. */
-function clockwise(from: number, count: number): number[] {
+function clockwise(from: number, count: number): Array<number> {
   return Array.from({ length: count }, (_, step) => (from + 1 + step) % count);
 }
 
@@ -75,7 +75,11 @@ function blindsOf(game: Game): readonly [small: number, big: number] {
   return [small, big];
 }
 
-function antesFor(antes: Antes, count: number, bigBlind: number): number[] {
+function antesFor(
+  antes: Antes,
+  count: number,
+  bigBlind: number
+): Array<number> {
   switch (antes.kind) {
     case "none":
       return perPosition([], count);
@@ -109,7 +113,7 @@ function owingAlso(owes: Owed, blind: "smallBlind" | "bigBlind"): Owed {
 }
 
 type Layout = {
-  readonly positions: readonly number[];
+  readonly positions: ReadonlyArray<number>;
   readonly game: Game;
   readonly rotation: Rotation;
   readonly smallBlind: number | null;
@@ -137,7 +141,7 @@ function headsUp(
 /** Every player who can play is dealt in, owing nothing, with the button on `button`. */
 function restart(
   input: SeatingInput,
-  playable: readonly number[],
+  playable: ReadonlyArray<number>,
   button: number
 ): Layout {
   const count = input.seats.length;
@@ -161,7 +165,7 @@ function restart(
 
 function deadButton(
   input: SeatingInput,
-  playable: readonly number[],
+  playable: ReadonlyArray<number>,
   last: BlindSeats
 ): Layout | null {
   const { seats, game } = input;

@@ -20,11 +20,13 @@ function threeHanded(): Hand {
 
 type Stored = {
   setup: {
-    stacks: number[];
-    deck: string[];
+    stacks: Array<number>;
+    deck: Array<string>;
     game: { rules?: object; boards: number };
   };
-  events: { body: { type: string; player?: string; cards?: object[] } }[];
+  events: Array<{
+    body: { type: string; player?: string; cards?: Array<object> };
+  }>;
 };
 
 function stored(hand: Hand): Stored {

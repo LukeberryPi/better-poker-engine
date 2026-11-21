@@ -18,7 +18,7 @@ const entryPoints = Object.entries(manifest.exports).map(
   })
 );
 
-function run(command: string[], cwd: string): string {
+function run(command: Array<string>, cwd: string): string {
   const { exitCode, stdout, stderr } = Bun.spawnSync(command, {
     cwd,
     stdout: "pipe",
@@ -32,7 +32,7 @@ function run(command: string[], cwd: string): string {
   return stdout.toString();
 }
 
-async function runtimeExports(source: string): Promise<string[]> {
+async function runtimeExports(source: string): Promise<Array<string>> {
   return Object.keys(await import(source)).toSorted();
 }
 
@@ -97,7 +97,7 @@ test("Node loads every entry point with its source module's exports", async () =
 });
 
 test("TypeScript types every runtime export of every entry point", async () => {
-  const lines: string[] = [];
+  const lines: Array<string> = [];
   for (const [index, { specifier, source }] of entryPoints.entries()) {
     lines.push(`import * as entry${index} from ${JSON.stringify(specifier)};`);
     for (const name of await runtimeExports(source)) {

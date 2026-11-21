@@ -9,7 +9,7 @@ import type { HandState, Position } from "./state.ts";
 export function perPosition(
   amounts: Iterable<readonly [Position, number]>,
   count: number
-): number[] {
+): Array<number> {
   const values = Array.from({ length: count }, () => 0);
   for (const [position, amount] of amounts) {
     const index = position < 0 ? count + position : position;
@@ -19,7 +19,7 @@ export function perPosition(
   return values;
 }
 
-export function anteVector(antes: Antes, count: number): number[] {
+export function anteVector(antes: Antes, count: number): Array<number> {
   switch (antes.kind) {
     case "none":
       return perPosition([], count);
@@ -40,7 +40,7 @@ export function anteVector(antes: Antes, count: number): number[] {
   }
 }
 
-function defaultPlayers(count: number): string[] {
+function defaultPlayers(count: number): Array<string> {
   return Array.from({ length: count }, (_, position) => `p${position + 1}`);
 }
 
@@ -129,7 +129,8 @@ export function initialState(setup: HandSetup): HandState {
   const count = setup.stacks.length;
   const game = copyGame(setup.game);
   const zeros = () => Array.from({ length: count }, () => 0);
-  const empty = <T>(): T[][] => Array.from({ length: count }, (): T[] => []);
+  const empty = <T>(): Array<Array<T>> =>
+    Array.from({ length: count }, (): Array<T> => []);
   const state: HandState = {
     game,
     players: [...(setup.players ?? defaultPlayers(count))],

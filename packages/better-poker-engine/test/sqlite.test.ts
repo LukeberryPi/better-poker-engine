@@ -30,7 +30,7 @@ function bunDriver(db: Database): SqliteDriver {
         )
       )(),
     all: async (sql, params) =>
-      db.query<SqlRow, SqlValue[]>(sql).all(...params),
+      db.query<SqlRow, Array<SqlValue>>(sql).all(...params),
   };
 }
 
@@ -67,8 +67,8 @@ const deal = {
 async function playStored(
   store: Awaited<ReturnType<typeof openStore>>["store"],
   id: string
-): Promise<TableEvent[]> {
-  const events: TableEvent[] = [];
+): Promise<Array<TableEvent>> {
+  const events: Array<TableEvent> = [];
   for (let moves = 0; moves < 200; moves += 1) {
     const table = await store.loadTable(id);
     if (table === null) throw new Error("No table");

@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import { doctestsIn, unitTestsIn } from "./extract.ts";
 
-const lines = (...source: string[]): string => source.join("\n");
+const lines = (...source: Array<string>): string => source.join("\n");
 
 test("doctest ids are the module path plus the qualified name", () => {
   const source = lines(

@@ -78,9 +78,9 @@ function discard(text: string): Action {
 /** A burn before each street's board cards, from example `first` on. */
 function burnsAndBoards(
   first: number,
-  streets: readonly (readonly [text: string, board: number])[]
-): Step[] {
-  return streets.flatMap(([text, board], offset): Step[] => [
+  streets: ReadonlyArray<readonly [text: string, board: number]>
+): Array<Step> {
+  return streets.flatMap(([text, board], offset): Array<Step> => [
     [first + 2 * offset, burn("??"), burned("??")],
     [first + 2 * offset + 1, dealBoard(text), boardDealt(text, board)],
   ]);
@@ -162,7 +162,7 @@ gameProperty(
   0
 );
 
-gameProperty<readonly (readonly Rank[])[]>(
+gameProperty<ReadonlyArray<ReadonlyArray<Rank>>>(
   "pokerkit.games.Poker.rank_orders",
   (game) =>
     game.rules.handTypes.map(

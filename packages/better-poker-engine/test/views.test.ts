@@ -33,7 +33,7 @@ import { cards } from "./support.ts";
 
 const { call } = moves;
 
-function holeCardsOf(view: HandView): string[][] {
+function holeCardsOf(view: HandView): Array<Array<string>> {
   return view.players.map((player) =>
     player.holeCards.map((hole) => hole.card)
   );
@@ -123,7 +123,7 @@ describe("eventsFor", () => {
 
   function drawnHand() {
     const table = drive(start(game, [100, 100], automate));
-    const events: HandEvent[] = [];
+    const events: Array<HandEvent> = [];
     const record = (action: Parameters<typeof table.act>[0]) => {
       table.act(action);
       events.push(...table.events());
@@ -168,7 +168,7 @@ describe("eventsFor", () => {
 
   test("changes nothing an auditor may see", () => {
     const events = drawnHand();
-    expect<readonly HandEvent[]>(
+    expect<ReadonlyArray<HandEvent>>(
       eventsFor(events, { kind: "auditor" })
     ).toEqual(events);
   });
@@ -176,7 +176,7 @@ describe("eventsFor", () => {
 
 describe("viewRecord", () => {
   const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
-  const holeCardsOf = (view: HandRecord): string[][] =>
+  const holeCardsOf = (view: HandRecord): Array<Array<string>> =>
     view.players.map((player) => player.holeCards.map((hole) => hole.card));
 
   function foldedRecord(): HandRecord {
@@ -221,7 +221,7 @@ const knownCard = /"([2-9TJQKA][cdhs?])"/g;
 
 function cardsIn(
   value: HandView | HandEventView | HandRecordView | undefined
-): string[] {
+): Array<string> {
   return [...JSON.stringify(value).matchAll(knownCard)].map(
     ([, card]) => card ?? ""
   );
@@ -249,7 +249,7 @@ function learn(known: Set<string>, audience: Audience, event: HandEvent) {
   }
 }
 
-function transitions(walk: Walk): Transition[] {
+function transitions(walk: Walk): Array<Transition> {
   return [
     walk.start,
     ...walk.steps.flatMap((step) =>
@@ -265,7 +265,7 @@ describe("random hands", () => {
 
   test("show each audience only cards it may know, in views and events", () => {
     const leaks = walks.flatMap((walk) => {
-      const audiences: Audience[] = [
+      const audiences: Array<Audience> = [
         { kind: "spectator" },
         ...walk.spectated.players.map(({ player }) => ({
           kind: "player" as const,
@@ -302,7 +302,7 @@ describe("random hands", () => {
       const record = summarizeHand(walk.hand);
       if (record === null) throw new Error(`Seed ${walk.seed} is not complete`);
       const events = transitions(walk).flatMap((step) => step.events);
-      const audiences: Audience[] = [
+      const audiences: Array<Audience> = [
         { kind: "spectator" },
         ...walk.spectated.players.map(({ player }) => ({
           kind: "player" as const,

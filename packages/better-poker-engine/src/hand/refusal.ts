@@ -15,7 +15,7 @@ export type Refusal =
 export function notEligible(
   state: HandState,
   position: Position,
-  eligible: readonly Position[]
+  eligible: ReadonlyArray<Position>
 ): Refusal {
   return {
     code: "not_eligible",
@@ -27,7 +27,7 @@ export function notEligible(
 /** The named player if they are pending, else the first pending one. */
 export function pendingPlayer(
   state: HandState,
-  pending: readonly boolean[],
+  pending: ReadonlyArray<boolean>,
   player: Position | undefined
 ): Result<Position, Refusal> {
   const first = pending.indexOf(true);

@@ -32,7 +32,7 @@ const studUp = ["down", "down", "up"] as const;
 
 doctest("pokerkit.state.State.get_censored_hole_cards", (example) => {
   let table: Driver;
-  let downCards: Card[];
+  let downCards: Array<Card>;
   example(1, () => {});
   example(2, () => {
     const game = stud.fixedLimitHiLo(studStakes);
@@ -56,14 +56,14 @@ function studHand(): Driver {
   return drive(start(stud.fixedLimit(studStakes), [50, 100], studAutomation));
 }
 
-const studOpening: readonly Step[] = [
+const studOpening: ReadonlyArray<Step> = [
   [3, dealHole("AcAdAh"), holeDealt("p1", "AcAdAh", studUp)],
   [4, dealHole("KcKdKh"), holeDealt("p2", "KcKdKh", studUp)],
 ];
 
 doctest("pokerkit.state.State.get_down_cards", (example) => {
   let table: Driver;
-  let downCards: Card[];
+  let downCards: Array<Card>;
   const down = (position: number) =>
     holeCards(auditor(table.hand), position, "down");
   example(1, () => {});
@@ -137,9 +137,9 @@ function holdemHand(showing: boolean): Driver {
 function checkDown(
   from: number,
   holes: readonly [string, string],
-  gaps: readonly number[]
-): Step[] {
-  const list: Step[] = [];
+  gaps: ReadonlyArray<number>
+): Array<Step> {
+  const list: Array<Step> = [];
   let index = from;
   const add = (step: Step[1], body: Step[2]) => {
     list.push([index, step, body]);
@@ -165,7 +165,7 @@ function interleave(
   example: Example,
   table: () => Driver,
   [first, last]: readonly [number, number],
-  list: readonly Step[],
+  list: ReadonlyArray<Step>,
   checks: ReadonlyMap<number, () => void>
 ): void {
   const byIndex = new Map(list.map((step) => [step[0], step]));
@@ -247,7 +247,7 @@ doctest("pokerkit.state.State.get_up_hand", (example) => {
 
 doctest("pokerkit.state.State.get_up_hands", (example) => {
   let table: Driver;
-  let upHands: (HandValue | null | undefined)[];
+  let upHands: Array<HandValue | null | undefined>;
   const upHandsOf = (hand: Hand) =>
     spectator(hand).players.map((player) => player.hands[0]?.[0]);
   example(1, () => {});

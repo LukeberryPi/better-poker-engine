@@ -18,13 +18,13 @@ export type Position = number;
 export type PotState = {
   raked: Chips;
   unraked: Chips;
-  readonly eligible: readonly Position[];
+  readonly eligible: ReadonlyArray<Position>;
 };
 
 /** A pot as it stood when betting closed for good, before anyone showed or mucked. */
 export type ContestedPot = {
   readonly amount: Chips;
-  readonly eligible: readonly Position[];
+  readonly eligible: ReadonlyArray<Position>;
 };
 
 export type SubPot = {
@@ -38,35 +38,35 @@ export type SubPot = {
 
 type Pending<Kind extends string> = {
   readonly kind: Kind;
-  readonly pending: boolean[];
+  readonly pending: Array<boolean>;
 };
 
 export type Dealing = {
   readonly kind: "dealing";
   burn: boolean;
   /** Faces of the hole cards each player is still owed. */
-  readonly hole: Face[][];
+  readonly hole: Array<Array<Face>>;
   /** Cards each board is still owed. */
-  readonly board: number[];
-  readonly draw: boolean[];
+  readonly board: Array<number>;
+  readonly draw: Array<boolean>;
 };
 
 export type Betting = {
   readonly kind: "betting";
   bringIn: boolean;
   completion: boolean;
-  actors: Position[];
+  actors: Array<Position>;
   /** The largest raise so far; pokerkit's `completion_betting_or_raising_amount`. */
   lastRaise: Chips;
   raises: number;
-  acted: Position[];
-  shortAllIns: Chips[];
+  acted: Array<Position>;
+  shortAllIns: Array<Chips>;
 };
 
 export type Showdown = {
   readonly kind: "showdown";
-  readonly selectors: boolean[];
-  order: Position[];
+  readonly selectors: Array<boolean>;
+  order: Array<Position>;
 };
 
 export type Phase =
@@ -77,7 +77,7 @@ export type Phase =
   | Betting
   | Showdown
   | Pending<"handKilling">
-  | { readonly kind: "chipsPushing"; readonly subPots: SubPot[] }
+  | { readonly kind: "chipsPushing"; readonly subPots: Array<SubPot> }
   | Pending<"chipsPulling">
   | { readonly kind: "complete" };
 
@@ -91,29 +91,29 @@ export type LoggedAction = {
 /** pokerkit's `State` fields, mutated in place on a private copy per action. */
 export type HandState = Brandable<"Hand"> & {
   readonly game: Game;
-  readonly players: readonly PlayerId[];
-  readonly automate: readonly AutomatedStep[];
-  readonly antes: readonly Chips[];
-  readonly blinds: readonly number[];
-  readonly startingStacks: readonly Stack[];
+  readonly players: ReadonlyArray<PlayerId>;
+  readonly automate: ReadonlyArray<AutomatedStep>;
+  readonly antes: ReadonlyArray<Chips>;
+  readonly blinds: ReadonlyArray<number>;
+  readonly startingStacks: ReadonlyArray<Stack>;
   version: number;
   readonly startingDeck: Deck;
-  deck: Card[];
+  deck: Array<Card>;
   /** Hashed from the starting deck, so players can't predict a reshuffle. */
   readonly reshuffleSeed: Seed;
   /** pokerkit's `board_cards`: one entry per dealt slot, one card per board. */
-  boards: Card[][];
-  burned: Card[];
-  mucked: Card[];
+  boards: Array<Array<Card>>;
+  burned: Array<Card>;
+  mucked: Array<Card>;
   /** Per street. */
-  discarded: Card[][];
-  readonly active: boolean[];
-  readonly bets: Chips[];
-  readonly stacks: Stack[];
-  readonly payoffs: number[];
-  readonly hole: HoleCard[][];
+  discarded: Array<Array<Card>>;
+  readonly active: Array<boolean>;
+  readonly bets: Array<Chips>;
+  readonly stacks: Array<Stack>;
+  readonly payoffs: Array<number>;
+  readonly hole: Array<Array<HoleCard>>;
   /** What each player held when they folded or mucked, for the record. */
-  readonly retired: HoleCard[][];
+  readonly retired: Array<Array<HoleCard>>;
   street: number | null;
   runout: Runout | null;
   allIn: boolean;
@@ -121,12 +121,12 @@ export type HandState = Brandable<"Hand"> & {
   runoutCount: number | null;
   runoutCountSelected: boolean;
   /** Frozen once chips pushing begins. */
-  pots: PotState[] | null;
+  pots: Array<PotState> | null;
   /** Mucks can merge `pots`, as in pokerkit; the record reports these instead. */
-  contestedPots: readonly ContestedPot[] | null;
+  contestedPots: ReadonlyArray<ContestedPot> | null;
   phase: Phase;
   /** Accepted actions only: events replay from them, so a hand stays small. */
-  log: readonly LoggedAction[];
+  log: ReadonlyArray<LoggedAction>;
 };
 
 export function stateOf(hand: Hand): HandState {
@@ -223,7 +223,7 @@ export function cloneState(state: HandState): HandState {
   };
 }
 
-export function positionsOf(state: HandState): Position[] {
+export function positionsOf(state: HandState): Array<Position> {
   return state.players.map((_, position) => position);
 }
 
@@ -233,13 +233,13 @@ export function playerAt(state: HandState, position: Position): PlayerId {
   return player;
 }
 
-export function at<T>(values: readonly T[], index: number): T {
+export function at<T>(values: ReadonlyArray<T>, index: number): T {
   const value = values[index];
   if (value === undefined) throw new Error(`No value at ${index}`);
   return value;
 }
 
-export function sum(values: readonly number[]): number {
+export function sum(values: ReadonlyArray<number>): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
@@ -252,7 +252,10 @@ export function activeCount(state: HandState): number {
 }
 
 /** pokerkit's `rotated`: positions starting from `first`. */
-export function rotatedFrom(state: HandState, first: Position): Position[] {
+export function rotatedFrom(
+  state: HandState,
+  first: Position
+): Array<Position> {
   const positions = positionsOf(state);
   return [...positions.slice(first), ...positions.slice(0, first)];
 }
@@ -270,11 +273,11 @@ export function isLastStreet(state: HandState): boolean {
   return state.street === state.game.rules.streets.length - 1;
 }
 
-export function laterStreets(state: HandState): readonly Street[] {
+export function laterStreets(state: HandState): ReadonlyArray<Street> {
   return state.game.rules.streets.slice((state.street ?? -1) + 1);
 }
 
-export function upCards(state: HandState, position: Position): Card[] {
+export function upCards(state: HandState, position: Position): Array<Card> {
   return at(state.hole, position)
     .filter((hole) => hole.face === "up")
     .map((hole) => hole.card);
@@ -292,7 +295,7 @@ export function boardCount(state: HandState): number {
 }
 
 /** pokerkit's `get_board_cards`: runouts share the cards dealt before them. */
-export function boardCards(state: HandState, board: number): Card[] {
+export function boardCards(state: HandState, board: number): Array<Card> {
   let shared = 0;
   if (state.runout !== null) {
     for (const street of state.game.rules.streets.slice(
@@ -309,7 +312,7 @@ export function boardCards(state: HandState, board: number): Card[] {
   });
 }
 
-function knownCards(cards: readonly Card[]): KnownCard[] {
+function knownCards(cards: ReadonlyArray<Card>): Array<KnownCard> {
   return cards.filter(isKnownCard);
 }
 
@@ -345,7 +348,7 @@ export function upHandOf(
 
 /** pokerkit's `min_or_none`: the first smallest by `key`, skipping nulls. */
 export function minOrNull<T>(
-  values: readonly (T | null)[],
+  values: ReadonlyArray<T | null>,
   key: (value: T) => number
 ): T | null {
   let best: T | null = null;
@@ -359,7 +362,7 @@ export function minOrNull<T>(
 
 /** pokerkit's `max_or_none`: the first largest by `key`, skipping nulls. */
 export function maxOrNull<T>(
-  values: readonly (T | null)[],
+  values: ReadonlyArray<T | null>,
   key: (value: T) => number
 ): T | null {
   let best: T | null = null;

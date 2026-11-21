@@ -20,7 +20,7 @@ import {
 } from "../../src/lookups.ts";
 import { cards, digestSortedByEntry, forEachCombination } from "../support.ts";
 
-type Hand = readonly KnownCard[];
+type Hand = ReadonlyArray<KnownCard>;
 
 function entryIn(table: Lookup, text: string): Entry {
   const entry = entryOf(table, cards(text));
@@ -41,8 +41,8 @@ function digestOfCombinations(
 /** pokerkit's Badugi test: rainbow unpaired hands sort; paired or suited ones have no entry. */
 function badugiDigest(name: LookupName, deck: Hand): string {
   const table = lookup(name);
-  const badugis: Hand[] = [];
-  const accepted: string[] = [];
+  const badugis: Array<Hand> = [];
+  const accepted: Array<string> = [];
   for (const size of [1, 2, 3, 4]) {
     forEachCombination(deck, size, (hand) => {
       if (!arePaired(hand) && areRainbow(hand)) {

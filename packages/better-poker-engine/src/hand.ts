@@ -30,7 +30,7 @@ export type AutomatedStep =
   | "chipsPushing"
   | "chipsPulling";
 
-export type Automation = readonly AutomatedStep[];
+export type Automation = ReadonlyArray<AutomatedStep>;
 
 /** `dealer` leaves runout counts and showdown choices to the players. */
 export const automation = {
@@ -63,9 +63,9 @@ export const automation = {
 
 export type HandSetup = {
   readonly game: Game;
-  readonly stacks: readonly (number | Unbounded)[];
+  readonly stacks: ReadonlyArray<number | Unbounded>;
   /** In position order. Defaults to "p1".."pN". */
-  readonly players?: readonly PlayerId[];
+  readonly players?: ReadonlyArray<PlayerId>;
   /** Dealt from the front; shuffle it first with `shuffle`. */
   readonly deck: Deck;
   readonly automate: Automation;
@@ -107,7 +107,7 @@ export type DealerDecision =
         | "blindPosting"
         | "handKilling"
         | "chipsPulling";
-      readonly players: readonly PlayerId[];
+      readonly players: ReadonlyArray<PlayerId>;
     }
   | {
       readonly kind: "dealer";
@@ -144,7 +144,7 @@ export type Decision =
     }
   | {
       readonly kind: "runoutSelection";
-      readonly players: readonly PlayerId[];
+      readonly players: ReadonlyArray<PlayerId>;
       /** The most runouts the deck left can deal in full. */
       readonly maxRunouts: number;
     }
@@ -166,10 +166,10 @@ export type PlayerAction = By &
     | { readonly type: "checkOrCall" }
     | { readonly type: "postBringIn" }
     | { readonly type: "betOrRaiseTo"; readonly amount: number }
-    | { readonly type: "draw"; readonly discard: readonly Card[] }
+    | { readonly type: "draw"; readonly discard: ReadonlyArray<Card> }
     | { readonly type: "selectRunoutCount"; readonly count: number | null }
     /** Without cards, shows what is held; with cards, reveals unknown "??" cards or a subset. */
-    | { readonly type: "show"; readonly cards?: readonly Card[] }
+    | { readonly type: "show"; readonly cards?: ReadonlyArray<Card> }
     | { readonly type: "muck" }
     /** Check when free, else fold; stand pat; no runout preference; show only if it can win. */
     | { readonly type: "timeout" }
@@ -180,8 +180,8 @@ export type DealerAction =
   | { readonly type: "collectBets" }
   | (By & { readonly type: "postBlind" })
   | { readonly type: "burnCard"; readonly card?: Card }
-  | (By & { readonly type: "dealHole"; readonly cards?: readonly Card[] })
-  | { readonly type: "dealBoard"; readonly cards?: readonly Card[] }
+  | (By & { readonly type: "dealHole"; readonly cards?: ReadonlyArray<Card> })
+  | { readonly type: "dealBoard"; readonly cards?: ReadonlyArray<Card> }
   | (By & { readonly type: "killHand" })
   | { readonly type: "pushChips" }
   | (By & { readonly type: "pullChips" });
@@ -203,7 +203,7 @@ export type Violation =
   | {
       readonly code: "not_eligible";
       readonly player: PlayerId;
-      readonly eligible: readonly PlayerId[];
+      readonly eligible: ReadonlyArray<PlayerId>;
     }
   /** Showing outside the showdown requires a named player. */
   | { readonly code: "player_required" }
@@ -247,14 +247,14 @@ export type Violation =
 
 export type Transition = {
   readonly hand: Hand;
-  readonly events: readonly HandEvent[];
+  readonly events: ReadonlyArray<HandEvent>;
 };
 
 export function startHand(setup: HandSetup): Result<Transition, SetupError> {
   const error = validateSetup(setup);
   if (error !== null) return err(error);
   const state = initialState(setup);
-  const events: HandEvent[] = [];
+  const events: Array<HandEvent> = [];
   settle(state);
   automate(state, events);
   return ok({ hand: handFrom(state), events });
@@ -329,7 +329,7 @@ export function summarizeHand(hand: Hand): HandRecord | null {
 }
 
 /** Every event so far, replayed from the setup and the actions the hand logged. */
-export function eventsOf(hand: Hand): HandEvent[] {
+export function eventsOf(hand: Hand): Array<HandEvent> {
   const state = stateOf(hand);
   const started = startHand({
     game: state.game,
@@ -364,7 +364,7 @@ export type ReplayError =
 
 export function replayHand(
   setup: HandSetup,
-  actions: readonly Action[]
+  actions: ReadonlyArray<Action>
 ): Result<Transition, ReplayError> {
   const started = startHand(setup);
   if (!started.ok) return err({ code: "setup", error: started.error });

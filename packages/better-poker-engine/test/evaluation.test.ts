@@ -33,7 +33,7 @@ describe("evaluateStrength", () => {
 
   test("agrees with evaluate on 200,000 random seven-card hands", () => {
     const random = insecureSeededRandom(11);
-    const differing: string[] = [];
+    const differing: Array<string> = [];
     for (let deal = 0; deal < 200_000; deal += 1) {
       const dealt = shuffle(decks.standard, random);
       const hole = dealt.slice(0, 2);

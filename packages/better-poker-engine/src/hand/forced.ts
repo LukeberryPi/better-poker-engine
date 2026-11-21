@@ -114,7 +114,7 @@ export function collectBets(state: HandState): Result<EventBody, Refusal> {
   const collectors = positionsOf(state).filter(
     (position) => !lone || !at(state.active, position)
   );
-  const returned: PlayerAmount[] = [];
+  const returned: Array<PlayerAmount> = [];
   if (state.street !== null || state.game.forcedBets.anteTrimming) {
     const cutoff = at(
       state.bets.toSorted((a, b) => a - b),

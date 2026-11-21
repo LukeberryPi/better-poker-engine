@@ -162,7 +162,7 @@ describe("equities", () => {
 
 describe("handStrength", () => {
   test("deals the random opponents before the player", () => {
-    const strength = (values: readonly number[]) =>
+    const strength = (values: ReadonlyArray<number>) =>
       handStrength({
         ...kuhn,
         players: 2,

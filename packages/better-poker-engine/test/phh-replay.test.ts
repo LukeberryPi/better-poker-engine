@@ -18,14 +18,16 @@ function fixture(path: string): string {
   return readFileSync(new URL(path, fixtures), "utf8");
 }
 
-function bodies(replay: HistoryReplay): (string | null | EventBody)[][] {
+function bodies(
+  replay: HistoryReplay
+): Array<Array<string | null | EventBody>> {
   return replay.steps.map((step) => [
     step.action,
     ...step.events.map((event) => event.body),
   ]);
 }
 
-function noLimit(players: number, actions: readonly string[]): Phh {
+function noLimit(players: number, actions: ReadonlyArray<string>): Phh {
   const zeros = Array.from({ length: players }, () => 0);
   const blinds = zeros.map((zero, position) =>
     position < 2 ? position + 1 : zero

@@ -4,13 +4,13 @@ import { toAcpc, toPluribus, type Phh } from "../src/phh.ts";
 import { err, ok } from "../src/result.ts";
 import { parsed } from "./phh-support.ts";
 
-function history(lines: readonly string[]): Phh {
+function history(lines: ReadonlyArray<string>): Phh {
   return parsed(lines.join("\n"));
 }
 
 function headsUp(
-  actions: readonly string[],
-  fields: readonly string[] = []
+  actions: ReadonlyArray<string>,
+  fields: ReadonlyArray<string> = []
 ): Phh {
   return history([
     "variant = 'NT'",
