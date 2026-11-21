@@ -274,19 +274,19 @@ describe("random hands", () => {
   });
 });
 
-describe("no-limit cash games", () => {
-  const unclaimed = (strandedPots: Conventions["strandedPots"]) =>
-    Array.from({ length: 300 }, (_, seed) => {
-      const walk = randomWalk(seed, () =>
-        holdem.noLimit({
-          blinds: [1, 2],
-          minBet: 2,
-          conventions: { ...conventions.cashGame, strandedPots },
-        })
-      );
-      return summarizeHand(walk.hand)?.unclaimed ?? 0;
-    }).filter((chips) => chips > 0);
+const unclaimed = (strandedPots: Conventions["strandedPots"]) =>
+  Array.from({ length: 300 }, (_, seed) => {
+    const walk = randomWalk(seed, () =>
+      holdem.noLimit({
+        blinds: [1, 2],
+        minBet: 2,
+        conventions: { ...conventions.cashGame, strandedPots },
+      })
+    );
+    return summarizeHand(walk.hand)?.unclaimed ?? 0;
+  }).filter((chips) => chips > 0);
 
+describe("no-limit cash games", () => {
   test("strand side pots with needless folds and mucks unless refused", () => {
     expect(unclaimed("unclaimed").length).toBeGreaterThan(0);
     expect(unclaimed("refused")).toEqual([]);

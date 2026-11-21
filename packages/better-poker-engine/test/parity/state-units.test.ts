@@ -634,6 +634,13 @@ function turns(hand: Hand) {
   };
 }
 
+const acting = (player: PlayerId) => ({
+  turn: player,
+  drawer: null,
+  actor: player,
+  showdown: null,
+});
+
 unitTest("pokerkit.tests.test_state.StateTestCase.test_turn_index", () => {
   const game = draw.deuceToSevenSingle({
     blinds: [1, 2],
@@ -647,12 +654,6 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_turn_index", () => {
       allBut("holeCardsShowingOrMucking", "runoutCountSelection")
     )
   );
-  const acting = (player: PlayerId) => ({
-    turn: player,
-    drawer: null,
-    actor: player,
-    showdown: null,
-  });
   for (const [player, move] of [
     ["p3", fold],
     ["p4", fold],
@@ -708,6 +709,9 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_reshuffling", () => {
   expect(inProgress(table.hand)).toBe(false);
 });
 
+const dealHoles = (count: number) =>
+  repeat(accept({ type: "dealHole" }), count);
+
 unitTest(
   "pokerkit.tests.test_state.StateTestCase.test_hole_to_board_dealing",
   () => {
@@ -724,8 +728,6 @@ unitTest(
         allBut("holeDealing", "boardDealing", "runoutCountSelection")
       )
     );
-    const dealHoles = (count: number) =>
-      repeat(accept({ type: "dealHole" }), count);
     play(table, [
       ...dealHoles(27),
       raise,
@@ -954,9 +956,10 @@ unitTest(
   }
 );
 
+const game = (blinds: Array<number>) =>
+  holdem.noLimit({ blinds, minBet: 2, anteTrimming: true });
+
 unitTest("pokerkit.tests.test_state.StateTestCase.test_post_bets", () => {
-  const game = (blinds: Array<number>) =>
-    holdem.noLimit({ blinds, minBet: 2, anteTrimming: true });
   const opener = (blinds: Array<number>) =>
     actor(start(game(blinds), sixStacks, automation.all));
   expect(opener([1, 2])).toBe("p3");
@@ -979,6 +982,12 @@ unitTest("pokerkit.tests.test_state.StateTestCase.test_post_bets", () => {
   expect(table.act(checkOrCall)).toEqual(checked("p2"));
   expect(table.act(checkOrCall)).toEqual(checked("p1"));
 });
+
+const total = (values: ReadonlyArray<Stack>) =>
+  values.reduce<number>(
+    (sum, value) => sum + (value === "unbounded" ? 0 : value),
+    0
+  );
 
 unitTest(
   "pokerkit.tests.test_state.StateTestCase.test_nonstandard_folds",
@@ -1042,24 +1051,20 @@ unitTest(
       burn,
       board("5d"),
     ]);
-    const total = (values: ReadonlyArray<Stack>) =>
-      values.reduce<number>(
-        (sum, value) => sum + (value === "unbounded" ? 0 : value),
-        0
-      );
     expect(total(startingStacks) - total(stacks(table.hand))).toBe(2210);
   }
 );
 
+const folded = (script: Array<Move>) => {
+  const table = drive(
+    start(rhodeIsland.fixedLimit(), [155, 155], automation.all)
+  );
+  play(table, script);
+  const record = summarizeHand(table.hand);
+  return record === null ? null : !record.wentToShowdown;
+};
+
 unitTest("pokerkit.tests.test_state.StateTestCase.test_folded_status", () => {
-  const folded = (script: Array<Move>) => {
-    const table = drive(
-      start(rhodeIsland.fixedLimit(), [155, 155], automation.all)
-    );
-    play(table, script);
-    const record = summarizeHand(table.hand);
-    return record === null ? null : !record.wentToShowdown;
-  };
   expect(folded([call, call, call, call, raise, raise, call])).toBe(false);
   expect(folded([raise, raise, fold])).toBe(true);
   expect(folded([call, call, call, call, raise, raise, fold])).toBe(true);

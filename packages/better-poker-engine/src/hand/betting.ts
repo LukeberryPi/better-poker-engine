@@ -85,6 +85,8 @@ function openingEntry(
   return entryOf(table, cards);
 }
 
+const entryIndex = (entry: Entry) => entry.index;
+
 /** pokerkit's `_begin_betting` opener, ties going to the earlier position. */
 function openerOf(state: HandState, opening: Opening): Position {
   const positions = positionsOf(state);
@@ -123,8 +125,9 @@ function openerOf(state: HandState, opening: Opening): Position {
       const entries = positions.map((position) =>
         openingEntry(state, position, low)
       );
-      const index = (entry: Entry) => entry.index;
-      const best = low ? minOrNull(entries, index) : maxOrNull(entries, index);
+      const best = low
+        ? minOrNull(entries, entryIndex)
+        : maxOrNull(entries, entryIndex);
       return entries.findIndex((entry) => entry?.index === best?.index);
     }
   }

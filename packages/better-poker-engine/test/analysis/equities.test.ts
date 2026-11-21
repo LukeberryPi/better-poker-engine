@@ -29,6 +29,9 @@ const kuhn = {
 
 const anyCards: Range = [[]];
 
+const frozen = (text: string): Range =>
+  Object.freeze(range(text).map((combo) => Object.freeze([...combo])));
+
 describe("equities", () => {
   test("deals players in turn, then the board, with unbiased draws", () => {
     const deal = { ...kuhn, ranges: [anyCards, anyCards] };
@@ -78,8 +81,6 @@ describe("equities", () => {
   });
 
   test("gives the same result for the same seed and leaves inputs alone", () => {
-    const frozen = (text: string): Range =>
-      Object.freeze(range(text).map((combo) => Object.freeze([...combo])));
     const input = Object.freeze({
       ...holdem,
       ranges: Object.freeze([frozen("QQ+"), frozen("AKs")]),
@@ -161,15 +162,16 @@ describe("equities", () => {
   });
 });
 
+const strength = (values: ReadonlyArray<number>) =>
+  handStrength({
+    ...kuhn,
+    players: 2,
+    range: anyCards,
+    random: scripted(values),
+  });
+
 describe("handStrength", () => {
   test("deals the random opponents before the player", () => {
-    const strength = (values: ReadonlyArray<number>) =>
-      handStrength({
-        ...kuhn,
-        players: 2,
-        range: anyCards,
-        random: scripted(values),
-      });
     expect(strength([0, 2, 0])).toEqual(ok(0));
     expect(strength([0, 0, 1])).toEqual(ok(1));
   });

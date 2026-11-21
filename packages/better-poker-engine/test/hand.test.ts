@@ -47,6 +47,17 @@ function setup(
   return { game, stacks: [100, 100], deck, automate: automation.all };
 }
 
+const seats = (game: Game, players: number) =>
+  startHand({
+    game,
+    stacks: repeat(10, players),
+    deck: decks[game.rules.deck],
+    automate: automation.all,
+  });
+
+const upTo = (most: number) =>
+  Array.from({ length: most - 1 }, (_, index) => index + 2);
+
 describe("startHand", () => {
   test("refuses player lists that do not name each stack once", () => {
     expect(startHand({ ...setup(noLimit), players: ["a", "a"] })).toEqual({
@@ -80,13 +91,6 @@ describe("startHand", () => {
   });
 
   test("refuses more players than the game's deck can deal", () => {
-    const seats = (game: Game, players: number) =>
-      startHand({
-        game,
-        stacks: repeat(10, players),
-        deck: decks[game.rules.deck],
-        automate: automation.all,
-      });
     expect(seats(leduc.fixedLimit(), 6)).toEqual({
       ok: false,
       error: { code: "player_count", players: 6 },
@@ -159,8 +163,6 @@ describe("startHand", () => {
       }
       return accepted;
     });
-    const upTo = (most: number) =>
-      Array.from({ length: most - 1 }, (_, index) => index + 2);
     expect(seats).toEqual([12, 11, 12, 10, 3, 5, 7].map(upTo));
   });
 
@@ -688,6 +690,17 @@ describe("summarizeHand", () => {
       return table;
     };
     const potsOf = (holes: string) => summarizeHand(shove(holes).hand)?.pots;
+    const record = (last: "show" | "muck") => {
+      const table = shove("7cKsAs2dKhAh", automation.dealer);
+      for (;;) {
+        const { decision } = spectator(table.hand);
+        if (decision.kind !== "showdown") {
+          break;
+        }
+        table.act({ type: decision.player === "p3" ? "show" : last });
+      }
+      return summarizeHand(table.hand)?.pots.map((pot) => pot.eligible);
+    };
     const amounts = (pots: ReturnType<typeof potsOf>) =>
       pots?.map(({ amount, eligible, winners }) => ({
         amount,
@@ -731,17 +744,6 @@ describe("summarizeHand", () => {
     });
 
     test("leaves a loser eligible whether they show or muck", () => {
-      const record = (last: "show" | "muck") => {
-        const table = shove("7cKsAs2dKhAh", automation.dealer);
-        for (;;) {
-          const { decision } = spectator(table.hand);
-          if (decision.kind !== "showdown") {
-            break;
-          }
-          table.act({ type: decision.player === "p3" ? "show" : last });
-        }
-        return summarizeHand(table.hand)?.pots.map((pot) => pot.eligible);
-      };
       expect(record("show")).toEqual([
         ["p1", "p2", "p3"],
         ["p2", "p3"],

@@ -168,10 +168,11 @@ describe("eventsFor", () => {
   });
 });
 
+const recordedHoleCards = (view: HandRecord): Array<Array<string>> =>
+  view.players.map((player) => player.holeCards.map((hole) => hole.card));
+
 describe("viewRecord", () => {
   const game = holdem.noLimit({ blinds: [1, 2], minBet: 2 });
-  const holeCardsOf = (view: HandRecord): Array<Array<string>> =>
-    view.players.map((player) => player.holeCards.map((hole) => hole.card));
 
   function foldedRecord(): HandRecord {
     const table = drive(start(game, [100, 100, 100], automation.all));
@@ -185,17 +186,15 @@ describe("viewRecord", () => {
 
   test("shows each player their own folded cards and nobody else's", () => {
     const record = foldedRecord();
-    const p2 = holeCardsOf(record)[1] ?? [];
+    const p2 = recordedHoleCards(record)[1] ?? [];
     expect(
-      holeCardsOf(viewRecord(record, { kind: "player", player: "p2" }))
+      recordedHoleCards(viewRecord(record, { kind: "player", player: "p2" }))
     ).toEqual([hidden, p2, hidden]);
-    expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
-      hidden,
-      hidden,
-      hidden,
-    ]);
+    expect(
+      recordedHoleCards(viewRecord(record, { kind: "spectator" }))
+    ).toEqual([hidden, hidden, hidden]);
     expect<HandRecord>(viewRecord(record, { kind: "auditor" })).toEqual(record);
-    expect(holeCardsOf(record).flat()).not.toContain("??");
+    expect(recordedHoleCards(record).flat()).not.toContain("??");
   });
 
   test("shows hands shown at showdown to everyone, mucked ones to nobody", () => {
@@ -208,10 +207,9 @@ describe("viewRecord", () => {
     if (record === null) {
       throw new Error("The hand is not complete");
     }
-    expect(holeCardsOf(viewRecord(record, { kind: "spectator" }))).toEqual([
-      ["As", "Qh"],
-      hidden,
-    ]);
+    expect(
+      recordedHoleCards(viewRecord(record, { kind: "spectator" }))
+    ).toEqual([["As", "Qh"], hidden]);
   });
 });
 

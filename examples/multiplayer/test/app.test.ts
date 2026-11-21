@@ -22,18 +22,19 @@ type Json =
 
 const auditor = { kind: "auditor" } as const;
 
+function headersFor(player: PlayerId | null): Headers {
+  const headers = new Headers({ "content-type": "application/json" });
+  if (player !== null) {
+    headers.set("x-player", player);
+  }
+  return headers;
+}
+
 async function dealtTable() {
   const db = new Database(":memory:");
   const store = sqliteStore(bunDriver(db));
   await store.migrate();
   const app = createApp(store, insecureSeededRandom(1));
-  const headersFor = (player: PlayerId | null) => {
-    const headers = new Headers({ "content-type": "application/json" });
-    if (player !== null) {
-      headers.set("x-player", player);
-    }
-    return headers;
-  };
   const request = (path: string, player: PlayerId | null) =>
     app.request(path, { headers: headersFor(player) });
   const post = (path: string, player: PlayerId | null, body: Json = {}) =>

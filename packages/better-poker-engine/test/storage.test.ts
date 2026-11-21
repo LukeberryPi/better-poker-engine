@@ -42,30 +42,30 @@ function tampered(hand: Hand, edit: (data: Stored) => void): string {
   return JSON.stringify(data);
 }
 
-describe("a raw hand or table", () => {
-  const seated = (): Table => {
-    const created = createTable({ game, seats: 2 });
-    if (!created.ok) {
-      throw new Error(JSON.stringify(created.error));
+const seated = (): Table => {
+  const created = createTable({ game, seats: 2 });
+  if (!created.ok) {
+    throw new Error(JSON.stringify(created.error));
+  }
+  let table = created.value;
+  for (const command of [
+    { type: "join", player: "ann", seat: 0, stack: 200 },
+    { type: "join", player: "bo", seat: 1, stack: 200 },
+    {
+      type: "startHand",
+      deck: shuffle(decks.standard, insecureSeededRandom(3)),
+    },
+  ] as const) {
+    const next = actAtTable(table, command);
+    if (!next.ok) {
+      throw new Error(JSON.stringify(next.error));
     }
-    let table = created.value;
-    for (const command of [
-      { type: "join", player: "ann", seat: 0, stack: 200 },
-      { type: "join", player: "bo", seat: 1, stack: 200 },
-      {
-        type: "startHand",
-        deck: shuffle(decks.standard, insecureSeededRandom(3)),
-      },
-    ] as const) {
-      const next = actAtTable(table, command);
-      if (!next.ok) {
-        throw new Error(JSON.stringify(next.error));
-      }
-      table = next.value.table;
-    }
-    return table;
-  };
+    table = next.value.table;
+  }
+  return table;
+};
 
+describe("a raw hand or table", () => {
   test("refuses JSON, so a log line or a response body can't carry the deck", () => {
     expect(() => JSON.stringify(threeHanded())).toThrow(/serializeHand/u);
     expect(() => JSON.stringify({ table: seated() })).toThrow(

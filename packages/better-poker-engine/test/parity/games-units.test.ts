@@ -34,6 +34,8 @@ function selectRunoutCount(count: number | null) {
   return accept({ type: "selectRunoutCount", count });
 }
 
+const boardCards = (table: Driver) => auditor(table.hand).boards;
+
 unitTest(
   "pokerkit.tests.test_games.PotLimitOmahaHoldemTestCase.test_double_board",
   () => {
@@ -58,7 +60,6 @@ unitTest(
         )
       );
     const holes = ["AcKc3c2c", "AdKd3d2d", "AhKh3h2h", "AsKs3s2s"].map(deal);
-    const boardCards = (table: Driver) => auditor(table.hand).boards;
 
     let table = newHand();
     play(table, [
@@ -211,11 +212,12 @@ unitTest(
   }
 );
 
+const startingStacks = (hand: Hand) =>
+  auditor(hand).players.map((player) => player.startingStack);
+
 unitTest(
   "pokerkit.tests.test_games.RhodeIslandHoldemTestCase.test_create_state",
   () => {
-    const startingStacks = (hand: Hand) =>
-      auditor(hand).players.map((player) => player.startingStack);
     const postAnte = accept({ type: "postAnte" });
     const collectBets = accept({ type: "collectBets" });
     const showOrMuck = accept({ type: "timeout" });

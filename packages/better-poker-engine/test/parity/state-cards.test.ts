@@ -250,11 +250,12 @@ doctest("pokerkit.state.State.get_up_hand", (example) => {
   );
 });
 
+const upHandsOf = (hand: Hand) =>
+  spectator(hand).players.map((player) => player.hands[0]?.[0]);
+
 doctest("pokerkit.state.State.get_up_hands", (example) => {
   let table: Driver;
   let upHands: Array<HandValue | null | undefined>;
-  const upHandsOf = (hand: Hand) =>
-    spectator(hand).players.map((player) => player.hands[0]?.[0]);
   example(1, () => {});
   example(2, () => {
     table = holdemHand(true);

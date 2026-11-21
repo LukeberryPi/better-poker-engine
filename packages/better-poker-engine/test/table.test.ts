@@ -116,35 +116,35 @@ function startedSeats(events: ReadonlyArray<TableEvent>): Array<Array<number>> {
   );
 }
 
+function foldRound(
+  table: Table,
+  deck = shuffle(decks.standard, insecureSeededRandom(1))
+): Run {
+  const started = run(table, [{ type: "startHand", deck }]);
+  let { table: current } = started;
+  const events = [...started.events];
+  for (;;) {
+    const hand = viewTable(current, auditor).hand;
+    if (hand === null) {
+      return { table: current, events };
+    }
+    if (hand.decision.kind !== "betting") {
+      throw new Error("Not betting");
+    }
+    const next = run(current, [
+      actAs(current, hand.decision.player, { type: "fold" }),
+    ]);
+    current = next.table;
+    events.push(...next.events);
+  }
+}
+
 describe("a table", () => {
   const threeSeated = joinAll([
     ["a", 1, 100],
     ["b", 3, 100],
     ["c", 4, 100],
   ]);
-
-  function foldRound(
-    table: Table,
-    deck = shuffle(decks.standard, insecureSeededRandom(1))
-  ): Run {
-    const started = run(table, [{ type: "startHand", deck }]);
-    let { table: current } = started;
-    const events = [...started.events];
-    for (;;) {
-      const hand = viewTable(current, auditor).hand;
-      if (hand === null) {
-        return { table: current, events };
-      }
-      if (hand.decision.kind !== "betting") {
-        throw new Error("Not betting");
-      }
-      const next = run(current, [
-        actAs(current, hand.decision.player, { type: "fold" }),
-      ]);
-      current = next.table;
-      events.push(...next.events);
-    }
-  }
 
   test("seats the player after the button first and moves the button each hand", () => {
     let table = threeSeated;
@@ -683,43 +683,44 @@ function cardsIn(
   );
 }
 
-describe("a dead-button table", () => {
-  const deadButton = () =>
-    okValue(createTable({ game, seats: 6, button: "dead" }));
-  const seatedAt = (players: ReadonlyArray<string>) =>
-    players.map((player, seat): TableCommand => ({
-      type: "join",
-      player,
-      seat,
-      stack: 100,
-    }));
-  const folds = (table: Table) => {
-    let current = table;
-    for (;;) {
-      const view = viewTable(current, auditor);
-      if (view.hand === null) {
-        return current;
-      }
-      const { decision } = view.hand;
-      if (decision.kind !== "betting") {
-        throw new Error(decision.kind);
-      }
-      const fold = decision.fold === null ? "checkOrCall" : "fold";
-      current = run(current, [
-        {
-          type: "act",
-          player: decision.player,
-          expectedVersion: view.version,
-          action: { type: fold },
-        },
-      ]).table;
-    }
-  };
-  const started = (run: Run) =>
-    run.events.flatMap(({ body }) =>
-      body.type === "handStarted" ? [body] : []
-    );
+const deadButton = () =>
+  okValue(createTable({ game, seats: 6, button: "dead" }));
 
+const seatedAt = (players: ReadonlyArray<string>) =>
+  players.map((player, seat): TableCommand => ({
+    type: "join",
+    player,
+    seat,
+    stack: 100,
+  }));
+
+const folds = (table: Table) => {
+  let current = table;
+  for (;;) {
+    const view = viewTable(current, auditor);
+    if (view.hand === null) {
+      return current;
+    }
+    const { decision } = view.hand;
+    if (decision.kind !== "betting") {
+      throw new Error(decision.kind);
+    }
+    const fold = decision.fold === null ? "checkOrCall" : "fold";
+    current = run(current, [
+      {
+        type: "act",
+        player: decision.player,
+        expectedVersion: view.version,
+        action: { type: fold },
+      },
+    ]).table;
+  }
+};
+
+const started = (run: Run) =>
+  run.events.flatMap(({ body }) => (body.type === "handStarted" ? [body] : []));
+
+describe("a dead-button table", () => {
   test("puts the first button where the server says, then moves the big blind a seat a hand", () => {
     const first = run(deadButton(), [
       ...seatedAt(["a", "b", "c", "d"]),
