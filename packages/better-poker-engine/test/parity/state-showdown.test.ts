@@ -46,10 +46,12 @@ function toLastCheck(example: Example, table: () => Driver): void {
   ];
   let index = 9;
   for (const board of ["AcAdAh", "2c", "2d"]) {
-    list.push([index, burn("??"), burned("??")]);
-    list.push([index + 1, dealBoard(board), boardDealt(board)]);
-    list.push([index + 2, checkOrCall, checked("p1")]);
-    list.push([index + 3, checkOrCall, checked("p2")]);
+    list.push(
+      [index, burn("??"), burned("??")],
+      [index + 1, dealBoard(board), boardDealt(board)],
+      [index + 2, checkOrCall, checked("p1")],
+      [index + 3, checkOrCall, checked("p2")]
+    );
     if (index < 19) {
       list.push([index + 4, checkOrCall, checked("p3")]);
     }
