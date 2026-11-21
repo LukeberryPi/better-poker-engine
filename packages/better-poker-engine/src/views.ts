@@ -198,6 +198,7 @@ export function viewRecord(
   );
   const view: HandRecord = { ...record, players };
   // SAFETY: winners' hands come from face-up cards only, and players' hidden ones read "??".
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- views are brands; no type can check which cards were redacted.
   return view as HandRecordView;
 }
 
@@ -210,6 +211,7 @@ export function eventsFor(
     const body = redactBody(event.body, audience);
     const view = { ...event, body, cause: redactCause(event.cause, body) };
     // SAFETY: redactBody and redactCause replaced every card this audience may not see.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- views are brands; no type can check which cards were redacted.
     return view as HandEventView;
   });
 }

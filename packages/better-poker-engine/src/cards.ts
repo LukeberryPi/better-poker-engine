@@ -52,11 +52,13 @@ export const allCards = [
 
 export function rankOf(card: Card): RankSymbol {
   // SAFETY: every card is a rank symbol followed by a suit symbol.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TypeScript cannot split a Card template literal.
   return card.charAt(0) as RankSymbol;
 }
 
 export function suitOf(card: Card): SuitSymbol {
   // SAFETY: every card is a rank symbol followed by a suit symbol.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TypeScript cannot split a Card template literal.
   return card.charAt(1) as SuitSymbol;
 }
 

@@ -62,6 +62,7 @@ function canonicalText({ units, exponent }: ExactDecimal): PhhDecimal {
   const fraction = padded.slice(point);
   const whole = `${padded.slice(0, point)}${"0".repeat(Math.max(exponent, 0))}`;
   // SAFETY: an optional minus, digits and an optional fraction form a numeral.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TypeScript cannot prove a built string is a numeral.
   return `${sign}${whole}${fraction === "" ? "" : `.${fraction}`}` as PhhDecimal;
 }
 

@@ -133,6 +133,7 @@ export type HandState = Brandable<"Hand"> & {
 
 export function stateOf(hand: Hand): HandState {
   // SAFETY: only `handFrom` creates a Hand, from a HandState.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- an Opaque brand can only be granted, never inferred.
   return hand as HandState;
 }
 
@@ -173,6 +174,7 @@ export function sealed<T extends NonNullable<unknown>>(
 
 export function handFrom(state: HandState): Hand {
   // SAFETY: HandState carries the optional Hand brand; this grants it.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- an Opaque brand can only be granted, never inferred.
   return deepFreeze(sealed(state, "Hand")) as Hand;
 }
 

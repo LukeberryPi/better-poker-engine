@@ -24,6 +24,7 @@ function keysOf<Key extends string, Value>(
   record: Readonly<Record<Key, Value>>
 ): Array<Key> {
   // SAFETY: a Record<Key, Value> literal has exactly the keys Key.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys returns strings.
   return Object.keys(record) as Array<Key>;
 }
 

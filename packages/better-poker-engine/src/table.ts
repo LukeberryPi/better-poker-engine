@@ -215,11 +215,13 @@ export type TableState = Brandable<"Table"> &
 
 export function tableStateOf(table: Table): TableState {
   // SAFETY: only `tableFrom` creates a Table, from a TableState.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- an Opaque brand can only be granted, never inferred.
   return table as TableState;
 }
 
 function tableFrom(state: TableState): Table {
   // SAFETY: TableState carries the optional Table brand; this grants it.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- an Opaque brand can only be granted, never inferred.
   return deepFreeze(sealed(state, "Table")) as Table;
 }
 
