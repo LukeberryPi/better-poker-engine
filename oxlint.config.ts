@@ -108,6 +108,10 @@ export default defineConfig({
       },
     },
     {
+      files: ["parity/check.ts", "parity/extract.ts"],
+      rules: { "no-console": "off" },
+    },
+    {
       files: ["**/*.test.ts", "parity/harness.ts"],
       rules: {
         "anti-slop/no-silent-skip": "error",
