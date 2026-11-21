@@ -12,10 +12,10 @@ export function secureRandom(): RandomSource {
   let getRandomValues: (array: Uint32Array) => Uint32Array;
   try {
     getRandomValues = crypto.getRandomValues.bind(crypto);
-  } catch (cause) {
+  } catch (error) {
     throw new Error(
       "secureRandom needs Web Crypto's crypto.getRandomValues; on React Native, install a polyfill such as react-native-get-random-values",
-      { cause }
+      { cause: error }
     );
   }
   return {

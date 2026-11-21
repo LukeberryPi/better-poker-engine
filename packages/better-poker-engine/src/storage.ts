@@ -99,8 +99,8 @@ export function parseHand(text: string): Result<Hand, HandParseError> {
   }
   try {
     return replay(stored.value);
-  } catch (cause) {
-    return err({ code: "unplayable", cause });
+  } catch (error) {
+    return err({ code: "unplayable", cause: error });
   }
 }
 
@@ -228,8 +228,8 @@ export function parseTable(text: string): Result<Table, TableParseError> {
   }
   try {
     return replayTable(stored.value);
-  } catch (cause) {
-    return err({ code: "unplayable", cause });
+  } catch (error) {
+    return err({ code: "unplayable", cause: error });
   }
 }
 
