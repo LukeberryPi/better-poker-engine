@@ -279,7 +279,7 @@ describe("user-defined fields", () => {
     "_local = 1979-05-27T07:32:00",
     "_clock = 07:32:00",
     "_flags = [true, false]",
-    '"my key" = "line\\nbreak"',
+    String.raw`"my key" = "line\nbreak"`,
     "_meta = { source = 'x', nested = { depth = 2 } }",
   ];
   const parsed = history([noLimit, ...userFields].join("\n"));
@@ -346,7 +346,7 @@ describe("user-defined fields", () => {
         "_local = 1979-05-27T07:32:00.000",
         "_clock = 07:32:00.000",
         "_flags = [true, false]",
-        "'my key' = \"line\\nbreak\"",
+        String.raw`'my key' = "line\nbreak"`,
         "_meta = {source = 'x', nested = {depth = 2}}",
       ].join("\n")
     );
@@ -627,7 +627,7 @@ describe("formatPhh", () => {
         "starting_stacks = [200, 200]",
         "actions = ['d dh p1 AcAd', 'd dh p2 KcKd', 'p1 cbr 6', 'p2 cc']",
         "author = '''O'Neil'''",
-        'event = "Line one\\nline two"',
+        String.raw`event = "Line one\nline two"`,
         "time = 09:05:00.007",
         "time_zone = 'America/Toronto'",
         "hand = 'A-1'",

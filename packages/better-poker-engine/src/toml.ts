@@ -124,13 +124,13 @@ function fitsLiteral(text: string): boolean {
 }
 
 const escapes = new Map([
-  ["\b", "\\b"],
-  ["\t", "\\t"],
-  ["\n", "\\n"],
-  ["\f", "\\f"],
-  ["\r", "\\r"],
-  ['"', '\\"'],
-  ["\\", "\\\\"],
+  ["\b", String.raw`\b`],
+  ["\t", String.raw`\t`],
+  ["\n", String.raw`\n`],
+  ["\f", String.raw`\f`],
+  ["\r", String.raw`\r`],
+  ['"', String.raw`\"`],
+  ["\\", String.raw`\\`],
 ]);
 
 function basicString(text: string): string {
